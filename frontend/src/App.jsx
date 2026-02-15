@@ -1,26 +1,27 @@
-import { useEffect, useState } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import Welcome from "./pages/Welcome";
+import About from "./pages/About";
+import Register from "./pages/Register";
+import Login from "./pages/Login";
+import Approve from "./pages/Approve";
+import PrivateTrip from "./pages/PrivateTrip";
+
 
 export default function App() {
-  const [trips, setTrips] = useState([]);
-
-  useEffect(() => {
-    fetch("/api/trips")
-      .then(res => res.json())
-      .then(data => setTrips(data))
-      .catch(console.error);
-  }, []);
-
   return (
-    <div style={{ padding: 20 }}>
-      <h1>Trip Management</h1>
-      <ul>
-        {trips.map(trip => (
-          <li key={trip.id}>
-            {trip.destination} — {trip.transportation} — ⭐ {trip.rating}
-          </li>
-        ))}
-      </ul>
-    </div>
+    <Routes>
+      <Route path="/" element={<Welcome />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/approve" element={<Approve />} />
+<Route path="/private-trip" element={<PrivateTrip />} />
+
+
+
+      {/* fallback route */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 
