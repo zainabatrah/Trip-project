@@ -7,7 +7,7 @@ export default function Login() {
   return (
 <>
         {/* Header */}
-        <div >
+        <div>
           <h1>Welcome Back</h1>
           <p>
             LOGO
@@ -52,7 +52,7 @@ export default function Login() {
 
           {/* Button */}
           <button>
-            Sign In
+            Sign In 
           </button>
         </form>
 
