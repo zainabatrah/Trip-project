@@ -2,7 +2,17 @@ import { Link } from "react-router-dom";
 
 export default function Welcome() {
   return (
-    <div style={styles.page}>
+
+  <div style={styles.page}>
+      <nav style={styles.navbar}>
+         <Link to="/login" style={styles.primaryBtn}>
+          Login
+        </Link>
+
+        <Link to="/register" style={styles.secondaryBtn}>
+          Register
+        </Link>
+      </nav>
       <h1 style={styles.title}>Trip Management Platform</h1>
 
       <p style={styles.text}>
@@ -11,13 +21,7 @@ export default function Welcome() {
       </p>
 
       <div style={styles.buttons}>
-        <Link to="/login" style={styles.primaryBtn}>
-          Login
-        </Link>
-
-        <Link to="/register" style={styles.secondaryBtn}>
-          Register
-        </Link>
+      
 
         <Link to="/private-trip" style={styles.secondaryBtn}>
           Private Trip
@@ -34,12 +38,15 @@ export default function Welcome() {
 }
 
 const styles = {
-  page: {
-    padding: 30,
-    maxWidth: 700,
-    margin: "0 auto",
-    textAlign: "center",
+  page:{
+    marginTop:-325,
   },
+navbar:{
+  maxHeight:100,
+  
+margin: "0 auto",
+},
+
   title: {
     fontSize: 40,
     marginBottom: 10,
@@ -54,19 +61,22 @@ const styles = {
     justifyContent: "center",
     gap: 15,
     flexWrap: "wrap",
+    
   },
   primaryBtn: {
-    padding: "10px 18px",
+    marginLeft:"1200px",
     backgroundColor: "#ffffff",
     color: "#111",
     borderRadius: 10,
     textDecoration: "none",
     fontWeight: "bold",
+    fontWeight:600,
+      color: rgb(14 165 233 / var(--tw-text-opacity)),
   },
   secondaryBtn: {
-    padding: "10px 18px",
-    border: "1px solid #ffffff",
-    color: "#ffffff",
+   marginLeft:"100px",
+    border: "1px solid #0e0d0d",
+    color: "#080808",
     borderRadius: 10,
     textDecoration: "none",
     fontWeight: "bold",
