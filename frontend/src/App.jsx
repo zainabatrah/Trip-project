@@ -5,7 +5,7 @@ import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Approve from "./pages/Approve";
 import PrivateTrip from "./pages/PrivateTrip";
-
+import Map from "./pages/Map";
 
 export default function App() {
   return (
@@ -16,7 +16,7 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/approve" element={<Approve />} />
 <Route path="/private-trip" element={<PrivateTrip />} />
-
+<Route path="/map" element={<Map />} />
 
 
       {/* fallback route */}
