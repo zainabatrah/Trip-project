@@ -2,14 +2,11 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 export default function Approve() {
-  // Demo status. Later you’ll fetch from backend (GET /api/auth/status)
-  const [status, setStatus] = useState("pending"); // pending | approved | rejected
+  // Demo status. Later you can fetch from backend: GET /api/auth/status
+  const [status] = useState("pending"); // pending | approved | rejected
   const [msg, setMsg] = useState("Checking approval status...");
 
   useEffect(() => {
-    // ✅ Demo “polling” logic: simulate checking status
-    // Replace with real fetch:
-    // const interval = setInterval(async () => { ... }, 5000);
     const t = setTimeout(() => {
       setMsg("Still pending. Please wait for admin verification.");
     }, 800);
@@ -27,31 +24,76 @@ export default function Approve() {
         <div>
           <h1 style={styles.title}>Approval Required</h1>
           <p style={styles.subtitle}>
-            Your registration is under review (including the uploaded ID).
+            Your registration is under review, including the uploaded ID.
           </p>
         </div>
 
-        <Link to="/" style={styles.backBtn}>← Back</Link>
+        <Link to="/" style={styles.backBtn}>
+          ← Back
+        </Link>
       </div>
 
       <div style={styles.card}>
-        <div style={styles.statusRow}>
-          <span style={styles.statusLabel}>Status</span>
+        <div style={styles.iconBox}>
+          {isPending && "⏳"}
+          {isApproved && "✅"}
+          {isRejected && "❌"}
+        </div>
 
-          {isPending && <span style={{ ...styles.badge, ...styles.badgePending }}>Pending</span>}
-          {isApproved && <span style={{ ...styles.badge, ...styles.badgeApproved }}>Approved</span>}
-          {isRejected && <span style={{ ...styles.badge, ...styles.badgeRejected }}>Rejected</span>}
+        <div style={styles.statusRow}>
+          <span style={styles.statusLabel}>Account Status</span>
+
+          {isPending && (
+            <span style={{ ...styles.badge, ...styles.badgePending }}>
+              Pending
+            </span>
+          )}
+
+          {isApproved && (
+            <span style={{ ...styles.badge, ...styles.badgeApproved }}>
+              Approved
+            </span>
+          )}
+
+          {isRejected && (
+            <span style={{ ...styles.badge, ...styles.badgeRejected }}>
+              Rejected
+            </span>
+          )}
         </div>
 
         <p style={styles.infoText}>{msg}</p>
 
         <div style={styles.hr} />
 
-        <div style={styles.actions}>
-          <Link to="/about" style={styles.btnOutline}>About us</Link>
+        <div style={styles.detailsBox}>
+          <h3 style={styles.smallTitle}>What happens next?</h3>
 
-          {/* Example: later you can add contact page */}
-          <a href="#" onClick={(e) => e.preventDefault()} style={styles.btn}>
+          <ul style={styles.list}>
+            <li style={styles.listItem}>
+              Admin reviews your registration information.
+            </li>
+            <li style={styles.listItem}>
+              Your uploaded ID is checked for verification.
+            </li>
+            <li style={styles.listItem}>
+              After approval, you can browse and book trips.
+            </li>
+          </ul>
+        </div>
+
+        <div style={styles.hr} />
+
+        <div style={styles.actions}>
+          <Link to="/about" style={styles.btnOutline}>
+            About us
+          </Link>
+
+          <a
+            href="#"
+            onClick={(e) => e.preventDefault()}
+            style={styles.btn}
+          >
             Contact support
           </a>
         </div>
@@ -60,7 +102,8 @@ export default function Approve() {
       <div style={styles.tipCard}>
         <p style={styles.tipTitle}>Tip</p>
         <p style={styles.tipText}>
-          If it takes too long, contact the organizer/admin and provide the email you registered with.
+          If approval takes too long, contact the organizer or admin and provide
+          the email address you registered with.
         </p>
       </div>
     </div>
@@ -71,62 +114,77 @@ const styles = {
   page: {
     width: "100vw",
     minHeight: "100vh",
-    padding: "28px 18px",
-    background:
-      "linear-gradient(135deg, #b8e1ff 0%, #a7c7ff 45%, #c3b1ff 100%)",
+    padding: "34px 26px",
+    background: "#0f1020",
+    color: "#ffffff",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
+    fontFamily: "Inter, Arial, sans-serif",
+    boxSizing: "border-box",
   },
 
   header: {
     width: "100%",
-    maxWidth: 820,
+    maxWidth: 900,
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: 12,
-    marginBottom: 14,
+    gap: 14,
+    marginBottom: 22,
   },
 
   title: {
     margin: 0,
-    fontSize: 28,
+    fontSize: 34,
     fontWeight: 900,
-    color: "#14204a",
+    color: "#f8fafc",
+    letterSpacing: "-0.04em",
   },
 
   subtitle: {
-    margin: "6px 0 0",
-    fontSize: 14,
-    color: "rgba(20, 32, 74, 0.75)",
-    fontWeight: 600,
+    margin: "8px 0 0",
+    fontSize: 15,
+    color: "#a7b0d8",
+    fontWeight: 500,
+    lineHeight: 1.7,
+    maxWidth: 650,
   },
 
   backBtn: {
-    padding: "10px 14px",
-    borderRadius: 12,
-    background: "rgba(255,255,255,0.25)",
-    border: "1px solid rgba(255,255,255,0.35)",
-    backdropFilter: "blur(12px)",
-    WebkitBackdropFilter: "blur(12px)",
-    color: "#14204a",
+    padding: "11px 16px",
+    borderRadius: 14,
+    background: "#182343",
+    border: "1px solid #263764",
+    color: "#dce6ff",
     textDecoration: "none",
     fontWeight: 800,
-    boxShadow: "0 10px 22px rgba(0,0,0,0.12)",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.25)",
     whiteSpace: "nowrap",
   },
 
   card: {
     width: "100%",
-    maxWidth: 820,
-    padding: 22,
+    maxWidth: 900,
+    padding: 24,
     borderRadius: 22,
-    background: "rgba(255, 255, 255, 0.22)",
-    backdropFilter: "blur(18px)",
-    WebkitBackdropFilter: "blur(18px)",
-    border: "1px solid rgba(255,255,255,0.35)",
-    boxShadow: "0 20px 45px rgba(0,0,0,0.18)",
+    background: "#171b33",
+    border: "1px solid #293154",
+    boxShadow: "0 25px 70px rgba(0,0,0,0.35)",
+    boxSizing: "border-box",
+  },
+
+  iconBox: {
+    width: 58,
+    height: 58,
+    borderRadius: 18,
+    background: "linear-gradient(135deg, #5b6cff, #31d4c7)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 26,
+    marginBottom: 18,
+    boxShadow: "0 14px 30px rgba(91,108,255,0.35)",
   },
 
   statusRow: {
@@ -137,39 +195,79 @@ const styles = {
   },
 
   statusLabel: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 900,
-    color: "#22306a",
+    color: "#f8fafc",
   },
 
   badge: {
-    padding: "8px 12px",
+    padding: "8px 13px",
     borderRadius: 999,
     fontWeight: 900,
     fontSize: 12,
     letterSpacing: 0.4,
-    border: "1px solid rgba(255,255,255,0.55)",
-    background: "rgba(255,255,255,0.55)",
-    color: "#14204a",
+    border: "1px solid transparent",
   },
 
-  badgePending: {},
-  badgeApproved: { background: "rgba(220, 255, 236, 0.75)", color: "#0b5d2a" },
-  badgeRejected: { background: "rgba(255, 225, 230, 0.75)", color: "#8a1021" },
+  badgePending: {
+    background: "rgba(251, 191, 36, 0.14)",
+    color: "#fbbf24",
+    border: "1px solid rgba(251, 191, 36, 0.35)",
+  },
+
+  badgeApproved: {
+    background: "rgba(34, 197, 94, 0.14)",
+    color: "#22c55e",
+    border: "1px solid rgba(34, 197, 94, 0.35)",
+  },
+
+  badgeRejected: {
+    background: "rgba(248, 113, 113, 0.14)",
+    color: "#f87171",
+    border: "1px solid rgba(248, 113, 113, 0.35)",
+  },
 
   infoText: {
-    marginTop: 12,
+    marginTop: 14,
     marginBottom: 0,
     fontSize: 14,
-    fontWeight: 700,
-    color: "rgba(20, 32, 74, 0.85)",
-    lineHeight: 1.6,
+    fontWeight: 500,
+    color: "#aeb8dd",
+    lineHeight: 1.7,
   },
 
   hr: {
     height: 1,
-    background: "rgba(255,255,255,0.45)",
-    margin: "16px 0",
+    background: "#293154",
+    margin: "22px 0",
+  },
+
+  detailsBox: {
+    padding: 18,
+    borderRadius: 18,
+    background: "#141c35",
+    border: "1px solid #263764",
+  },
+
+  smallTitle: {
+    margin: 0,
+    fontSize: 16,
+    fontWeight: 900,
+    color: "#f8fafc",
+    marginBottom: 12,
+  },
+
+  list: {
+    margin: 0,
+    paddingLeft: 20,
+    color: "#aeb8dd",
+    fontWeight: 500,
+    fontSize: 14,
+    lineHeight: 1.8,
+  },
+
+  listItem: {
+    marginBottom: 7,
   },
 
   actions: {
@@ -180,50 +278,50 @@ const styles = {
   },
 
   btn: {
-    padding: "10px 14px",
+    padding: "11px 16px",
     borderRadius: 14,
-    background: "linear-gradient(135deg, #6ec6ff, #7c83fd)",
-    color: "#fff",
+    background: "linear-gradient(135deg, #5b6cff, #31d4c7)",
+    color: "#ffffff",
     textDecoration: "none",
     fontWeight: 900,
     border: "none",
+    boxShadow: "0 12px 28px rgba(91,108,255,0.35)",
   },
 
   btnOutline: {
-    padding: "10px 14px",
+    padding: "11px 16px",
     borderRadius: 14,
-    background: "rgba(255,255,255,0.25)",
-    border: "1px solid rgba(255,255,255,0.5)",
-    color: "#14204a",
+    background: "#182343",
+    border: "1px solid #31426d",
+    color: "#dce6ff",
     textDecoration: "none",
     fontWeight: 900,
   },
 
   tipCard: {
     width: "100%",
-    maxWidth: 820,
-    marginTop: 14,
-    padding: 16,
+    maxWidth: 900,
+    marginTop: 16,
+    padding: 18,
     borderRadius: 18,
-    background: "rgba(255, 255, 255, 0.18)",
-    backdropFilter: "blur(14px)",
-    WebkitBackdropFilter: "blur(14px)",
-    border: "1px solid rgba(255,255,255,0.30)",
-    boxShadow: "0 14px 30px rgba(0,0,0,0.12)",
+    background: "#171b33",
+    border: "1px solid #293154",
+    boxShadow: "0 16px 40px rgba(0,0,0,0.25)",
+    boxSizing: "border-box",
   },
 
   tipTitle: {
     margin: 0,
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: 900,
-    color: "#22306a",
+    color: "#f8fafc",
   },
 
   tipText: {
-    margin: "6px 0 0",
-    fontSize: 13,
-    fontWeight: 650,
-    color: "rgba(20, 32, 74, 0.78)",
-    lineHeight: 1.6,
+    margin: "7px 0 0",
+    fontSize: 14,
+    fontWeight: 500,
+    color: "#aeb8dd",
+    lineHeight: 1.7,
   },
 };
