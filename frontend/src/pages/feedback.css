@@ -1,0 +1,100 @@
+/* ===== PAGE BACKGROUND ===== */
+.login-container,
+.feedback-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #ffffff; /* white background */
+  font-family: Arial, sans-serif;
+}
+
+/* ===== CARD ===== */
+.login-card,
+.feedback-card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 18px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f3f4f6;
+}
+
+/* ===== HEADINGS ===== */
+.login-header h1,
+.feedback-card h1 {
+  text-align: center;
+  color: #6d28d9; /* purple */
+  margin-bottom: 20px;
+}
+
+/* ===== LABELS ===== */
+label {
+  color: #374151;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+/* ===== INPUTS ===== */
+input,
+textarea,
+select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #fafafa;
+  outline: none;
+  transition: 0.2s;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: #a855f7;
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2);
+}
+
+/* ===== BUTTONS ===== */
+button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #a855f7, #7c3aed);
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* ===== LINKS ===== */
+a {
+  color: #7c3aed;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* ===== PASSWORD BUTTON ===== */
+.toggle-btn {
+  background: #f3e8ff;
+  color: #6d28d9;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.toggle-btn:hover {
+  background: #ede9fe;
+}
