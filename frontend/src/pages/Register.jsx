@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -59,33 +59,41 @@ export default function Register() {
   return (
     <div style={styles.page}>
       <div style={styles.card}>
+        <div style={styles.logoBox}>T</div>
+
         <h2 style={styles.title}>Create Account</h2>
+        <p style={styles.subtitle}>
+          Register your account to browse, plan, and book trips.
+        </p>
 
         <form onSubmit={handleSubmit} style={styles.form}>
+          <label style={styles.label}>Full Name</label>
           <input
             type="text"
             name="fullName"
-            placeholder="Full Name"
+            placeholder="Enter your full name"
             value={form.fullName}
             onChange={handleChange}
             required
             style={styles.input}
           />
 
+          <label style={styles.label}>Email Address</label>
           <input
             type="email"
             name="email"
-            placeholder="Email Address"
+            placeholder="Enter your email address"
             value={form.email}
             onChange={handleChange}
             required
             style={styles.input}
           />
 
+          <label style={styles.label}>Password</label>
           <input
             type="password"
             name="password"
-            placeholder="Password"
+            placeholder="Create a password"
             value={form.password}
             onChange={handleChange}
             required
@@ -100,19 +108,35 @@ export default function Register() {
             style={styles.fileInput}
           />
 
+          {idFile && (
+            <p style={styles.fileName}>
+              Selected file: <span style={styles.fileNameStrong}>{idFile.name}</span>
+            </p>
+          )}
+
           {error && <p style={styles.error}>{error}</p>}
 
           <button type="submit" style={styles.button} disabled={loading}>
             {loading ? "Registering..." : "Register"}
           </button>
         </form>
+
+        <p style={styles.bottomText}>
+          Already have an account?{" "}
+          <Link to="/login" style={styles.link}>
+            Login
+          </Link>
+        </p>
+
+        <Link to="/" style={styles.backLink}>
+          ← Back to home
+        </Link>
       </div>
     </div>
   );
 }
 
 const styles = {
-  // IMPORTANT: use viewport units so it fills the whole screen even if #root is constrained
   page: {
     width: "100vw",
     minHeight: "100vh",
@@ -120,28 +144,54 @@ const styles = {
     justifyContent: "center",
     alignItems: "center",
     padding: "24px",
-    background:
-      "linear-gradient(135deg, #b8e1ff 0%, #a7c7ff 45%, #c3b1ff 100%)",
+    background: "#0f1020",
+    color: "#ffffff",
+    fontFamily: "Inter, Arial, sans-serif",
+    boxSizing: "border-box",
   },
 
   card: {
     width: "100%",
-    maxWidth: "420px",
-    padding: "44px",
-    borderRadius: "22px",
-    background: "rgba(255, 255, 255, 0.22)",
-    backdropFilter: "blur(18px)",
-    WebkitBackdropFilter: "blur(18px)",
-    border: "1px solid rgba(255,255,255,0.35)",
-    boxShadow: "0 20px 45px rgba(0,0,0,0.18)",
+    maxWidth: "460px",
+    padding: "36px",
+    borderRadius: "24px",
+    background: "#171b33",
+    border: "1px solid #293154",
+    boxShadow: "0 25px 70px rgba(0,0,0,0.35)",
+    boxSizing: "border-box",
+  },
+
+  logoBox: {
+    width: 54,
+    height: 54,
+    borderRadius: 18,
+    margin: "0 auto 18px",
+    background: "linear-gradient(135deg, #5b6cff, #31d4c7)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#ffffff",
+    fontSize: 24,
+    fontWeight: 900,
+    boxShadow: "0 14px 30px rgba(91,108,255,0.35)",
   },
 
   title: {
     textAlign: "center",
-    marginBottom: "28px",
-    fontSize: "24px",
-    fontWeight: 700,
-    color: "#1f2d5c",
+    margin: 0,
+    fontSize: "28px",
+    fontWeight: 900,
+    color: "#f8fafc",
+    letterSpacing: "-0.03em",
+  },
+
+  subtitle: {
+    textAlign: "center",
+    margin: "8px 0 26px",
+    fontSize: "14px",
+    fontWeight: 500,
+    color: "#a7b0d8",
+    lineHeight: 1.6,
   },
 
   form: {
@@ -149,44 +199,94 @@ const styles = {
     flexDirection: "column",
   },
 
+  label: {
+    marginBottom: "7px",
+    fontSize: "13px",
+    fontWeight: 800,
+    color: "#dce6ff",
+  },
+
   input: {
     marginBottom: "16px",
     padding: "13px 14px",
-    borderRadius: "12px",
-    border: "1px solid rgba(255,255,255,0.55)",
-    background: "rgba(255,255,255,0.65)",
+    borderRadius: "14px",
+    border: "1px solid #31426d",
+    background: "#111a32",
+    color: "#f8fafc",
     outline: "none",
     fontSize: "14px",
-  },
-
-  label: {
-    marginBottom: "6px",
-    fontSize: "13px",
-    fontWeight: 600,
-    color: "#2b3a75",
+    fontWeight: 500,
+    boxSizing: "border-box",
   },
 
   fileInput: {
-    marginBottom: "16px",
-    color: "#2b3a75",
-  },
-
-  button: {
-    marginTop: "6px",
-    padding: "14px",
+    marginBottom: "10px",
+    padding: "12px",
     borderRadius: "14px",
-    border: "none",
-    background: "linear-gradient(135deg, #6ec6ff, #7c83fd)",
-    color: "#fff",
-    fontSize: "15px",
-    fontWeight: 700,
+    border: "1px dashed #31426d",
+    background: "#111a32",
+    color: "#aeb8dd",
+    fontSize: "13px",
     cursor: "pointer",
   },
 
+  fileName: {
+    margin: "0 0 14px",
+    fontSize: "13px",
+    color: "#aeb8dd",
+    lineHeight: 1.5,
+  },
+
+  fileNameStrong: {
+    color: "#31d4c7",
+    fontWeight: 800,
+  },
+
+  button: {
+    marginTop: "8px",
+    padding: "14px",
+    borderRadius: "14px",
+    border: "none",
+    background: "linear-gradient(135deg, #5b6cff, #31d4c7)",
+    color: "#ffffff",
+    fontSize: "15px",
+    fontWeight: 900,
+    cursor: "pointer",
+    boxShadow: "0 12px 28px rgba(91,108,255,0.35)",
+  },
+
   error: {
-    color: "#d7263d",
-    marginBottom: "12px",
+    padding: "11px 12px",
+    borderRadius: "12px",
+    background: "rgba(248, 113, 113, 0.14)",
+    border: "1px solid rgba(248, 113, 113, 0.35)",
+    color: "#f87171",
+    margin: "0 0 14px",
     fontSize: "14px",
     textAlign: "center",
+    fontWeight: 700,
+  },
+
+  bottomText: {
+    margin: "20px 0 0",
+    textAlign: "center",
+    fontSize: "14px",
+    color: "#aeb8dd",
+  },
+
+  link: {
+    color: "#31d4c7",
+    textDecoration: "none",
+    fontWeight: 900,
+  },
+
+  backLink: {
+    display: "block",
+    marginTop: "14px",
+    textAlign: "center",
+    color: "#7f8cff",
+    textDecoration: "none",
+    fontSize: "14px",
+    fontWeight: 800,
   },
 };
