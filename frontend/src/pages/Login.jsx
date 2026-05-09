@@ -1,23 +1,26 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import "./Login.css";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-<>
+    <div className="login-container">
+      
+      {/* Card */}
+      <div className="login-card">
+
         {/* Header */}
-        <div >
-          <h1>Welcome Back</h1>
-          <p>
-            LOGO
-          </p>
+        <div className="login-header">
+          <h1>Welcome</h1>
         </div>
 
         {/* Form */}
-        <form>
+        <form className="login-form">
+
           {/* Email */}
-          <div>
+          <div className="form-group">
             <label>Email</label>
             <input
               type="email"
@@ -26,16 +29,19 @@ export default function Login() {
           </div>
 
           {/* Password */}
-          <div>
+          <div className="form-group">
             <label>Password</label>
-            <div>
+
+            <div className="password-box">
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="********"
-               />
+              />
+
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
+                className="toggle-btn"
               >
                 {showPassword ? "Hide" : "Show"}
               </button>
@@ -43,27 +49,24 @@ export default function Login() {
           </div>
 
           {/* Remember */}
-          <div>
+          <div className="remember">
             <input type="checkbox" />
-            <span>
-              Remember me
-            </span>
+            <span>Remember me</span>
           </div>
 
           {/* Button */}
-          <button>
+          <button className="login-btn">
             Sign In
           </button>
         </form>
 
         {/* Footer */}
-        <p>
+        <p className="footer-text">
           Don’t have an account?{" "}
-          <Link to="/register" className="text-blue-600 font-semibold">
-          Sign up
-          </Link>
-
+          <Link to="/register">Sign up</Link>
         </p>
-</>
+
+      </div>
+    </div>
   );
 }
