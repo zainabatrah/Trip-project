@@ -89,11 +89,7 @@ export default function Approve() {
             About us
           </Link>
 
-          <a
-            href="#"
-            onClick={(e) => e.preventDefault()}
-            style={styles.btn}
-          >
+          <a href="#" onClick={(e) => e.preventDefault()} style={styles.btn}>
             Contact support
           </a>
         </div>
@@ -115,8 +111,9 @@ const styles = {
     width: "100vw",
     minHeight: "100vh",
     padding: "34px 26px",
-    background: "#0f1020",
-    color: "#ffffff",
+    background:
+      "linear-gradient(135deg, #dbeafe 0%, #c7d2fe 55%, #e9d5ff 100%)",
+    color: "#1e293b",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
@@ -138,14 +135,14 @@ const styles = {
     margin: 0,
     fontSize: 34,
     fontWeight: 900,
-    color: "#f8fafc",
+    color: "#1e3a8a",
     letterSpacing: "-0.04em",
   },
 
   subtitle: {
     margin: "8px 0 0",
     fontSize: 15,
-    color: "#a7b0d8",
+    color: "#475569",
     fontWeight: 500,
     lineHeight: 1.7,
     maxWidth: 650,
@@ -154,12 +151,12 @@ const styles = {
   backBtn: {
     padding: "11px 16px",
     borderRadius: 14,
-    background: "#182343",
-    border: "1px solid #263764",
-    color: "#dce6ff",
+    background: "linear-gradient(135deg, #bfdbfe, #c4b5fd)",
+    border: "1px solid rgba(147, 197, 253, 0.55)",
+    color: "#0f172a",
     textDecoration: "none",
-    fontWeight: 800,
-    boxShadow: "0 10px 25px rgba(0,0,0,0.25)",
+    fontWeight: 900,
+    boxShadow: "0 10px 25px rgba(96, 165, 250, 0.22)",
     whiteSpace: "nowrap",
   },
 
@@ -168,9 +165,11 @@ const styles = {
     maxWidth: 900,
     padding: 24,
     borderRadius: 22,
-    background: "#171b33",
-    border: "1px solid #293154",
-    boxShadow: "0 25px 70px rgba(0,0,0,0.35)",
+    background: "rgba(255, 255, 255, 0.72)",
+    border: "1px solid rgba(147, 197, 253, 0.45)",
+    boxShadow: "0 25px 70px rgba(59, 130, 246, 0.22)",
+    backdropFilter: "blur(16px)",
+    WebkitBackdropFilter: "blur(16px)",
     boxSizing: "border-box",
   },
 
@@ -178,13 +177,13 @@ const styles = {
     width: 58,
     height: 58,
     borderRadius: 18,
-    background: "linear-gradient(135deg, #5b6cff, #31d4c7)",
+    background: "linear-gradient(135deg, #60a5fa, #a78bfa)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     fontSize: 26,
     marginBottom: 18,
-    boxShadow: "0 14px 30px rgba(91,108,255,0.35)",
+    boxShadow: "0 14px 30px rgba(96, 165, 250, 0.35)",
   },
 
   statusRow: {
@@ -197,7 +196,7 @@ const styles = {
   statusLabel: {
     fontSize: 16,
     fontWeight: 900,
-    color: "#f8fafc",
+    color: "#1e3a8a",
   },
 
   badge: {
@@ -210,21 +209,21 @@ const styles = {
   },
 
   badgePending: {
-    background: "rgba(251, 191, 36, 0.14)",
-    color: "#fbbf24",
-    border: "1px solid rgba(251, 191, 36, 0.35)",
+    background: "rgba(251, 191, 36, 0.18)",
+    color: "#92400e",
+    border: "1px solid rgba(251, 191, 36, 0.45)",
   },
 
   badgeApproved: {
-    background: "rgba(34, 197, 94, 0.14)",
-    color: "#22c55e",
-    border: "1px solid rgba(34, 197, 94, 0.35)",
+    background: "rgba(34, 197, 94, 0.16)",
+    color: "#15803d",
+    border: "1px solid rgba(34, 197, 94, 0.38)",
   },
 
   badgeRejected: {
-    background: "rgba(248, 113, 113, 0.14)",
-    color: "#f87171",
-    border: "1px solid rgba(248, 113, 113, 0.35)",
+    background: "rgba(248, 113, 113, 0.16)",
+    color: "#dc2626",
+    border: "1px solid rgba(248, 113, 113, 0.38)",
   },
 
   infoText: {
@@ -232,35 +231,35 @@ const styles = {
     marginBottom: 0,
     fontSize: 14,
     fontWeight: 500,
-    color: "#aeb8dd",
+    color: "#475569",
     lineHeight: 1.7,
   },
 
   hr: {
     height: 1,
-    background: "#293154",
+    background: "rgba(147, 197, 253, 0.65)",
     margin: "22px 0",
   },
 
   detailsBox: {
     padding: 18,
     borderRadius: 18,
-    background: "#141c35",
-    border: "1px solid #263764",
+    background: "rgba(255, 255, 255, 0.72)",
+    border: "1px solid #bfdbfe",
   },
 
   smallTitle: {
     margin: 0,
     fontSize: 16,
     fontWeight: 900,
-    color: "#f8fafc",
+    color: "#1e3a8a",
     marginBottom: 12,
   },
 
   list: {
     margin: 0,
     paddingLeft: 20,
-    color: "#aeb8dd",
+    color: "#475569",
     fontWeight: 500,
     fontSize: 14,
     lineHeight: 1.8,
@@ -280,20 +279,20 @@ const styles = {
   btn: {
     padding: "11px 16px",
     borderRadius: 14,
-    background: "linear-gradient(135deg, #5b6cff, #31d4c7)",
-    color: "#ffffff",
+    background: "linear-gradient(135deg, #93c5fd, #a78bfa)",
+    color: "#0f172a",
     textDecoration: "none",
     fontWeight: 900,
     border: "none",
-    boxShadow: "0 12px 28px rgba(91,108,255,0.35)",
+    boxShadow: "0 12px 28px rgba(96, 165, 250, 0.35)",
   },
 
   btnOutline: {
     padding: "11px 16px",
     borderRadius: 14,
-    background: "#182343",
-    border: "1px solid #31426d",
-    color: "#dce6ff",
+    background: "rgba(255,255,255,0.72)",
+    border: "1px solid #bfdbfe",
+    color: "#1e3a8a",
     textDecoration: "none",
     fontWeight: 900,
   },
@@ -304,9 +303,11 @@ const styles = {
     marginTop: 16,
     padding: 18,
     borderRadius: 18,
-    background: "#171b33",
-    border: "1px solid #293154",
-    boxShadow: "0 16px 40px rgba(0,0,0,0.25)",
+    background: "rgba(255, 255, 255, 0.72)",
+    border: "1px solid rgba(147, 197, 253, 0.45)",
+    boxShadow: "0 16px 40px rgba(96, 165, 250, 0.18)",
+    backdropFilter: "blur(16px)",
+    WebkitBackdropFilter: "blur(16px)",
     boxSizing: "border-box",
   },
 
@@ -314,14 +315,14 @@ const styles = {
     margin: 0,
     fontSize: 14,
     fontWeight: 900,
-    color: "#f8fafc",
+    color: "#1e3a8a",
   },
 
   tipText: {
     margin: "7px 0 0",
     fontSize: 14,
     fontWeight: 500,
-    color: "#aeb8dd",
+    color: "#475569",
     lineHeight: 1.7,
   },
 };

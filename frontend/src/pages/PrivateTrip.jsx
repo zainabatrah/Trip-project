@@ -285,8 +285,8 @@ const styles = {
     width: "100vw",
     minHeight: "100vh",
     padding: "34px 26px",
-    background: "#0f1020",
-    color: "#ffffff",
+    background: "linear-gradient(135deg, #dbeafe 0%, #c7d2fe 55%, #e9d5ff 100%)",
+    color: "#1e293b",
     fontFamily: "Inter, Arial, sans-serif",
     boxSizing: "border-box",
   },
@@ -310,13 +310,13 @@ const styles = {
     margin: 0,
     fontSize: 34,
     fontWeight: 900,
-    color: "#f8fafc",
+    color: "#1e3a8a",
     letterSpacing: "-0.04em",
   },
 
   subtitle: {
     margin: "8px 0 0",
-    color: "#a7b0d8",
+    color: "#475569",
     fontSize: 15,
     fontWeight: 500,
     lineHeight: 1.7,
@@ -326,12 +326,12 @@ const styles = {
   backBtn: {
     padding: "11px 16px",
     borderRadius: 14,
-    background: "#182343",
-    border: "1px solid #263764",
-    color: "#dce6ff",
+    background: "linear-gradient(135deg, #bfdbfe, #c4b5fd)",
+    border: "1px solid rgba(147, 197, 253, 0.55)",
+    color: "#0f172a",
     textDecoration: "none",
-    fontWeight: 800,
-    boxShadow: "0 10px 25px rgba(0,0,0,0.25)",
+    fontWeight: 900,
+    boxShadow: "0 10px 25px rgba(96, 165, 250, 0.22)",
     whiteSpace: "nowrap",
   },
 
@@ -339,9 +339,11 @@ const styles = {
     width: "100%",
     padding: 24,
     borderRadius: 22,
-    background: "#171b33",
-    border: "1px solid #293154",
-    boxShadow: "0 25px 70px rgba(0,0,0,0.35)",
+    background: "rgba(255, 255, 255, 0.72)",
+    border: "1px solid rgba(147, 197, 253, 0.45)",
+    boxShadow: "0 25px 70px rgba(59, 130, 246, 0.22)",
+    backdropFilter: "blur(16px)",
+    WebkitBackdropFilter: "blur(16px)",
     boxSizing: "border-box",
   },
 
@@ -349,7 +351,7 @@ const styles = {
     width: 58,
     height: 58,
     borderRadius: 18,
-    background: "linear-gradient(135deg, #5b6cff, #31d4c7)",
+    background: "linear-gradient(135deg, #60a5fa, #a78bfa)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -357,19 +359,19 @@ const styles = {
     fontSize: 26,
     fontWeight: 900,
     marginBottom: 16,
-    boxShadow: "0 14px 30px rgba(91,108,255,0.35)",
+    boxShadow: "0 14px 30px rgba(96, 165, 250, 0.35)",
   },
 
   cardTitle: {
     margin: 0,
     fontSize: 22,
     fontWeight: 900,
-    color: "#f8fafc",
+    color: "#1e3a8a",
   },
 
   cardSubtitle: {
     margin: "7px 0 22px",
-    color: "#a7b0d8",
+    color: "#475569",
     fontSize: 14,
     lineHeight: 1.6,
   },
@@ -389,16 +391,16 @@ const styles = {
     marginBottom: 7,
     fontSize: 13,
     fontWeight: 800,
-    color: "#dce6ff",
+    color: "#334155",
   },
 
   input: {
     width: "100%",
     padding: "13px 14px",
     borderRadius: 14,
-    border: "1px solid #31426d",
-    background: "#111a32",
-    color: "#f8fafc",
+    border: "1px solid #bfdbfe",
+    background: "rgba(255,255,255,0.9)",
+    color: "#0f172a",
     outline: "none",
     fontSize: 14,
     fontWeight: 500,
@@ -412,15 +414,15 @@ const styles = {
   },
 
   inputErr: {
-    border: "1px solid rgba(248, 113, 113, 0.7)",
-    background: "#17172b",
+    border: "1px solid rgba(220, 38, 38, 0.65)",
+    background: "rgba(254, 242, 242, 0.95)",
   },
 
   errText: {
     marginTop: 6,
     fontSize: 12,
     fontWeight: 800,
-    color: "#f87171",
+    color: "#dc2626",
   },
 
   hintRow: {
@@ -433,21 +435,21 @@ const styles = {
 
   hintText: {
     fontSize: 12,
-    color: "#aeb8dd",
+    color: "#475569",
     fontWeight: 500,
   },
 
   counter: {
     fontSize: 12,
-    color: "#31d4c7",
+    color: "#2563eb",
     fontWeight: 900,
   },
 
   summaryBox: {
     padding: 16,
     borderRadius: 18,
-    background: "#141c35",
-    border: "1px solid #263764",
+    background: "rgba(255,255,255,0.72)",
+    border: "1px solid #bfdbfe",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
@@ -455,13 +457,13 @@ const styles = {
   },
 
   summaryLabel: {
-    color: "#aeb8dd",
+    color: "#475569",
     fontSize: 13,
     fontWeight: 700,
   },
 
   summaryValue: {
-    color: "#31d4c7",
+    color: "#2563eb",
     fontSize: 15,
     fontWeight: 900,
   },
@@ -472,7 +474,7 @@ const styles = {
     borderRadius: 14,
     background: "rgba(34, 197, 94, 0.14)",
     border: "1px solid rgba(34, 197, 94, 0.35)",
-    color: "#22c55e",
+    color: "#15803d",
     fontWeight: 900,
     textAlign: "center",
   },
@@ -483,12 +485,12 @@ const styles = {
     padding: "14px 16px",
     borderRadius: 16,
     border: "none",
-    background: "linear-gradient(135deg, #5b6cff, #31d4c7)",
-    color: "#ffffff",
+    background: "linear-gradient(135deg, #93c5fd, #a78bfa)",
+    color: "#0f172a",
     fontWeight: 900,
     cursor: "pointer",
     fontSize: 15,
-    boxShadow: "0 12px 28px rgba(91,108,255,0.35)",
+    boxShadow: "0 12px 28px rgba(96, 165, 250, 0.35)",
   },
 
   btnDisabled: {
