@@ -4,14 +4,20 @@ import { FaSearch, FaInfoCircle, FaCreditCard,FaShieldAlt, FaUserLock, FaHeadset
 import Carousel from "react-bootstrap/Carousel";
 export default function Welcome() {
   return (
-    <div className={styles.body} >
-<nav className={styles.navbar}>
+<>
+ 
 
+
+  <div className={styles.body}>
+     
+
+<nav className={styles.navbar}>
   <div className={styles.leftLinks}>
     <Link to="/" className={styles.link}>Home</Link>
     <Link to="/about" className={styles.link}>About Us</Link>
     <Link to="/private-trip" className={styles.link}>Private Trip</Link>
   </div>
+
 
   <div className={styles.rightButtons}>
     <Link to="/login" className={styles.primaryBtn}>Login</Link>
@@ -167,7 +173,7 @@ export default function Welcome() {
         Popular Trip Categories
       </h2>
 
-      <div className={styles.categorycards}>
+  <div className={styles.categorycards}>
 
         <div className={styles.categorycard}>
           <img src="/Images/Tyre-Beach-Lebanon.jpg" alt="Beach Trips" />
@@ -195,9 +201,10 @@ export default function Welcome() {
           <div className={styles.categoryoverlay}>
             <h3>Adventure Trips</h3>
           </div>
+
         </div>
 
-      </div>
+</div>
 
     </section>
 
@@ -244,6 +251,10 @@ export default function Welcome() {
     </section>
   
     </div>
+    </>
   );
 }
+
+
+
 
