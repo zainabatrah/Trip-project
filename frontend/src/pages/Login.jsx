@@ -4,26 +4,52 @@ import "./Login.css";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    try {
+      const res = await fetch("http://localhost:5000/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+      console.log("LOGIN RESPONSE:", data);
+
+      if (res.ok) {
+        alert("Login successful");
+      } else {
+        alert(data.message); // 👈 THIS is the key fix
+      }
+    } catch (err) {
+      console.error("Error:", err);
+      alert("Server not reachable");
+    }
+  };
 
   return (
     <div className="login-container">
-      
-      {/* Card */}
       <div className="login-card">
 
-        {/* Header */}
         <div className="login-header">
           <h1>Welcome</h1>
         </div>
 
-        {/* Form */}
-        <form className="login-form">
+        <form className="login-form" onSubmit={handleLogin}>
 
           {/* Email */}
           <div className="form-group">
             <label>Email</label>
             <input
               type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="example@email.com"
             />
           </div>
@@ -35,6 +61,8 @@ export default function Login() {
             <div className="password-box">
               <input
                 type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="********"
               />
 
@@ -48,22 +76,18 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Remember */}
           <div className="remember">
             <input type="checkbox" />
             <span>Remember me</span>
           </div>
 
-          {/* Button */}
-          <button className="login-btn">
+          <button className="login-btn" type="submit">
             Sign In
           </button>
         </form>
 
-        {/* Footer */}
         <p className="footer-text">
-          Don’t have an account?{" "}
-          <Link to="/register">Sign up</Link>
+          Don’t have an account? <Link to="/register">Sign up</Link>
         </p>
 
       </div>
