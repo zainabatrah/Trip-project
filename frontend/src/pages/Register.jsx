@@ -31,8 +31,8 @@ export default function Register() {
       setLoading(true);
 
       const formData = new FormData();
-      formData.append("fullName", form.fullName);
-      formData.append("email", form.email);
+      formData.append("fullName", form.fullName.trim());
+      formData.append("email", form.email.trim());
       formData.append("password", form.password);
       formData.append("idFile", idFile);
 
@@ -41,16 +41,26 @@ export default function Register() {
         body: formData,
       });
 
-      const data = await res.json();
+      const text = await res.text();
+
+      let data = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        console.error("Backend returned non-JSON response:", text);
+        setError("Backend is not responding correctly. Check backend terminal.");
+        return;
+      }
 
       if (!res.ok) {
-        setError(data.error || "Registration failed");
+        setError(data.error || data.message || "Registration failed");
         return;
       }
 
       navigate("/approve");
-    } catch {
-      setError("Server error");
+    } catch (err) {
+      console.error("Register request failed:", err);
+      setError("Cannot connect to backend. Make sure backend is running.");
     } finally {
       setLoading(false);
     }
@@ -105,6 +115,7 @@ export default function Register() {
             type="file"
             accept=".jpg,.jpeg,.png,.pdf"
             onChange={(e) => setIdFile(e.target.files?.[0] || null)}
+            required
             style={styles.fileInput}
           />
 
@@ -145,7 +156,8 @@ const styles = {
     justifyContent: "center",
     alignItems: "center",
     padding: "24px",
-    background: "linear-gradient(135deg, #dbeafe 0%, #c7d2fe 55%, #e9d5ff 100%)",
+    background:
+      "linear-gradient(135deg, #dbeafe 0%, #c7d2fe 55%, #e9d5ff 100%)",
     color: "#1e293b",
     fontFamily: "Inter, Arial, sans-serif",
     boxSizing: "border-box",

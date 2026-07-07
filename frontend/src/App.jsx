@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import Welcome from "./pages/Welcome";
+import Trips from "./pages/Trips";
 import About from "./pages/About";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
@@ -15,6 +16,7 @@ export default function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/login" element={<Login />} />
       <Route path="/approve" element={<Approve />} />
+      <Route path="/trips" element={<Trips />} />
 <Route path="/private-trip" element={<PrivateTrip />} />
 
 
