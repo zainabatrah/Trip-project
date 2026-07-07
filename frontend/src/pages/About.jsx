@@ -4,39 +4,43 @@ export default function About() {
   const features = [
     {
       title: "Trip Management",
-      desc: "Organizations create, update, and control trips from one dashboard.",
+      desc: "Organizations can create, update, and manage trips from one dashboard.",
     },
     {
       title: "Browsing & Planning",
-      desc: "Users explore trips, compare schedules, and plan privately before booking.",
+      desc: "Users can explore trips, compare routes, and plan their journey before booking.",
+    },
+    {
+      title: "Private Trips",
+      desc: "Users can request a private custom trip with their own destination, date, and details.",
     },
     {
       title: "Booking & Reviews",
-      desc: "Book trips securely and submit reviews after the trip ends.",
+      desc: "Users can book trips securely and submit reviews after the trip is completed.",
     },
   ];
 
   const highlights = [
-    "Clear schedules & stops",
-    "Private trip planning",
-    "Ratings & reviews",
-    "Organizers dashboard",
-    "Future: maps & weather",
+    "Clear schedules and trip details",
+    "Private trip requests",
+    "Trip browsing and filtering",
+    "User account system",
+    "Future: maps, payments, and weather",
   ];
 
   return (
     <div style={styles.page}>
       <div style={styles.header}>
         <div>
-          <h1 style={styles.title}>About Trip Management</h1>
+          <h1 style={styles.title}>About TripManager</h1>
           <p style={styles.subtitle}>
-            A platform that helps organizers manage trips and helps users
-            discover, plan, and book.
+            TripManager helps users discover trips, request private trips, and
+            manage their travel experience in a simple way.
           </p>
         </div>
 
-        <Link to="/" style={styles.backBtn}>
-          ← Back
+        <Link to="/trips" style={styles.backBtn}>
+          ← Back to Trips
         </Link>
       </div>
 
@@ -44,11 +48,11 @@ export default function About() {
         <h2 style={styles.sectionTitle}>What this platform does</h2>
 
         <div style={styles.grid}>
-          {features.map((f) => (
-            <div key={f.title} style={styles.featureCard}>
+          {features.map((feature) => (
+            <div key={feature.title} style={styles.featureCard}>
               <div style={styles.iconCircle}>✦</div>
-              <div style={styles.featureTitle}>{f.title}</div>
-              <div style={styles.featureDesc}>{f.desc}</div>
+              <div style={styles.featureTitle}>{feature.title}</div>
+              <div style={styles.featureDesc}>{feature.desc}</div>
             </div>
           ))}
         </div>
@@ -58,10 +62,11 @@ export default function About() {
         <div style={styles.twoCols}>
           <div style={styles.infoBox}>
             <h3 style={styles.smallTitle}>Key highlights</h3>
+
             <ul style={styles.list}>
-              {highlights.map((x) => (
-                <li key={x} style={styles.listItem}>
-                  {x}
+              {highlights.map((item) => (
+                <li key={item} style={styles.listItem}>
+                  {item}
                 </li>
               ))}
             </ul>
@@ -69,11 +74,12 @@ export default function About() {
 
           <div style={styles.infoBox}>
             <h3 style={styles.smallTitle}>How users use it</h3>
+
             <ol style={styles.list}>
-              <li style={styles.listItem}>Create an account and register.</li>
-              <li style={styles.listItem}>Wait for approval ID verification.</li>
-              <li style={styles.listItem}>Browse trips or plan a private trip.</li>
-              <li style={styles.listItem}>Book trips and review after completion.</li>
+              <li style={styles.listItem}>Create an account or login.</li>
+              <li style={styles.listItem}>Browse available trips.</li>
+              <li style={styles.listItem}>Request a private trip if needed.</li>
+              <li style={styles.listItem}>Book trips and manage bookings.</li>
             </ol>
           </div>
         </div>
@@ -81,9 +87,18 @@ export default function About() {
         <div style={styles.hr} />
 
         <div style={styles.actions}>
-          <Link to="/register" style={styles.btn}>
-            Create account
+          <Link to="/trips" style={styles.btn}>
+            Browse Trips
           </Link>
+
+          <Link to="/private-trip" style={styles.btn}>
+            Private Trip
+          </Link>
+
+          <Link to="/register" style={styles.btnOutline}>
+            Create Account
+          </Link>
+
           <Link to="/login" style={styles.btnOutline}>
             Login
           </Link>
@@ -92,9 +107,10 @@ export default function About() {
 
       <div style={styles.footerNote}>
         <div style={styles.footerTitle}>Next improvements</div>
+
         <div style={styles.footerText}>
-          Add real-time trip availability, payment integration, map view, and
-          weather widgets.
+          Add real-time trip availability, online payments, map view, weather
+          widgets, and organizer trip dashboards.
         </div>
       </div>
     </div>
@@ -169,11 +185,10 @@ const styles = {
   },
 
   sectionTitle: {
-    margin: 0,
+    margin: "0 0 16px",
     fontSize: 20,
     fontWeight: 900,
     color: "#1e3a8a",
-    marginBottom: 16,
   },
 
   grid: {
@@ -239,11 +254,10 @@ const styles = {
   },
 
   smallTitle: {
-    margin: 0,
+    margin: "0 0 12px",
     fontSize: 16,
     fontWeight: 900,
     color: "#1e3a8a",
-    marginBottom: 12,
   },
 
   list: {

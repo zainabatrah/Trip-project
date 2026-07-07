@@ -1,82 +1,122 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const trips = [
   {
     id: 1,
-    title: "Mountain Adventure",
+    title: "Beirut City Tour",
     vehicle: "BUS",
-    icon: "🚌",
-    from: "New York",
-    to: "Denver",
-    description: "Explore the breathtaking mountain trails with experienced guides",
+    image: "/images/beirut.jpg",
+    fallbackImage:
+      "https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=900&q=80",
+    from: "Hamra",
+    to: "Downtown Beirut",
+    description:
+      "Explore Beirut’s streets, waterfront, cafes, and cultural landmarks in one comfortable city trip.",
     date: "Sun, Mar 15",
-    price: 149.99,
-    seatsLeft: 39,
+    price: 25.0,
+    seatsLeft: 22,
   },
   {
     id: 2,
-    title: "Coastal Express",
-    vehicle: "TRAIN",
-    icon: "🚆",
-    from: "Los Angeles",
-    to: "San Francisco",
-    description: "A scenic journey along the beautiful coastline",
+    title: "Byblos Coastal Escape",
+    vehicle: "VAN",
+    image: "/images/byblos.jpg",
+    fallbackImage:
+      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80",
+    from: "Beirut",
+    to: "Byblos",
+    description:
+      "A coastal trip to Byblos with time to visit the old souk, harbor, castle area, and seaside restaurants.",
     date: "Fri, Mar 20",
-    price: 89.99,
-    seatsLeft: 50,
+    price: 35.0,
+    seatsLeft: 14,
   },
   {
     id: 3,
-    title: "Sky High Journey",
-    vehicle: "FLIGHT",
-    icon: "✈️",
-    from: "Chicago",
-    to: "Miami",
-    description: "Premium flight experience with complimentary meals",
+    title: "Cedars Mountain Trip",
+    vehicle: "BUS",
+    image: "/images/cedars.jpg",
+    fallbackImage:
+      "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=900&q=80",
+    from: "Beirut",
+    to: "Cedars of God",
+    description:
+      "A mountain journey to Bcharre and the Cedars area with fresh air, nature views, and photo stops.",
     date: "Wed, Apr 1",
-    price: 299.99,
-    seatsLeft: 180,
+    price: 45.0,
+    seatsLeft: 31,
   },
   {
     id: 4,
-    title: "Island Escape",
-    vehicle: "SHIP",
-    icon: "🚢",
-    from: "Athens",
-    to: "Santorini",
-    description: "Relaxing sea trip with beautiful island views",
+    title: "Jeita & Harissa Day Trip",
+    vehicle: "MINIBUS",
+    image: "/images/jeita-harissa.jpg",
+    fallbackImage:
+      "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=900&q=80",
+    from: "Beirut",
+    to: "Jeita & Harissa",
+    description:
+      "Visit Jeita Grotto and Harissa in one day with a calm route, scenic stops, and flexible timing.",
     date: "Mon, Apr 7",
-    price: 199.99,
-    seatsLeft: 62,
+    price: 30.0,
+    seatsLeft: 18,
   },
   {
     id: 5,
-    title: "City Explorer",
-    vehicle: "BUS",
-    icon: "🚌",
-    from: "Boston",
-    to: "Washington",
-    description: "Comfortable bus trip through historic city routes",
+    title: "Tyre Beach & Heritage",
+    vehicle: "VAN",
+    image: "/images/tyre.jpg",
+    fallbackImage:
+      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
+    from: "Beirut",
+    to: "Tyre",
+    description:
+      "A south Lebanon trip to Tyre with beach views, heritage areas, and time for walking near the coast.",
     date: "Thu, Apr 10",
-    price: 79.99,
-    seatsLeft: 44,
+    price: 40.0,
+    seatsLeft: 16,
   },
   {
     id: 6,
-    title: "Railway Discovery",
-    vehicle: "TRAIN",
-    icon: "🚆",
-    from: "Paris",
-    to: "Berlin",
-    description: "Fast train ride with calm views and comfortable seats",
+    title: "Baalbek Heritage Journey",
+    vehicle: "PRIVATE CAR",
+    image: "/images/baalbek.jpg",
+    fallbackImage:
+      "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&w=900&q=80",
+    from: "Beirut",
+    to: "Baalbek",
+    description:
+      "A private route to Baalbek for travelers who want a more flexible heritage and sightseeing experience.",
     date: "Sat, Apr 12",
-    price: 129.99,
-    seatsLeft: 88,
+    price: 70.0,
+    seatsLeft: 4,
   },
+  
 ];
 
+const badgeStyles = {
+  BUS: {
+    background: "rgba(129, 140, 248, 0.25)",
+    color: "#4f46e5",
+  },
+  VAN: {
+    background: "rgba(45, 212, 191, 0.25)",
+    color: "#0f766e",
+  },
+  MINIBUS: {
+    background: "rgba(96, 165, 250, 0.25)",
+    color: "#2563eb",
+  },
+  "PRIVATE CAR": {
+    background: "rgba(250, 204, 21, 0.28)",
+    color: "#a16207",
+  },
+};
+
 export default function Trips() {
+  const navigate = useNavigate();
+
   const [search, setSearch] = useState("");
   const [vehicle, setVehicle] = useState("All Vehicles");
   const [sort, setSort] = useState("Latest");
@@ -84,12 +124,20 @@ export default function Trips() {
   const userName = localStorage.getItem("tripUserName") || "Guest User";
   const userEmail = localStorage.getItem("tripUserEmail") || "No email";
 
+  const handleLogout = () => {
+    localStorage.removeItem("tripUserName");
+    localStorage.removeItem("tripUserEmail");
+    navigate("/login");
+  };
+
   const filteredTrips = useMemo(() => {
     let list = trips.filter((trip) => {
+      const searchValue = search.toLowerCase();
+
       const matchesSearch =
-        trip.title.toLowerCase().includes(search.toLowerCase()) ||
-        trip.from.toLowerCase().includes(search.toLowerCase()) ||
-        trip.to.toLowerCase().includes(search.toLowerCase());
+        trip.title.toLowerCase().includes(searchValue) ||
+        trip.from.toLowerCase().includes(searchValue) ||
+        trip.to.toLowerCase().includes(searchValue);
 
       const matchesVehicle =
         vehicle === "All Vehicles" || trip.vehicle === vehicle;
@@ -129,6 +177,11 @@ export default function Trips() {
             Browse Trips
           </Link>
 
+          <Link to="/private-trip" style={styles.navItem}>
+            <span style={styles.navIcon}>🔒</span>
+            Private Trip
+          </Link>
+
           <Link to="/bookings" style={styles.navItem}>
             <span style={styles.navIcon}>▱</span>
             My Bookings
@@ -137,6 +190,11 @@ export default function Trips() {
           <Link to="/profile" style={styles.navItem}>
             <span style={styles.navIcon}>♙</span>
             Profile
+          </Link>
+
+          <Link to="/about" style={styles.navItem}>
+            <span style={styles.navIcon}>ⓘ</span>
+            About Us
           </Link>
         </nav>
 
@@ -150,15 +208,19 @@ export default function Trips() {
             <div style={styles.userRole}>{userEmail}</div>
           </div>
 
-          <button style={styles.logoutBtn}>↪</button>
+          <button type="button" style={styles.logoutBtn} onClick={handleLogout}>
+            ↪
+          </button>
         </div>
       </aside>
 
       <main style={styles.main}>
         <div style={styles.header}>
           <div>
-            <h1 style={styles.title}>Browse Trips</h1>
-            <p style={styles.subtitle}>Find your perfect journey</p>
+            <h1 style={styles.title}>Trips Inside Lebanon</h1>
+            <p style={styles.subtitle}>
+              Browse local trips across Lebanon and choose your preferred route.
+            </p>
           </div>
         </div>
 
@@ -167,7 +229,7 @@ export default function Trips() {
             <span style={styles.searchIcon}>⌕</span>
             <input
               style={styles.searchInput}
-              placeholder="Search trips..."
+              placeholder="Search Lebanon trips..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -181,9 +243,9 @@ export default function Trips() {
             >
               <option>All Vehicles</option>
               <option>BUS</option>
-              <option>TRAIN</option>
-              <option>FLIGHT</option>
-              <option>SHIP</option>
+              <option>VAN</option>
+              <option>MINIBUS</option>
+              <option>PRIVATE CAR</option>
             </select>
 
             <select
@@ -202,16 +264,17 @@ export default function Trips() {
           {filteredTrips.map((trip) => (
             <div key={trip.id} style={styles.card}>
               <div style={styles.imageArea}>
-                <span style={styles.tripIcon}>{trip.icon}</span>
-                <span
-                  style={{
-                    ...styles.badge,
-                    ...(trip.vehicle === "BUS" ? styles.badgeBus : {}),
-                    ...(trip.vehicle === "TRAIN" ? styles.badgeTrain : {}),
-                    ...(trip.vehicle === "FLIGHT" ? styles.badgeFlight : {}),
-                    ...(trip.vehicle === "SHIP" ? styles.badgeShip : {}),
+                <img
+                  src={trip.image}
+                  alt={trip.title}
+                  style={styles.tripImage}
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = trip.fallbackImage;
                   }}
-                >
+                />
+
+                <span style={{ ...styles.badge, ...badgeStyles[trip.vehicle] }}>
                   {trip.vehicle}
                 </span>
               </div>
@@ -233,7 +296,7 @@ export default function Trips() {
 
                 <div style={styles.bottomRow}>
                   <div>
-                    <span style={styles.price}>${trip.price}</span>
+                    <span style={styles.price}>${trip.price.toFixed(2)}</span>
                     <span style={styles.perSeat}>/seat</span>
                   </div>
 
@@ -479,18 +542,17 @@ const styles = {
   },
 
   imageArea: {
-    height: 172,
-    background:
-      "linear-gradient(135deg, rgba(191, 219, 254, 0.75), rgba(196, 181, 253, 0.75))",
+    height: 190,
     position: "relative",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
+    overflow: "hidden",
+    background: "#dbeafe",
   },
 
-  tripIcon: {
-    fontSize: 42,
-    opacity: 0.75,
+  tripImage: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    display: "block",
   },
 
   badge: {
@@ -501,26 +563,8 @@ const styles = {
     borderRadius: 999,
     fontSize: 12,
     fontWeight: 900,
-  },
-
-  badgeBus: {
-    background: "rgba(129, 140, 248, 0.25)",
-    color: "#4f46e5",
-  },
-
-  badgeTrain: {
-    background: "rgba(45, 212, 191, 0.25)",
-    color: "#0f766e",
-  },
-
-  badgeFlight: {
-    background: "rgba(96, 165, 250, 0.25)",
-    color: "#2563eb",
-  },
-
-  badgeShip: {
-    background: "rgba(250, 204, 21, 0.28)",
-    color: "#a16207",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
   },
 
   cardBody: {

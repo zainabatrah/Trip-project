@@ -47,8 +47,7 @@ export default function Register() {
       try {
         data = text ? JSON.parse(text) : {};
       } catch {
-        console.error("Backend returned non-JSON response:", text);
-        setError("Backend is not responding correctly. Check backend terminal.");
+        setError("Backend returned invalid response.");
         return;
       }
 
@@ -57,7 +56,17 @@ export default function Register() {
         return;
       }
 
-      navigate("/approve");
+      localStorage.setItem(
+        "tripUserName",
+        data.user?.fullName || form.fullName.trim()
+      );
+
+      localStorage.setItem(
+        "tripUserEmail",
+        data.user?.email || form.email.trim()
+      );
+
+      navigate("/trips");
     } catch (err) {
       console.error("Register request failed:", err);
       setError("Cannot connect to backend. Make sure backend is running.");

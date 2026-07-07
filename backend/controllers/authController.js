@@ -33,14 +33,14 @@ async function register(req, res) {
     });
 
     return res.status(201).json({
-      message: "Registered successfully. Waiting for admin approval.",
-      user: {
-        id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        approvalStatus: user.approvalStatus,
-      },
-    });
+  message: "Registered successfully. Waiting for admin approval.",
+  user: {
+    id: user._id,
+    fullName: user.fullName,
+    email: user.email,
+    approvalStatus: user.approvalStatus,
+  },
+});
   } catch (error) {
     console.error("Register error:", error.message);
     return res.status(500).json({ error: "Registration failed" });
