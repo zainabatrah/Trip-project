@@ -15,12 +15,23 @@ export default function Register() {
   const [error, setError] = useState("");
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    const fullName = form.fullName.trim();
+    const email = form.email.trim();
+
+    if (!fullName || !email || !form.password) {
+      setError("Please fill all fields.");
+      return;
+    }
 
     if (!idFile) {
       setError("Please upload your ID document.");
@@ -31,8 +42,8 @@ export default function Register() {
       setLoading(true);
 
       const formData = new FormData();
-      formData.append("fullName", form.fullName.trim());
-      formData.append("email", form.email.trim());
+      formData.append("fullName", fullName);
+      formData.append("email", email);
       formData.append("password", form.password);
       formData.append("idFile", idFile);
 
@@ -52,21 +63,31 @@ export default function Register() {
       }
 
       if (!res.ok) {
-        setError(data.error || data.message || "Registration failed");
+        setError(data.error || data.message || "Registration failed.");
         return;
       }
 
-      localStorage.setItem(
-        "tripUserName",
-        data.user?.fullName || form.fullName.trim()
-      );
+      const registeredUser = {
+        id: data.user?.id || data.user?._id || null,
+        fullName: data.user?.fullName || fullName,
+        email: data.user?.email || email,
+      };
 
-      localStorage.setItem(
-        "tripUserEmail",
-        data.user?.email || form.email.trim()
-      );
+      localStorage.setItem("isRegistered", "true");
+      localStorage.setItem("user", JSON.stringify(registeredUser));
+      localStorage.setItem("tripUser", JSON.stringify(registeredUser));
+      localStorage.setItem("tripUserName", registeredUser.fullName);
+      localStorage.setItem("tripUserEmail", registeredUser.email);
 
-      navigate("/trips");
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+      }
+
+      if (data.accessToken) {
+        localStorage.setItem("accessToken", data.accessToken);
+      }
+
+      navigate("/trips", { replace: true });
     } catch (err) {
       console.error("Register request failed:", err);
       setError("Cannot connect to backend. Make sure backend is running.");
@@ -81,6 +102,7 @@ export default function Register() {
         <div style={styles.logoBox}>T</div>
 
         <h2 style={styles.title}>Create Account</h2>
+
         <p style={styles.subtitle}>
           Register your account to browse, plan, and book trips.
         </p>
@@ -137,7 +159,15 @@ export default function Register() {
 
           {error && <p style={styles.error}>{error}</p>}
 
-          <button type="submit" style={styles.button} disabled={loading}>
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              ...styles.button,
+              opacity: loading ? 0.65 : 1,
+              cursor: loading ? "not-allowed" : "pointer",
+            }}
+          >
             {loading ? "Registering..." : "Register"}
           </button>
         </form>
@@ -159,7 +189,7 @@ export default function Register() {
 
 const styles = {
   page: {
-    width: "100vw",
+    width: "100%",
     minHeight: "100vh",
     display: "flex",
     justifyContent: "center",
@@ -251,7 +281,6 @@ const styles = {
     background: "rgba(255,255,255,0.82)",
     color: "#475569",
     fontSize: "13px",
-    cursor: "pointer",
   },
 
   fileName: {
@@ -275,7 +304,6 @@ const styles = {
     color: "#0f172a",
     fontSize: "15px",
     fontWeight: 900,
-    cursor: "pointer",
     boxShadow: "0 12px 28px rgba(96, 165, 250, 0.35)",
   },
 

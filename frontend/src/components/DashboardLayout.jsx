@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
@@ -27,6 +28,8 @@ useEffect(() => {
   };
 
 }, []);
+
+
   const location = useLocation();
   const navigate = useNavigate();
   const user = getStoredUser();
@@ -55,10 +58,12 @@ useEffect(() => {
   };
 
 
+
   return (
     <div style={styles.layout}>
       <button
         type="button"
+
   onClick={() => setSidebarOpen((prev) => !prev)}
   style={{
     ...styles.menuButton,
@@ -76,6 +81,8 @@ useEffect(() => {
     transform: sidebarOpen ? "translateX(0)" : "translateX(-100%)",
   }}
 >
+
+    
         <div>
           <div style={styles.logoBox}>
             <div style={styles.logoIcon}>T</div>
@@ -124,7 +131,10 @@ useEffect(() => {
       <main
         style={{
           ...styles.main,
+
        marginLeft: isMobile ? 0 : sidebarOpen ? 300 : 0,
+
+
         }}
       >
         {children}
@@ -169,7 +179,9 @@ const styles = {
   layout: {
     width: "100%",
     minHeight: "100vh",
+
     background: "#a8c0ff9e",
+
     fontFamily: "Inter, Arial, sans-serif",
     overflowX: "hidden",
   },
@@ -208,7 +220,7 @@ const styles = {
     justifyContent: "space-between",
     overflow: "hidden",
     transition: "transform 0.25s ease",
-   
+
   },
 
   logoBox: {
