@@ -7,7 +7,7 @@ import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Approve from "./pages/Approve";
 import PrivateTrip from "./pages/PrivateTrip";
-
+import TripDetails from "./pages/TripDetails";
 export default function App() {
   return (
     <Routes>
@@ -19,7 +19,10 @@ export default function App() {
       <Route path="/trips" element={<Trips />} />
       <Route path="/private-trip" element={<PrivateTrip />} />
       <Route path="/about" element={<About />} />
-
+ <Route
+          path="/trips/:id"
+          element={<TripDetails />}
+        />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

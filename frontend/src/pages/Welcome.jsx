@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
+import { useState } from "react";
 import styles from '../Styles/welcome.module.css';
 import { FaSearch, FaInfoCircle, FaCreditCard,FaShieldAlt, FaUserLock, FaHeadset, FaUndo} from "react-icons/fa";
 import Carousel from "react-bootstrap/Carousel";
 export default function Welcome() {
+  const [open, setOpen] = useState(false);
   return (
 <>
  
@@ -11,24 +13,43 @@ export default function Welcome() {
   <div className={styles.body}>
      
 
-<nav className={styles.navbar}>
-  <div className={styles.leftLinks}>
-    <Link to="/" className={styles.link}>Home</Link>
-    <Link to="/about" className={styles.link}>About Us</Link>
-    <Link to="/private-trip" className={styles.link}>Private Trip</Link>
-  </div>
+   <nav className={styles.navbar}>
+
+      <div 
+        className={`${styles.menu} ${open ? styles.open : ""}`}
+      >
+
+        <div className={styles.leftLinks}>
+          <Link to="/" className={styles.link}>Home</Link>
+          <Link to="/about" className={styles.link}>About Us</Link>
+          <Link to="/private-trip" className={styles.link}>Private Trip</Link>
+        </div>
+
+        <div className={styles.rightButtons}>
+          <Link to="/login" className={styles.primaryBtn}>
+            Login
+          </Link>
+
+          <Link to="/register" className={styles.secondaryBtn}>
+            Register
+          </Link>
+        </div>
+
+      </div>
 
 
-  <div className={styles.rightButtons}>
-    <Link to="/login" className={styles.primaryBtn}>Login</Link>
-    <Link to="/register" className={styles.secondaryBtn}>Register</Link>
-  </div>
+      <div 
+        className={styles.hamburger}
+        onClick={() => setOpen(!open)}
+      >
+          {open ? "✕" : "☰"}
+      </div>
 
-</nav>
+    </nav>
       
 
       
- <Carousel>
+ <Carousel   className={styles.carousel}>
       <Carousel.Item>
         <img
           className={styles.carouselimage}

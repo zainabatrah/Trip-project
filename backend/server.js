@@ -8,6 +8,7 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const tripRoutes = require("./routes/tripRoutes");
 const privateTripRoutes = require("./routes/privateTripRoutes");
+const tripRoute = require("./routes/tripsRoute");
 
 dotenv.config();
 
@@ -17,7 +18,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: "http://localhost:5173",
     credentials: true,
   })
 );
@@ -33,6 +34,7 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/trips", tripRoutes);
 app.use("/api/private-trips", privateTripRoutes);
+app.use("/trips", tripRoute);
 
 const PORT = process.env.PORT || 5000;
 
