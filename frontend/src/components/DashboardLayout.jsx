@@ -1,8 +1,35 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 export default function DashboardLayout({ children }) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+useEffect(() => {
+
+  const handleResize = () => {
+    const mobile = window.innerWidth <= 768;
+
+    setIsMobile(mobile);
+
+    if (mobile) {
+      setSidebarOpen(false);
+    } else {
+      setSidebarOpen(true);
+    }
+  };
+
+
+  window.addEventListener("resize", handleResize);
+
+  return () => {
+    window.removeEventListener("resize", handleResize);
+  };
+
+}, []);
+
+
   const location = useLocation();
   const navigate = useNavigate();
   const user = getStoredUser();
@@ -30,25 +57,32 @@ export default function DashboardLayout({ children }) {
     navigate("/login", { replace: true });
   };
 
+
+
   return (
     <div style={styles.layout}>
       <button
         type="button"
-        onClick={() => setSidebarOpen((prev) => !prev)}
-        style={{
-          ...styles.menuButton,
-          left: sidebarOpen ? 318 : 18,
-        }}
+
+  onClick={() => setSidebarOpen((prev) => !prev)}
+  style={{
+    ...styles.menuButton,
+    left: isMobile
+      ? (sidebarOpen ? 260 : 18)
+      : (sidebarOpen ? 318 : 18),
+  }}
       >
         ☰
       </button>
+<aside
+  style={{
+    ...styles.sidebar,
+             display: "flex",
+    transform: sidebarOpen ? "translateX(0)" : "translateX(-100%)",
+  }}
+>
 
-      <aside
-        style={{
-          ...styles.sidebar,
-          transform: sidebarOpen ? "translateX(0)" : "translateX(-100%)",
-        }}
-      >
+    
         <div>
           <div style={styles.logoBox}>
             <div style={styles.logoIcon}>T</div>
@@ -97,7 +131,10 @@ export default function DashboardLayout({ children }) {
       <main
         style={{
           ...styles.main,
-          marginLeft: sidebarOpen ? 300 : 0,
+
+       marginLeft: isMobile ? 0 : sidebarOpen ? 300 : 0,
+
+
         }}
       >
         {children}
@@ -142,8 +179,9 @@ const styles = {
   layout: {
     width: "100%",
     minHeight: "100vh",
-    background:
-      "linear-gradient(135deg, #dbeafe 0%, #c7d2fe 55%, #e9d5ff 100%)",
+
+    background: "#a8c0ff9e",
+
     fontFamily: "Inter, Arial, sans-serif",
     overflowX: "hidden",
   },
@@ -182,6 +220,7 @@ const styles = {
     justifyContent: "space-between",
     overflow: "hidden",
     transition: "transform 0.25s ease",
+
   },
 
   logoBox: {
@@ -309,4 +348,5 @@ const styles = {
     transition: "margin-left 0.25s ease",
     overflowX: "hidden",
   },
+
 };
