@@ -1,6 +1,9 @@
 import { Link } from "react-router-dom";
+import DashboardLayout from "../components/DashboardLayout";
 
 export default function About() {
+  const isLoggedIn = checkUserLoggedIn();
+
   const features = [
     {
       title: "Trip Management",
@@ -28,8 +31,8 @@ export default function About() {
     "Future: maps, payments, and weather",
   ];
 
-  return (
-    <div style={styles.page}>
+  const aboutContent = (
+    <div style={styles.contentWrapper}>
       <div style={styles.header}>
         <div>
           <h1 style={styles.title}>About TripManager</h1>
@@ -39,9 +42,11 @@ export default function About() {
           </p>
         </div>
 
-        <Link to="/trips" style={styles.backBtn}>
-          ← Back to Trips
-        </Link>
+        {!isLoggedIn && (
+          <Link to="/trips" style={styles.backBtn}>
+            ← Back to Trips
+          </Link>
+        )}
       </div>
 
       <div style={styles.card}>
@@ -95,13 +100,17 @@ export default function About() {
             Private Trip
           </Link>
 
-          <Link to="/register" style={styles.btnOutline}>
-            Create Account
-          </Link>
+          {!isLoggedIn && (
+            <>
+              <Link to="/register" style={styles.btnOutline}>
+                Create Account
+              </Link>
 
-          <Link to="/login" style={styles.btnOutline}>
-            Login
-          </Link>
+              <Link to="/login" style={styles.btnOutline}>
+                Login
+              </Link>
+            </>
+          )}
         </div>
       </div>
 
@@ -115,26 +124,58 @@ export default function About() {
       </div>
     </div>
   );
+
+  if (isLoggedIn) {
+    return <DashboardLayout>{aboutContent}</DashboardLayout>;
+  }
+
+  return <div style={styles.publicPage}>{aboutContent}</div>;
+}
+
+function checkUserLoggedIn() {
+  const authKeys = [
+    "isRegistered",
+    "token",
+    "authToken",
+    "accessToken",
+    "user",
+    "tripUser",
+    "currentUser",
+    "tripUserName",
+    "tripUserEmail",
+  ];
+
+  return authKeys.some((key) => {
+    const value = localStorage.getItem(key);
+    return value !== null && value !== "" && value !== "null";
+  });
 }
 
 const styles = {
-  page: {
-    width: "100vw",
+  publicPage: {
+    width: "100%",
     minHeight: "100vh",
     padding: "34px 26px",
     background:
       "linear-gradient(135deg, #dbeafe 0%, #c7d2fe 55%, #e9d5ff 100%)",
     color: "#1e293b",
     display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
+    justifyContent: "center",
+    boxSizing: "border-box",
     fontFamily: "Inter, Arial, sans-serif",
+    overflowX: "hidden",
+  },
+
+  contentWrapper: {
+    width: "100%",
+    maxWidth: 1180,
+    margin: "0 auto",
+    color: "#1e293b",
     boxSizing: "border-box",
   },
 
   header: {
     width: "100%",
-    maxWidth: 1100,
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
@@ -173,7 +214,6 @@ const styles = {
 
   card: {
     width: "100%",
-    maxWidth: 1100,
     padding: 24,
     borderRadius: 22,
     background: "rgba(255, 255, 255, 0.72)",
@@ -302,7 +342,6 @@ const styles = {
 
   footerNote: {
     width: "100%",
-    maxWidth: 1100,
     marginTop: 16,
     padding: 18,
     borderRadius: 18,

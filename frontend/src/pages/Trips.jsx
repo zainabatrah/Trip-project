@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import DashboardLayout from "../components/DashboardLayout";
 
 const trips = [
   {
@@ -92,7 +92,6 @@ const trips = [
     price: 70.0,
     seatsLeft: 4,
   },
-  
 ];
 
 const badgeStyles = {
@@ -115,20 +114,9 @@ const badgeStyles = {
 };
 
 export default function Trips() {
-  const navigate = useNavigate();
-
   const [search, setSearch] = useState("");
   const [vehicle, setVehicle] = useState("All Vehicles");
   const [sort, setSort] = useState("Latest");
-
-  const userName = localStorage.getItem("tripUserName") || "Guest User";
-  const userEmail = localStorage.getItem("tripUserEmail") || "No email";
-
-  const handleLogout = () => {
-    localStorage.removeItem("tripUserName");
-    localStorage.removeItem("tripUserEmail");
-    navigate("/login");
-  };
 
   const filteredTrips = useMemo(() => {
     let list = trips.filter((trip) => {
@@ -157,64 +145,8 @@ export default function Trips() {
   }, [search, vehicle, sort]);
 
   return (
-    <div style={styles.page}>
-      <aside style={styles.sidebar}>
-        <div style={styles.logoRow}>
-          <div style={styles.logoBox}>T</div>
-          <span style={styles.logoText}>TripManager</span>
-        </div>
-
-        <div style={styles.divider} />
-
-        <nav style={styles.nav}>
-          <Link to="/dashboard" style={styles.navItem}>
-            <span style={styles.navIcon}>⌂</span>
-            Dashboard
-          </Link>
-
-          <Link to="/trips" style={{ ...styles.navItem, ...styles.navActive }}>
-            <span style={styles.navIcon}>🗺</span>
-            Browse Trips
-          </Link>
-
-          <Link to="/private-trip" style={styles.navItem}>
-            <span style={styles.navIcon}>🔒</span>
-            Private Trip
-          </Link>
-
-          <Link to="/bookings" style={styles.navItem}>
-            <span style={styles.navIcon}>▱</span>
-            My Bookings
-          </Link>
-
-          <Link to="/profile" style={styles.navItem}>
-            <span style={styles.navIcon}>♙</span>
-            Profile
-          </Link>
-
-          <Link to="/about" style={styles.navItem}>
-            <span style={styles.navIcon}>ⓘ</span>
-            About Us
-          </Link>
-        </nav>
-
-        <div style={styles.userBox}>
-          <div style={styles.userAvatar}>
-            {userName.charAt(0).toUpperCase()}
-          </div>
-
-          <div>
-            <div style={styles.userName}>{userName}</div>
-            <div style={styles.userRole}>{userEmail}</div>
-          </div>
-
-          <button type="button" style={styles.logoutBtn} onClick={handleLogout}>
-            ↪
-          </button>
-        </div>
-      </aside>
-
-      <main style={styles.main}>
+    <DashboardLayout>
+      <div style={styles.page}>
         <div style={styles.header}>
           <div>
             <h1 style={styles.title}>Trips Inside Lebanon</h1>
@@ -260,194 +192,74 @@ export default function Trips() {
           </div>
         </div>
 
-        <div style={styles.grid}>
-          {filteredTrips.map((trip) => (
-            <div key={trip.id} style={styles.card}>
-              <div style={styles.imageArea}>
-                <img
-                  src={trip.image}
-                  alt={trip.title}
-                  style={styles.tripImage}
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = trip.fallbackImage;
-                  }}
-                />
+        {filteredTrips.length === 0 ? (
+          <div style={styles.emptyBox}>No trips found.</div>
+        ) : (
+          <div style={styles.grid}>
+            {filteredTrips.map((trip) => (
+              <div key={trip.id} style={styles.card}>
+                <div style={styles.imageArea}>
+                  <img
+                    src={trip.image}
+                    alt={trip.title}
+                    style={styles.tripImage}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = trip.fallbackImage;
+                    }}
+                  />
 
-                <span style={{ ...styles.badge, ...badgeStyles[trip.vehicle] }}>
-                  {trip.vehicle}
-                </span>
-              </div>
-
-              <div style={styles.cardBody}>
-                <h2 style={styles.cardTitle}>{trip.title}</h2>
-
-                <div style={styles.route}>
-                  <span style={styles.dot}></span>
-                  <span>{trip.from}</span>
-                  <span style={styles.line}></span>
-                  <span>{trip.to}</span>
+                  <span
+                    style={{
+                      ...styles.badge,
+                      ...badgeStyles[trip.vehicle],
+                    }}
+                  >
+                    {trip.vehicle}
+                  </span>
                 </div>
 
-                <p style={styles.description}>{trip.description}</p>
-                <p style={styles.date}>{trip.date}</p>
+                <div style={styles.cardBody}>
+                  <h2 style={styles.cardTitle}>{trip.title}</h2>
 
-                <div style={styles.cardDivider} />
-
-                <div style={styles.bottomRow}>
-                  <div>
-                    <span style={styles.price}>${trip.price.toFixed(2)}</span>
-                    <span style={styles.perSeat}>/seat</span>
+                  <div style={styles.route}>
+                    <span style={styles.dot}></span>
+                    <span>{trip.from}</span>
+                    <span style={styles.line}></span>
+                    <span>{trip.to}</span>
                   </div>
 
-                  <span style={styles.seats}>{trip.seatsLeft} seats left</span>
+                  <p style={styles.description}>{trip.description}</p>
+                  <p style={styles.date}>{trip.date}</p>
+
+                  <div style={styles.cardDivider} />
+
+                  <div style={styles.bottomRow}>
+                    <div>
+                      <span style={styles.price}>
+                        ${trip.price.toFixed(2)}
+                      </span>
+                      <span style={styles.perSeat}>/seat</span>
+                    </div>
+
+                    <span style={styles.seats}>
+                      {trip.seatsLeft} seats left
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </main>
-    </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </DashboardLayout>
   );
 }
 
 const styles = {
   page: {
-    width: "100vw",
-    minHeight: "100vh",
-    display: "flex",
-    background:
-      "linear-gradient(135deg, #dbeafe 0%, #c7d2fe 55%, #e9d5ff 100%)",
+    width: "100%",
     color: "#1e293b",
-    fontFamily: "Inter, Arial, sans-serif",
-    boxSizing: "border-box",
-  },
-
-  sidebar: {
-    width: 280,
-    minHeight: "100vh",
-    padding: "26px 18px",
-    background: "rgba(255, 255, 255, 0.58)",
-    borderRight: "1px solid rgba(147, 197, 253, 0.45)",
-    backdropFilter: "blur(18px)",
-    WebkitBackdropFilter: "blur(18px)",
-    boxSizing: "border-box",
-    display: "flex",
-    flexDirection: "column",
-  },
-
-  logoRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: 12,
-  },
-
-  logoBox: {
-    width: 42,
-    height: 42,
-    borderRadius: 13,
-    background: "linear-gradient(135deg, #60a5fa, #a78bfa)",
-    color: "#ffffff",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: 20,
-    fontWeight: 900,
-    boxShadow: "0 12px 28px rgba(96, 165, 250, 0.3)",
-  },
-
-  logoText: {
-    color: "#2563eb",
-    fontSize: 21,
-    fontWeight: 900,
-  },
-
-  divider: {
-    height: 1,
-    background: "rgba(147, 197, 253, 0.5)",
-    margin: "28px 0",
-  },
-
-  nav: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 10,
-  },
-
-  navItem: {
-    display: "flex",
-    alignItems: "center",
-    gap: 12,
-    padding: "13px 14px",
-    borderRadius: 12,
-    color: "#475569",
-    textDecoration: "none",
-    fontSize: 15,
-    fontWeight: 800,
-  },
-
-  navActive: {
-    background:
-      "linear-gradient(135deg, rgba(147, 197, 253, 0.65), rgba(196, 181, 253, 0.65))",
-    color: "#1d4ed8",
-    boxShadow: "0 10px 24px rgba(96, 165, 250, 0.2)",
-  },
-
-  navIcon: {
-    width: 22,
-    display: "inline-flex",
-    justifyContent: "center",
-  },
-
-  userBox: {
-    marginTop: "auto",
-    paddingTop: 22,
-    borderTop: "1px solid rgba(147, 197, 253, 0.5)",
-    display: "flex",
-    alignItems: "center",
-    gap: 12,
-  },
-
-  userAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: "50%",
-    background: "linear-gradient(135deg, #60a5fa, #a78bfa)",
-    color: "#ffffff",
-    fontWeight: 900,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  userName: {
-    fontSize: 14,
-    color: "#0f172a",
-    fontWeight: 900,
-  },
-
-  userRole: {
-    maxWidth: 145,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-    fontSize: 12,
-    color: "#64748b",
-    fontWeight: 700,
-  },
-
-  logoutBtn: {
-    marginLeft: "auto",
-    background: "transparent",
-    border: "none",
-    color: "#64748b",
-    fontSize: 18,
-    cursor: "pointer",
-  },
-
-  main: {
-    flex: 1,
-    padding: "38px 34px",
     boxSizing: "border-box",
   },
 
@@ -476,6 +288,7 @@ const styles = {
     gap: 16,
     alignItems: "center",
     marginBottom: 26,
+    flexWrap: "wrap",
   },
 
   searchBox: {
@@ -489,6 +302,7 @@ const styles = {
     background: "rgba(255, 255, 255, 0.72)",
     border: "1px solid #bfdbfe",
     boxShadow: "0 10px 24px rgba(96, 165, 250, 0.14)",
+    boxSizing: "border-box",
   },
 
   searchIcon: {
@@ -509,6 +323,7 @@ const styles = {
   selectGroup: {
     display: "flex",
     gap: 12,
+    flexWrap: "wrap",
   },
 
   select: {
@@ -644,5 +459,15 @@ const styles = {
     fontSize: 13,
     color: "#1e3a8a",
     fontWeight: 900,
+  },
+
+  emptyBox: {
+    padding: 22,
+    borderRadius: 18,
+    background: "rgba(255, 255, 255, 0.72)",
+    border: "1px solid rgba(147, 197, 253, 0.45)",
+    color: "#475569",
+    fontWeight: 800,
+    textAlign: "center",
   },
 };

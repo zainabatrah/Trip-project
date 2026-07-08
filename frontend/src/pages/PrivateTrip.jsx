@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
 import { useMemo, useState } from "react";
+import DashboardLayout from "../components/DashboardLayout";
 
 export default function PrivateTrip() {
+  const isLoggedIn = checkUserLoggedIn();
+
   const [trip, setTrip] = useState({
     title: "",
     destination: "",
@@ -61,6 +64,7 @@ export default function PrivateTrip() {
   }, [trip]);
 
   const isValid = Object.keys(errors).length === 0;
+  const show = (field) => touched[field] && errors[field];
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -92,6 +96,7 @@ export default function PrivateTrip() {
       localStorage.setItem(key, JSON.stringify([payload, ...existing]));
 
       setServerMsg("Saved successfully.");
+
       setTrip({
         title: "",
         destination: "",
@@ -100,6 +105,7 @@ export default function PrivateTrip() {
         transportation: "Car",
         notes: "",
       });
+
       setTouched({});
     } catch {
       setServerMsg("Could not save. Try again.");
@@ -108,193 +114,220 @@ export default function PrivateTrip() {
     }
   }
 
-  const show = (field) => touched[field] && errors[field];
+  const pageContent = (
+    <div style={styles.container}>
+      <div style={styles.header}>
+        <div>
+          <h1 style={styles.title}>Create Private Trip</h1>
+          <p style={styles.subtitle}>
+            Plan trips privately, compare options, and save your travel ideas.
+          </p>
+        </div>
 
-  return (
-    <div style={styles.page}>
-      <div style={styles.container}>
-        <div style={styles.header}>
-          <div>
-            <h1 style={styles.title}>Create Private Trip</h1>
-            <p style={styles.subtitle}>
-              Plan trips privately, compare options, and save your travel ideas.
-            </p>
-          </div>
-
+        {!isLoggedIn && (
           <Link to="/" style={styles.backBtn}>
             ← Back
           </Link>
-        </div>
+        )}
+      </div>
 
-        <form onSubmit={onSubmit} style={styles.card}>
-          <div style={styles.iconBox}>✈</div>
+      <form onSubmit={onSubmit} style={styles.card}>
+        <div style={styles.iconBox}>✈</div>
 
-          <h2 style={styles.cardTitle}>Trip Details</h2>
-          <p style={styles.cardSubtitle}>
-            This trip is saved privately and is not visible to other users.
-          </p>
+        <h2 style={styles.cardTitle}>Trip Details</h2>
+        <p style={styles.cardSubtitle}>
+          This trip is saved privately and is not visible to other users.
+        </p>
 
-          <div style={styles.grid}>
-            <div>
-              <label style={styles.label}>Trip title</label>
-              <input
-                style={{
-                  ...styles.input,
-                  ...(show("title") ? styles.inputErr : {}),
-                }}
-                name="title"
-                value={trip.title}
-                onChange={onChange}
-                onBlur={onBlur}
-                placeholder="My Summer Trip"
-                required
-              />
-              {show("title") && <div style={styles.errText}>{errors.title}</div>}
-            </div>
-
-            <div>
-              <label style={styles.label}>Destination</label>
-              <input
-                style={{
-                  ...styles.input,
-                  ...(show("destination") ? styles.inputErr : {}),
-                }}
-                name="destination"
-                value={trip.destination}
-                onChange={onChange}
-                onBlur={onBlur}
-                placeholder="Beirut, Istanbul, Paris..."
-                required
-              />
-              {show("destination") && (
-                <div style={styles.errText}>{errors.destination}</div>
-              )}
-            </div>
-
-            <div>
-              <label style={styles.label}>Start date</label>
-              <input
-                style={{
-                  ...styles.input,
-                  ...(show("startDate") ? styles.inputErr : {}),
-                }}
-                type="date"
-                name="startDate"
-                value={trip.startDate}
-                onChange={onChange}
-                onBlur={onBlur}
-                required
-              />
-              {show("startDate") && (
-                <div style={styles.errText}>{errors.startDate}</div>
-              )}
-            </div>
-
-            <div>
-              <label style={styles.label}>End date</label>
-              <input
-                style={{
-                  ...styles.input,
-                  ...(show("endDate") ? styles.inputErr : {}),
-                }}
-                type="date"
-                name="endDate"
-                value={trip.endDate}
-                onChange={onChange}
-                onBlur={onBlur}
-                min={trip.startDate || undefined}
-                required
-              />
-              {show("endDate") && (
-                <div style={styles.errText}>{errors.endDate}</div>
-              )}
-            </div>
-
-            <div>
-              <label style={styles.label}>Transportation</label>
-              <select
-                style={styles.input}
-                name="transportation"
-                value={trip.transportation}
-                onChange={onChange}
-                onBlur={onBlur}
-              >
-                <option>Car</option>
-                <option>Bus</option>
-                <option>Plane</option>
-                <option>Train</option>
-                <option>Boat</option>
-              </select>
-            </div>
-
-            <div style={styles.summaryBox}>
-              <span style={styles.summaryLabel}>Selected vehicle</span>
-              <strong style={styles.summaryValue}>{trip.transportation}</strong>
-            </div>
-
-            <div style={styles.fullWidth}>
-              <label style={styles.label}>Notes</label>
-              <textarea
-                style={{
-                  ...styles.input,
-                  ...styles.textarea,
-                  ...(show("notes") ? styles.inputErr : {}),
-                }}
-                name="notes"
-                value={trip.notes}
-                onChange={onChange}
-                onBlur={onBlur}
-                placeholder="Restaurants, stops, budget, ideas..."
-                maxLength={800}
-              />
-
-              <div style={styles.hintRow}>
-                {show("notes") ? (
-                  <span style={styles.errText}>{errors.notes}</span>
-                ) : (
-                  <span style={styles.hintText}>
-                    Optional. Max 800 characters.
-                  </span>
-                )}
-
-                <span style={styles.counter}>{trip.notes.length}/800</span>
-              </div>
-            </div>
+        <div style={styles.grid}>
+          <div>
+            <label style={styles.label}>Trip title</label>
+            <input
+              style={{
+                ...styles.input,
+                ...(show("title") ? styles.inputErr : {}),
+              }}
+              name="title"
+              value={trip.title}
+              onChange={onChange}
+              onBlur={onBlur}
+              placeholder="My Summer Trip"
+              required
+            />
+            {show("title") && <div style={styles.errText}>{errors.title}</div>}
           </div>
 
-          {serverMsg && <div style={styles.toast}>{serverMsg}</div>}
+          <div>
+            <label style={styles.label}>Destination</label>
+            <input
+              style={{
+                ...styles.input,
+                ...(show("destination") ? styles.inputErr : {}),
+              }}
+              name="destination"
+              value={trip.destination}
+              onChange={onChange}
+              onBlur={onBlur}
+              placeholder="Beirut, Istanbul, Paris..."
+              required
+            />
+            {show("destination") && (
+              <div style={styles.errText}>{errors.destination}</div>
+            )}
+          </div>
 
-          <button
-            style={{
-              ...styles.btn,
-              ...(saving || !isValid ? styles.btnDisabled : {}),
-            }}
-            type="submit"
-            disabled={saving || !isValid}
-          >
-            {saving ? "Saving..." : "Save Private Trip"}
-          </button>
-        </form>
-      </div>
+          <div>
+            <label style={styles.label}>Start date</label>
+            <input
+              style={{
+                ...styles.input,
+                ...(show("startDate") ? styles.inputErr : {}),
+              }}
+              type="date"
+              name="startDate"
+              value={trip.startDate}
+              onChange={onChange}
+              onBlur={onBlur}
+              required
+            />
+            {show("startDate") && (
+              <div style={styles.errText}>{errors.startDate}</div>
+            )}
+          </div>
+
+          <div>
+            <label style={styles.label}>End date</label>
+            <input
+              style={{
+                ...styles.input,
+                ...(show("endDate") ? styles.inputErr : {}),
+              }}
+              type="date"
+              name="endDate"
+              value={trip.endDate}
+              onChange={onChange}
+              onBlur={onBlur}
+              min={trip.startDate || undefined}
+              required
+            />
+            {show("endDate") && (
+              <div style={styles.errText}>{errors.endDate}</div>
+            )}
+          </div>
+
+          <div>
+            <label style={styles.label}>Transportation</label>
+            <select
+              style={styles.input}
+              name="transportation"
+              value={trip.transportation}
+              onChange={onChange}
+              onBlur={onBlur}
+            >
+              <option>Car</option>
+              <option>Bus</option>
+              <option>Plane</option>
+              <option>Train</option>
+              <option>Boat</option>
+            </select>
+          </div>
+
+          <div style={styles.summaryBox}>
+            <span style={styles.summaryLabel}>Selected vehicle</span>
+            <strong style={styles.summaryValue}>{trip.transportation}</strong>
+          </div>
+
+          <div style={styles.fullWidth}>
+            <label style={styles.label}>Notes</label>
+            <textarea
+              style={{
+                ...styles.input,
+                ...styles.textarea,
+                ...(show("notes") ? styles.inputErr : {}),
+              }}
+              name="notes"
+              value={trip.notes}
+              onChange={onChange}
+              onBlur={onBlur}
+              placeholder="Restaurants, stops, budget, ideas..."
+              maxLength={800}
+            />
+
+            <div style={styles.hintRow}>
+              {show("notes") ? (
+                <span style={styles.errText}>{errors.notes}</span>
+              ) : (
+                <span style={styles.hintText}>
+                  Optional. Max 800 characters.
+                </span>
+              )}
+
+              <span style={styles.counter}>{trip.notes.length}/800</span>
+            </div>
+          </div>
+        </div>
+
+        {serverMsg && <div style={styles.toast}>{serverMsg}</div>}
+
+        <button
+          style={{
+            ...styles.btn,
+            ...(saving || !isValid ? styles.btnDisabled : {}),
+          }}
+          type="submit"
+          disabled={saving || !isValid}
+        >
+          {saving ? "Saving..." : "Save Private Trip"}
+        </button>
+      </form>
     </div>
   );
+
+  if (isLoggedIn) {
+    return <DashboardLayout>{pageContent}</DashboardLayout>;
+  }
+
+  return <div style={styles.publicPage}>{pageContent}</div>;
+}
+
+function checkUserLoggedIn() {
+  const authKeys = [
+    "isRegistered",
+    "token",
+    "authToken",
+    "accessToken",
+    "user",
+    "tripUser",
+    "currentUser",
+    "tripUserName",
+    "tripUserEmail",
+  ];
+
+  return authKeys.some((key) => {
+    const value = localStorage.getItem(key);
+    return value !== null && value !== "" && value !== "null";
+  });
 }
 
 const styles = {
-  page: {
-    width: "100vw",
+  publicPage: {
+    width: "100%",
     minHeight: "100vh",
     padding: "34px 26px",
-    background: "linear-gradient(135deg, #dbeafe 0%, #c7d2fe 55%, #e9d5ff 100%)",
+    background:
+      "linear-gradient(135deg, #dbeafe 0%, #c7d2fe 55%, #e9d5ff 100%)",
     color: "#1e293b",
     fontFamily: "Inter, Arial, sans-serif",
     boxSizing: "border-box",
+    overflowX: "hidden",
   },
 
   container: {
     width: "100%",
     maxWidth: 1000,
     margin: "0 auto",
+    color: "#1e293b",
+    boxSizing: "border-box",
   },
 
   header: {
