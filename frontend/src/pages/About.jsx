@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import DashboardLayout from "../components/DashboardLayout";
+import PublicNavbar from "../components/PublicNavbar";
 
 export default function About() {
   const isLoggedIn = checkUserLoggedIn();
@@ -41,12 +42,6 @@ export default function About() {
             manage their travel experience in a simple way.
           </p>
         </div>
-
-        {!isLoggedIn && (
-          <Link to="/trips" style={styles.backBtn}>
-            ← Back to Trips
-          </Link>
-        )}
       </div>
 
       <div style={styles.card}>
@@ -129,7 +124,12 @@ export default function About() {
     return <DashboardLayout>{aboutContent}</DashboardLayout>;
   }
 
-  return <div style={styles.publicPage}>{aboutContent}</div>;
+  return (
+    <div style={styles.publicPage}>
+      <PublicNavbar />
+      <main style={styles.publicMain}>{aboutContent}</main>
+    </div>
+  );
 }
 
 function checkUserLoggedIn() {
@@ -155,15 +155,18 @@ const styles = {
   publicPage: {
     width: "100%",
     minHeight: "100vh",
-    padding: "34px 26px",
     background:
       "linear-gradient(135deg, #dbeafe 0%, #c7d2fe 55%, #e9d5ff 100%)",
     color: "#1e293b",
-    display: "flex",
-    justifyContent: "center",
     boxSizing: "border-box",
     fontFamily: "Inter, Arial, sans-serif",
     overflowX: "hidden",
+  },
+
+  publicMain: {
+    width: "100%",
+    padding: "34px 26px",
+    boxSizing: "border-box",
   },
 
   contentWrapper: {
@@ -198,18 +201,6 @@ const styles = {
     color: "#475569",
     lineHeight: 1.7,
     maxWidth: 680,
-  },
-
-  backBtn: {
-    padding: "11px 16px",
-    borderRadius: 14,
-    background: "linear-gradient(135deg, #bfdbfe, #c4b5fd)",
-    border: "1px solid rgba(147, 197, 253, 0.55)",
-    color: "#0f172a",
-    textDecoration: "none",
-    fontWeight: 900,
-    boxShadow: "0 10px 25px rgba(96, 165, 250, 0.22)",
-    whiteSpace: "nowrap",
   },
 
   card: {

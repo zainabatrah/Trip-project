@@ -1,6 +1,6 @@
-import { Link } from "react-router-dom";
 import { useMemo, useState } from "react";
 import DashboardLayout from "../components/DashboardLayout";
+import PublicNavbar from "../components/PublicNavbar";
 
 export default function PrivateTrip() {
   const isLoggedIn = checkUserLoggedIn();
@@ -123,12 +123,6 @@ export default function PrivateTrip() {
             Plan trips privately, compare options, and save your travel ideas.
           </p>
         </div>
-
-        {!isLoggedIn && (
-          <Link to="/" style={styles.backBtn}>
-            ← Back
-          </Link>
-        )}
       </div>
 
       <form onSubmit={onSubmit} style={styles.card}>
@@ -287,7 +281,12 @@ export default function PrivateTrip() {
     return <DashboardLayout>{pageContent}</DashboardLayout>;
   }
 
-  return <div style={styles.publicPage}>{pageContent}</div>;
+  return (
+    <div style={styles.publicPage}>
+      <PublicNavbar />
+      <main style={styles.publicMain}>{pageContent}</main>
+    </div>
+  );
 }
 
 function checkUserLoggedIn() {
@@ -313,13 +312,18 @@ const styles = {
   publicPage: {
     width: "100%",
     minHeight: "100vh",
-    padding: "34px 26px",
     background:
       "linear-gradient(135deg, #dbeafe 0%, #c7d2fe 55%, #e9d5ff 100%)",
     color: "#1e293b",
     fontFamily: "Inter, Arial, sans-serif",
     boxSizing: "border-box",
     overflowX: "hidden",
+  },
+
+  publicMain: {
+    width: "100%",
+    padding: "34px 26px",
+    boxSizing: "border-box",
   },
 
   container: {
@@ -354,18 +358,6 @@ const styles = {
     fontWeight: 500,
     lineHeight: 1.7,
     maxWidth: 650,
-  },
-
-  backBtn: {
-    padding: "11px 16px",
-    borderRadius: 14,
-    background: "linear-gradient(135deg, #bfdbfe, #c4b5fd)",
-    border: "1px solid rgba(147, 197, 253, 0.55)",
-    color: "#0f172a",
-    textDecoration: "none",
-    fontWeight: 900,
-    boxShadow: "0 10px 25px rgba(96, 165, 250, 0.22)",
-    whiteSpace: "nowrap",
   },
 
   card: {
