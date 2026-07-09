@@ -21,12 +21,12 @@ export default function Register() {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     setError("");
 
     const fullName = form.fullName.trim();
-    const email = form.email.trim();
+    const email = form.email.trim().toLowerCase();
 
     if (!fullName || !email || !form.password) {
       setError("Please fill all fields.");
@@ -38,62 +38,48 @@ export default function Register() {
       return;
     }
 
-    try {
-      setLoading(true);
+    setLoading(true);
 
-      const formData = new FormData();
-      formData.append("fullName", fullName);
-      formData.append("email", email);
-      formData.append("password", form.password);
-      formData.append("idFile", idFile);
+    const registeredUser = {
+      id: Date.now(),
+      fullName,
+      email,
+      idFileName: idFile.name,
+      createdAt: new Date().toISOString(),
+    };
 
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        body: formData,
-      });
+    const loginUser = {
+      fullName,
+      email,
+      password: form.password,
+    };
 
-      const text = await res.text();
+    const existingUsers = JSON.parse(
+      localStorage.getItem("registeredUsers") || "[]"
+    );
 
-      let data = {};
-      try {
-        data = text ? JSON.parse(text) : {};
-      } catch {
-        setError("Backend returned invalid response.");
-        return;
-      }
+    const emailExists = existingUsers.some((user) => user.email === email);
 
-      if (!res.ok) {
-        setError(data.error || data.message || "Registration failed.");
-        return;
-      }
-
-      const registeredUser = {
-        id: data.user?.id || data.user?._id || null,
-        fullName: data.user?.fullName || fullName,
-        email: data.user?.email || email,
-      };
-
-      localStorage.setItem("isRegistered", "true");
-      localStorage.setItem("user", JSON.stringify(registeredUser));
-      localStorage.setItem("tripUser", JSON.stringify(registeredUser));
-      localStorage.setItem("tripUserName", registeredUser.fullName);
-      localStorage.setItem("tripUserEmail", registeredUser.email);
-
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-      }
-
-      if (data.accessToken) {
-        localStorage.setItem("accessToken", data.accessToken);
-      }
-
-      navigate("/trips", { replace: true });
-    } catch (err) {
-      console.error("Register request failed:", err);
-      setError("Cannot connect to backend. Make sure backend is running.");
-    } finally {
+    if (emailExists) {
+      setError("This email is already registered. Please login.");
       setLoading(false);
+      return;
     }
+
+    localStorage.setItem(
+      "registeredUsers",
+      JSON.stringify([loginUser, ...existingUsers])
+    );
+
+    localStorage.setItem("isRegistered", "true");
+    localStorage.setItem("user", JSON.stringify(registeredUser));
+    localStorage.setItem("tripUser", JSON.stringify(registeredUser));
+    localStorage.setItem("tripUserName", registeredUser.fullName);
+    localStorage.setItem("tripUserEmail", registeredUser.email);
+
+    setLoading(false);
+
+    navigate("/trips", { replace: true });
   };
 
   return (

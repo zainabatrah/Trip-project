@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import api from "../services/api";
 import "./tripdetail.css";
-import { Link } from "react-router-dom";
-import DashboardLayout from "../components/DashboardLayout";
+
+import TopNavbar from "../components/TopNavbar";
 import {
   FaBus,
   FaCar,

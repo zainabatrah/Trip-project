@@ -22,6 +22,7 @@ export default function App() {
 
       <Route path="/private-trip" element={<PrivateTrip />} />
       <Route path="/about" element={<About />} />
+
       <Route path="/map" element={<Map />} />
 
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,10 +1,8 @@
 import { Link } from "react-router-dom";
-import DashboardLayout from "../components/DashboardLayout";
-import PublicNavbar from "../components/PublicNavbar";
+import TopNavbar from "../components/TopNavbar";
+import welcomeStyles from "../Styles/welcome.module.css";
 
 export default function About() {
-  const isLoggedIn = checkUserLoggedIn();
-
   const features = [
     {
       title: "Trip Management",
@@ -32,131 +30,98 @@ export default function About() {
     "Future: maps, payments, and weather",
   ];
 
-  const aboutContent = (
-    <div style={styles.contentWrapper}>
-      <div style={styles.header}>
-        <div>
-          <h1 style={styles.title}>About TripManager</h1>
-          <p style={styles.subtitle}>
-            TripManager helps users discover trips, request private trips, and
-            manage their travel experience in a simple way.
-          </p>
-        </div>
-      </div>
-
-      <div style={styles.card}>
-        <h2 style={styles.sectionTitle}>What this platform does</h2>
-
-        <div style={styles.grid}>
-          {features.map((feature) => (
-            <div key={feature.title} style={styles.featureCard}>
-              <div style={styles.iconCircle}>✦</div>
-              <div style={styles.featureTitle}>{feature.title}</div>
-              <div style={styles.featureDesc}>{feature.desc}</div>
-            </div>
-          ))}
-        </div>
-
-        <div style={styles.hr} />
-
-        <div style={styles.twoCols}>
-          <div style={styles.infoBox}>
-            <h3 style={styles.smallTitle}>Key highlights</h3>
-
-            <ul style={styles.list}>
-              {highlights.map((item) => (
-                <li key={item} style={styles.listItem}>
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div style={styles.infoBox}>
-            <h3 style={styles.smallTitle}>How users use it</h3>
-
-            <ol style={styles.list}>
-              <li style={styles.listItem}>Create an account or login.</li>
-              <li style={styles.listItem}>Browse available trips.</li>
-              <li style={styles.listItem}>Request a private trip if needed.</li>
-              <li style={styles.listItem}>Book trips and manage bookings.</li>
-            </ol>
-          </div>
-        </div>
-
-        <div style={styles.hr} />
-
-        <div style={styles.actions}>
-          <Link to="/trips" style={styles.btn}>
-            Browse Trips
-          </Link>
-
-          <Link to="/private-trip" style={styles.btn}>
-            Private Trip
-          </Link>
-
-          {!isLoggedIn && (
-            <>
-              <Link to="/register" style={styles.btnOutline}>
-                Create Account
-              </Link>
-
-              <Link to="/login" style={styles.btnOutline}>
-                Login
-              </Link>
-            </>
-          )}
-        </div>
-      </div>
-
-      <div style={styles.footerNote}>
-        <div style={styles.footerTitle}>Next improvements</div>
-
-        <div style={styles.footerText}>
-          Add real-time trip availability, online payments, map view, weather
-          widgets, and organizer trip dashboards.
-        </div>
-      </div>
-    </div>
-  );
-
-  if (isLoggedIn) {
-    return <DashboardLayout>{aboutContent}</DashboardLayout>;
-  }
-
   return (
-    <div style={styles.publicPage}>
-      <PublicNavbar />
-      <main style={styles.publicMain}>{aboutContent}</main>
+    <div className={welcomeStyles.body} style={styles.publicPage}>
+      <TopNavbar />
+
+      <main style={styles.publicMain}>
+        <div style={styles.contentWrapper}>
+          <div style={styles.header}>
+            <div>
+              <h1 style={styles.title}>About TripManager</h1>
+
+              <p style={styles.subtitle}>
+                TripManager helps users discover trips, request private trips,
+                and manage their travel experience in a simple way.
+              </p>
+            </div>
+          </div>
+
+          <div style={styles.card}>
+            <h2 style={styles.sectionTitle}>What this platform does</h2>
+
+            <div style={styles.grid}>
+              {features.map((feature) => (
+                <div key={feature.title} style={styles.featureCard}>
+                  <div style={styles.iconCircle}>✦</div>
+                  <div style={styles.featureTitle}>{feature.title}</div>
+                  <div style={styles.featureDesc}>{feature.desc}</div>
+                </div>
+              ))}
+            </div>
+
+            <div style={styles.hr} />
+
+            <div style={styles.twoCols}>
+              <div style={styles.infoBox}>
+                <h3 style={styles.smallTitle}>Key highlights</h3>
+
+                <ul style={styles.list}>
+                  {highlights.map((item) => (
+                    <li key={item} style={styles.listItem}>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div style={styles.infoBox}>
+                <h3 style={styles.smallTitle}>How users use it</h3>
+
+                <ol style={styles.list}>
+                  <li style={styles.listItem}>Create an account.</li>
+                  <li style={styles.listItem}>Browse available trips.</li>
+                  <li style={styles.listItem}>
+                    Request a private trip if needed.
+                  </li>
+                  <li style={styles.listItem}>
+                    Book trips and manage bookings.
+                  </li>
+                </ol>
+              </div>
+            </div>
+
+            <div style={styles.hr} />
+
+            <div style={styles.actions}>
+              <Link to="/trips" style={styles.btn}>
+                Browse Trips
+              </Link>
+
+              <Link to="/private-trip" style={styles.btn}>
+                Private Trip
+              </Link>
+            </div>
+          </div>
+
+          <div style={styles.footerNote}>
+            <div style={styles.footerTitle}>Next improvements</div>
+
+            <div style={styles.footerText}>
+              Add real-time trip availability, online payments, map view,
+              weather widgets, and organizer trip dashboards.
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   );
-}
-
-function checkUserLoggedIn() {
-  const authKeys = [
-    "isRegistered",
-    "token",
-    "authToken",
-    "accessToken",
-    "user",
-    "tripUser",
-    "currentUser",
-    "tripUserName",
-    "tripUserEmail",
-  ];
-
-  return authKeys.some((key) => {
-    const value = localStorage.getItem(key);
-    return value !== null && value !== "" && value !== "null";
-  });
 }
 
 const styles = {
   publicPage: {
     width: "100%",
     minHeight: "100vh",
-    background:
-      "linear-gradient(135deg, #dbeafe 0%, #c7d2fe 55%, #e9d5ff 100%)",
     color: "#1e293b",
     boxSizing: "border-box",
     fontFamily: "Inter, Arial, sans-serif",
@@ -319,16 +284,6 @@ const styles = {
     textDecoration: "none",
     fontWeight: 900,
     boxShadow: "0 12px 28px rgba(96, 165, 250, 0.35)",
-  },
-
-  btnOutline: {
-    padding: "11px 16px",
-    borderRadius: 14,
-    background: "rgba(255,255,255,0.72)",
-    border: "1px solid #bfdbfe",
-    color: "#1e3a8a",
-    textDecoration: "none",
-    fontWeight: 900,
   },
 
   footerNote: {
