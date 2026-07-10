@@ -8,7 +8,7 @@ const router = express.Router();
 // REGISTER (SAVE TO DB)
 router.post("/register", async (req, res) => {
   try {
-    const { fullName, email, password } = req.body;
+    const { email, password } = req.body;
 
     const exists = await User.findOne({ email });
     if (exists) {
@@ -18,7 +18,6 @@ router.post("/register", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
-      fullName,
       email,
       password: hashedPassword
     });

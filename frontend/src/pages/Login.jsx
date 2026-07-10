@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./Login.css";
 
 export default function Login() {
+  const navigate = useNavigate();
+
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -11,7 +13,7 @@ export default function Login() {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:5000/api/login", {
+      const res = await fetch("http://localhost:5000/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -21,11 +23,15 @@ export default function Login() {
 
       const data = await res.json();
       console.log("LOGIN RESPONSE:", data);
-
       if (res.ok) {
         alert("Login successful");
-      } else {
-        alert(data.message); // 👈 THIS is the key fix
+
+        localStorage.setItem("token", data.token);
+
+         navigate("/ListofTrips");
+      } 
+      else {
+        alert(data.message);
       }
     } catch (err) {
       console.error("Error:", err);
