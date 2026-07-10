@@ -1,10 +1,15 @@
-const PrivateTrip = require("../models/PrivateTrip");
+const PrivateTripRequest = require(
+  "../src/models/PrivateTripRequest"
+);
 
 async function getPrivateTrips(req, res) {
   try {
-    const trips = await PrivateTrip.find({ user: req.user._id }).sort({
-      createdAt: -1,
-    });
+    const trips =
+      await PrivateTripRequest.find({
+        client: req.user._id,
+      }).sort({
+        createdAt: -1,
+      });
 
     return res.json(trips);
   } catch (error) {
@@ -15,9 +20,10 @@ async function getPrivateTrips(req, res) {
 
 async function createPrivateTrip(req, res) {
   try {
-    const trip = await PrivateTrip.create({
+    const trip =
+      await PrivateTripRequest.create({
       ...req.body,
-      user: req.user._id,
+      client: req.user._id,
     });
 
     return res.status(201).json(trip);
@@ -29,9 +35,10 @@ async function createPrivateTrip(req, res) {
 
 async function deletePrivateTrip(req, res) {
   try {
-    const trip = await PrivateTrip.findOneAndDelete({
+    const trip =
+      await PrivateTripRequest.findOneAndDelete({
       _id: req.params.id,
-      user: req.user._id,
+      client: req.user._id,
     });
 
     if (!trip) {

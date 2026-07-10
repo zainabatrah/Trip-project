@@ -1,85 +1,165 @@
-import { useEffect, useMemo, useState } from "react";
-import { Navigate } from "react-router-dom";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { Link } from "react-router-dom";
 
-import TopNavbar from "../components/TopNavbar";
-import welcomeStyles from "../Styles/welcome.module.css";
-
+import PublicPageLayout from "../components/PublicPageLayout.jsx";
+import {
+  getStatusBadgeStyle,
+  pageTheme,
+} from "../components/publicPageTheme.js";
 import {
   getPrivateTripRequests,
+  updatePrivateTripRequest,
   updatePrivateTripRequestStatus,
   getPrivateTripMessages,
   sendOrganizerTripMessage,
 } from "../api/privateTripRequests.js";
 
+function formatDate(value) {
+  if (!value) {
+    return "Not selected";
+  }
+
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime())
+    ? "Invalid date"
+    : date.toLocaleDateString();
+}
+
+function formatDateTime(value) {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime())
+    ? ""
+    : date.toLocaleString();
+}
+
+function getApprovedTripId(request) {
+  return (
+    request?.approvedTripId?._id ||
+    request?.approvedTripId ||
+    ""
+  );
+}
+
+function toDateInputValue(value) {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toISOString().slice(0, 10);
+}
+
+function buildEditForm(request) {
+  return {
+    title: request.title || "",
+    destination:
+      request.destination || "",
+    startDate: toDateInputValue(
+      request.startDate
+    ),
+    endDate: toDateInputValue(
+      request.endDate
+    ),
+    transportation:
+      request.transportation || "Car",
+    travelers: String(
+      request.travelers ?? 1
+    ),
+    budget: String(
+      request.budget ?? 0
+    ),
+    notes: request.notes || "",
+  };
+}
+
 export default function Approve() {
-  const user = getUserData();
+  const [requests, setRequests] =
+    useState([]);
 
-  const isOrganizer =
-    String(user?.role || "").toLowerCase() === "organizer" ||
-    String(user?.role || "").toLowerCase() === "admin" ||
-    String(localStorage.getItem("userRole") || "").toLowerCase() ===
-      "organizer" ||
-    String(localStorage.getItem("userRole") || "").toLowerCase() ===
-      "admin";
+  const [replyText, setReplyText] =
+    useState({});
+  const [editForms, setEditForms] =
+    useState({});
 
-  const [requests, setRequests] = useState([]);
-  const [replyText, setReplyText] = useState({});
-  const [updatingId, setUpdatingId] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [updatingId, setUpdatingId] =
+    useState("");
+  const [savingEditId, setSavingEditId] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(true);
+
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [success, setSuccess] =
+    useState("");
 
-  const stats = useMemo(() => {
-    return {
+  const statistics = useMemo(
+    () => ({
       total: requests.length,
 
       pending: requests.filter(
-        (request) => getStatus(request) === "PENDING"
+        (request) =>
+          request.status === "PENDING"
       ).length,
 
       approved: requests.filter(
-        (request) => getStatus(request) === "APPROVED"
+        (request) =>
+          request.status === "APPROVED"
       ).length,
 
       rejected: requests.filter(
-        (request) => getStatus(request) === "REJECTED"
+        (request) =>
+          request.status === "REJECTED"
       ).length,
-    };
-  }, [requests]);
+    }),
+    [requests]
+  );
 
   useEffect(() => {
-    if (!isOrganizer) {
-      return;
-    }
-
     let cancelled = false;
 
     async function loadRequests() {
       try {
-        setLoading(true);
-        setError("");
+        const data =
+          await getPrivateTripRequests();
 
-        const data = await getPrivateTripRequests();
-
-        const receivedRequests = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.requests)
+        if (!cancelled) {
+          const nextRequests = Array.isArray(
+            data?.requests
+          )
             ? data.requests
             : [];
 
-        if (!cancelled) {
-          setRequests(receivedRequests);
+          setRequests(
+            nextRequests
+          );
+          setEditForms(
+            Object.fromEntries(
+              nextRequests.map((request) => [
+                request._id || request.id,
+                buildEditForm(request),
+              ])
+            )
+          );
         }
       } catch (requestError) {
-        console.error("Loading requests failed:", requestError);
-
         if (!cancelled) {
-          setRequests([]);
-
-          setError(
-            requestError?.message ||
-              "Could not load private trip requests."
-          );
+          setError(requestError.message);
         }
       } finally {
         if (!cancelled) {
@@ -93,33 +173,82 @@ export default function Approve() {
     return () => {
       cancelled = true;
     };
-  }, [isOrganizer]);
+  }, []);
 
-  if (!isOrganizer) {
-    return <Navigate to="/" replace />;
+  function handleEditChange(
+    id,
+    field,
+    value
+  ) {
+    setEditForms((current) => ({
+      ...current,
+      [id]: {
+        ...current[id],
+        [field]: value,
+      },
+    }));
   }
 
-  async function approveRequest(id) {
-    const message =
-      replyText[id]?.trim() ||
-      "Your private trip request has been approved. The organizer will contact you soon.";
+  async function saveRequestEdits(id) {
+    if (savingEditId || updatingId) {
+      return;
+    }
 
-    await updateStatus(id, "APPROVED", message);
+    const form = editForms[id];
+
+    if (!form) {
+      return;
+    }
+
+    try {
+      setSavingEditId(id);
+      setError("");
+      setSuccess("");
+
+      const data =
+        await updatePrivateTripRequest(
+          id,
+          {
+            title: form.title.trim(),
+            destination:
+              form.destination.trim(),
+            startDate: form.startDate,
+            endDate: form.endDate,
+            transportation:
+              form.transportation,
+            travelers: Number(
+              form.travelers
+            ),
+            budget: Number(form.budget),
+            notes: form.notes.trim(),
+          }
+        );
+
+      setRequests((current) =>
+        current.map((request) =>
+          (request._id || request.id) === id
+            ? data.request
+            : request
+        )
+      );
+
+      setEditForms((current) => ({
+        ...current,
+        [id]: buildEditForm(data.request),
+      }));
+
+      setSuccess(data.message);
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setSavingEditId("");
+    }
   }
 
-  async function rejectRequest(id) {
-    const message =
-      replyText[id]?.trim() ||
-      "Sorry, this private trip request cannot be accepted right now.";
-
-    await updateStatus(id, "REJECTED", message);
-  }
-
-  async function resetRequest(id) {
-    await updateStatus(id, "PENDING", "");
-  }
-
-  async function updateStatus(id, status, organizerReply) {
+  async function updateStatus(
+    id,
+    status
+  ) {
     if (updatingId) {
       return;
     }
@@ -129,396 +258,649 @@ export default function Approve() {
       setError("");
       setSuccess("");
 
-      const response = await updatePrivateTripRequestStatus(id, {
-        status,
-        organizerReply,
-      });
+      const data =
+        await updatePrivateTripRequestStatus(
+          id,
+          {
+            status,
+            organizerReply:
+              replyText[id]?.trim() || "",
+          }
+        );
 
-      const updatedRequest = response?.request || response;
-
-      setRequests((oldRequests) =>
-        oldRequests.map((request) => {
-          const requestId = request._id || request.id;
-
-          return requestId === id
-            ? updatedRequest
-            : request;
-        })
+      setRequests((current) =>
+        current.map((request) =>
+          (request._id || request.id) === id
+            ? data.request
+            : request
+        )
       );
+      setEditForms((current) => ({
+        ...current,
+        [id]: buildEditForm(data.request),
+      }));
 
-      setReplyText((oldReplyText) => ({
-        ...oldReplyText,
+      setReplyText((current) => ({
+        ...current,
         [id]: "",
       }));
 
-      setSuccess(
-        response?.message ||
-          `Request changed to ${formatStatus(status)}.`
-      );
-    } catch (updateError) {
-      console.error("Status update failed:", updateError);
-
-      setError(
-        updateError?.message ||
-          "Could not update the request status."
-      );
+      setSuccess(data.message);
+    } catch (requestError) {
+      setError(requestError.message);
     } finally {
       setUpdatingId("");
     }
   }
 
   return (
-    <div
-      className={welcomeStyles.body}
-      style={styles.page}
+    <PublicPageLayout
+      eyebrow="Organizer Panel"
+      title="Trip Approval"
+      subtitle="Review private trip requests and communicate with clients."
+      maxWidth={1100}
+      headerAction={
+        <div style={styles.headerCard}>
+          <strong style={styles.headerValue}>
+            {statistics.pending}
+          </strong>
+          <span style={styles.headerText}>
+            requests waiting for a decision
+          </span>
+        </div>
+      }
     >
-      <TopNavbar />
+      <div style={styles.statistics}>
+        <Stat
+          label="Total"
+          value={statistics.total}
+        />
+        <Stat
+          label="Pending"
+          value={statistics.pending}
+        />
+        <Stat
+          label="Approved"
+          value={statistics.approved}
+        />
+        <Stat
+          label="Rejected"
+          value={statistics.rejected}
+        />
+      </div>
 
-      <main style={styles.main}>
-        <div style={styles.header}>
-          <div>
-            <h1 style={styles.title}>Trip Approval</h1>
-
-            <p style={styles.subtitle}>
-              Review private trip requests, approve or reject
-              them, and send messages to clients.
-            </p>
-          </div>
-
-          <div style={styles.headerBadge}>
-            Organizer Panel
-          </div>
+      {error && (
+        <div style={pageTheme.errorBox}>
+          {error}
         </div>
+      )}
 
-        <div style={styles.statsGrid}>
-          <StatCard
-            label="Total"
-            value={stats.total}
-          />
-
-          <StatCard
-            label="Pending"
-            value={stats.pending}
-          />
-
-          <StatCard
-            label="Approved"
-            value={stats.approved}
-          />
-
-          <StatCard
-            label="Rejected"
-            value={stats.rejected}
-          />
+      {success && (
+        <div style={pageTheme.successBox}>
+          {success}
         </div>
+      )}
 
-        {error && (
-          <div style={styles.errorBox}>
-            {error}
-          </div>
-        )}
+      {loading ? (
+        <div style={pageTheme.emptyBox}>
+          Loading requests...
+        </div>
+      ) : requests.length === 0 ? (
+        <div style={pageTheme.emptyBox}>
+          No private trip requests.
+        </div>
+      ) : (
+        <div style={styles.grid}>
+          {requests.map((request) => {
+            const id =
+              request._id || request.id;
+            const approvedTripId =
+              getApprovedTripId(request);
 
-        {success && (
-          <div style={styles.successBox}>
-            {success}
-          </div>
-        )}
+            const updating =
+              updatingId === id;
+            const savingEdit =
+              savingEditId === id;
+            const busy =
+              updating || savingEdit;
+            const form =
+              editForms[id] ||
+              buildEditForm(request);
 
-        {loading ? (
-          <div style={styles.emptyBox}>
-            Loading requests...
-          </div>
-        ) : requests.length === 0 ? (
-          <div style={styles.emptyBox}>
-            <h2 style={styles.emptyTitle}>
-              No private trip requests
-            </h2>
+            return (
+              <article
+                key={id}
+                style={pageTheme.surface}
+              >
+                <div style={styles.cardTop}>
+                  <div>
+                    <h2 style={styles.cardTitle}>
+                      {request.title}
+                    </h2>
 
-            <p style={styles.emptyText}>
-              Submitted private trip requests will appear here.
-            </p>
-          </div>
-        ) : (
-          <div style={styles.grid}>
-            {requests.map((request) => {
-              const id = request._id || request.id;
-              const status = getStatus(request);
-              const isUpdating = updatingId === id;
+                    <p style={styles.cardText}>
+                      {request.clientName} —{" "}
+                      {request.email}
+                    </p>
 
-              return (
-                <article
-                  key={id}
-                  style={styles.card}
-                >
-                  <div style={styles.cardTop}>
-                    <div>
-                      <h2 style={styles.clientName}>
-                        {request.clientName ||
-                          request.fullName ||
-                          request.name ||
-                          "Client"}
-                      </h2>
-
-                      <p style={styles.email}>
-                        {request.email ||
-                          "No email provided"}
-                      </p>
+                    <div style={styles.metaRow}>
+                      <span style={pageTheme.pill}>
+                        {request.transportation}
+                      </span>
+                      <span style={styles.metaText}>
+                        Submitted{" "}
+                        {formatDate(
+                          request.createdAt
+                        )}
+                      </span>
                     </div>
-
-                    <StatusBadge status={status} />
                   </div>
 
-                  <div style={styles.infoGrid}>
-                    <Info
-                      label="Trip title"
-                      value={
-                        request.title ||
-                        "Private Trip"
-                      }
-                    />
+                  <strong
+                    style={getStatusBadgeStyle(
+                      request.status
+                    )}
+                  >
+                    {request.status}
+                  </strong>
+                </div>
 
-                    <Info
-                      label="Destination"
-                      value={
-                        request.destination ||
-                        request.to ||
-                        "Not specified"
-                      }
-                    />
+                <div style={styles.infoGrid}>
+                  <Info
+                    label="Destination"
+                    value={
+                      request.destination
+                    }
+                  />
 
-                    <Info
-                      label="Start date"
-                      value={
-                        request.startDate ||
-                        request.date ||
-                        "Not selected"
-                      }
-                    />
+                  <Info
+                    label="Start date"
+                    value={formatDate(
+                      request.startDate
+                    )}
+                  />
 
-                    <Info
-                      label="End date"
-                      value={
-                        request.endDate ||
-                        "Not selected"
-                      }
-                    />
+                  <Info
+                    label="End date"
+                    value={formatDate(
+                      request.endDate
+                    )}
+                  />
 
-                    <Info
-                      label="Travelers"
-                      value={
-                        request.travelers ??
-                        request.passengers ??
-                        "Not specified"
-                      }
-                    />
+                  <Info
+                    label="Travelers"
+                    value={
+                      request.travelers
+                    }
+                  />
 
-                    <Info
-                      label="Transportation"
-                      value={
-                        request.transportation ||
-                        request.vehicle ||
-                        "Not specified"
-                      }
-                    />
+                  <Info
+                    label="Transportation"
+                    value={
+                      request.transportation
+                    }
+                  />
 
-                    <Info
-                      label="Budget"
-                      value={
-                        request.budget !== undefined &&
-                        request.budget !== null
-                          ? `$${Number(
-                              request.budget
-                            ).toFixed(2)}`
-                          : "Not specified"
-                      }
-                    />
+                  <Info
+                    label="Budget"
+                    value={`$${Number(
+                      request.budget || 0
+                    ).toFixed(2)}`}
+                  />
+                </div>
 
-                    <Info
-                      label="Status"
-                      value={formatStatus(status)}
-                    />
+                <section
+                  style={{
+                    ...pageTheme.softSurface,
+                    marginTop: 14,
+                  }}
+                >
+                  <div style={styles.replyHeader}>
+                    <strong style={styles.boxLabel}>
+                      Edit request
+                    </strong>
+                    <span style={styles.replyCount}>
+                      Organizer can update trip details before or after approval.
+                    </span>
                   </div>
 
-                  <div style={styles.notesBox}>
-                    <strong style={styles.boxTitle}>
-                      Client Notes
+                  <div style={styles.editorGrid}>
+                    <label style={pageTheme.field}>
+                      <span>Title</span>
+                      <input
+                        value={form.title}
+                        onChange={(event) =>
+                          handleEditChange(
+                            id,
+                            "title",
+                            event.target.value
+                          )
+                        }
+                        disabled={busy}
+                        style={pageTheme.control}
+                      />
+                    </label>
+
+                    <label style={pageTheme.field}>
+                      <span>Destination</span>
+                      <input
+                        value={
+                          form.destination
+                        }
+                        onChange={(event) =>
+                          handleEditChange(
+                            id,
+                            "destination",
+                            event.target.value
+                          )
+                        }
+                        disabled={busy}
+                        style={pageTheme.control}
+                      />
+                    </label>
+
+                    <label style={pageTheme.field}>
+                      <span>Start date</span>
+                      <input
+                        type="date"
+                        value={form.startDate}
+                        onChange={(event) =>
+                          handleEditChange(
+                            id,
+                            "startDate",
+                            event.target.value
+                          )
+                        }
+                        disabled={busy}
+                        style={pageTheme.control}
+                      />
+                    </label>
+
+                    <label style={pageTheme.field}>
+                      <span>End date</span>
+                      <input
+                        type="date"
+                        min={form.startDate}
+                        value={form.endDate}
+                        onChange={(event) =>
+                          handleEditChange(
+                            id,
+                            "endDate",
+                            event.target.value
+                          )
+                        }
+                        disabled={busy}
+                        style={pageTheme.control}
+                      />
+                    </label>
+
+                    <label style={pageTheme.field}>
+                      <span>Transportation</span>
+                      <select
+                        value={
+                          form.transportation
+                        }
+                        onChange={(event) =>
+                          handleEditChange(
+                            id,
+                            "transportation",
+                            event.target.value
+                          )
+                        }
+                        disabled={busy}
+                        style={pageTheme.control}
+                      >
+                        <option value="Car">
+                          Car
+                        </option>
+                        <option value="Van">
+                          Van
+                        </option>
+                        <option value="Minibus">
+                          Minibus
+                        </option>
+                        <option value="Bus">
+                          Bus
+                        </option>
+                      </select>
+                    </label>
+
+                    <label style={pageTheme.field}>
+                      <span>Travelers</span>
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={form.travelers}
+                        onChange={(event) =>
+                          handleEditChange(
+                            id,
+                            "travelers",
+                            event.target.value
+                          )
+                        }
+                        disabled={busy}
+                        style={pageTheme.control}
+                      />
+                    </label>
+
+                    <label style={pageTheme.field}>
+                      <span>Budget</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={form.budget}
+                        onChange={(event) =>
+                          handleEditChange(
+                            id,
+                            "budget",
+                            event.target.value
+                          )
+                        }
+                        disabled={busy}
+                        style={pageTheme.control}
+                      />
+                    </label>
+                  </div>
+
+                  <label style={pageTheme.field}>
+                    <span>Notes</span>
+                    <textarea
+                      value={form.notes}
+                      onChange={(event) =>
+                        handleEditChange(
+                          id,
+                          "notes",
+                          event.target.value
+                        )
+                      }
+                      disabled={busy}
+                      maxLength={800}
+                      style={{
+                        ...pageTheme.control,
+                        ...pageTheme.textarea,
+                      }}
+                    />
+                  </label>
+
+                  <div style={styles.editorActions}>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() =>
+                        saveRequestEdits(id)
+                      }
+                      style={{
+                        ...pageTheme.buttonSecondary,
+                        opacity: busy ? 0.7 : 1,
+                        cursor: busy
+                          ? "not-allowed"
+                          : "pointer",
+                      }}
+                    >
+                      {savingEdit
+                        ? "Saving..."
+                        : "Save Changes"}
+                    </button>
+                  </div>
+                </section>
+
+                <section
+                  style={{
+                    ...pageTheme.softSurface,
+                    marginTop: 14,
+                  }}
+                >
+                  <strong style={styles.boxLabel}>
+                    Client notes
+                  </strong>
+
+                  <p style={styles.boxText}>
+                    {request.notes ||
+                      "No notes supplied."}
+                  </p>
+                </section>
+
+                {request.organizerReply && (
+                  <section
+                    style={{
+                      ...pageTheme.softSurface,
+                      marginTop: 14,
+                    }}
+                  >
+                    <strong
+                      style={styles.boxLabel}
+                    >
+                      Current organizer reply
                     </strong>
 
                     <p style={styles.boxText}>
-                      {request.notes ||
-                        "No notes were added by the client."}
+                      {
+                        request.organizerReply
+                      }
                     </p>
-                  </div>
+                  </section>
+                )}
 
-                  <div style={styles.replyBox}>
-                    <label
-                      htmlFor={`reply-${id}`}
-                      style={styles.boxTitle}
-                    >
-                      Organizer Reply
-                    </label>
+                {approvedTripId ? (
+                  <section
+                    style={{
+                      ...pageTheme.softSurface,
+                      marginTop: 14,
+                    }}
+                  >
+                    <div style={styles.tripSyncRow}>
+                      <div>
+                        <strong
+                          style={styles.boxLabel}
+                        >
+                          Trip created
+                        </strong>
+                        <p style={styles.boxText}>
+                          This approved request is now stored in the trips collection and appears in the trips list.
+                        </p>
+                      </div>
 
-                    <textarea
-                      id={`reply-${id}`}
-                      value={replyText[id] || ""}
-                      onChange={(event) =>
-                        setReplyText(
-                          (oldReplyText) => ({
-                            ...oldReplyText,
-                            [id]: event.target.value,
-                          })
-                        )
-                      }
-                      placeholder="Write a message that the client will see..."
-                      maxLength={1000}
-                      disabled={isUpdating}
-                      style={styles.textarea}
-                    />
-
-                    <div style={styles.replyFooter}>
-                      <span style={styles.replyHint}>
-                        This message is saved when you
-                        approve or reject the request.
-                      </span>
-
-                      <span style={styles.replyCount}>
-                        {(replyText[id] || "").length}
-                        /1000
-                      </span>
-                    </div>
-
-                    {(request.organizerReply ||
-                      request.organizerMessage) && (
-                      <p style={styles.currentReply}>
-                        <strong>
-                          Current reply:
-                        </strong>{" "}
-                        {request.organizerReply ||
-                          request.organizerMessage}
-                      </p>
-                    )}
-                  </div>
-
-                  <RequestChat requestId={id} />
-
-                  <div style={styles.actions}>
-                    <button
-                      type="button"
-                      style={{
-                        ...styles.approveBtn,
-                        ...(isUpdating
-                          ? styles.disabledButton
-                          : {}),
-                      }}
-                      disabled={isUpdating}
-                      onClick={() =>
-                        approveRequest(id)
-                      }
-                    >
-                      {isUpdating
-                        ? "Updating..."
-                        : "Approve"}
-                    </button>
-
-                    <button
-                      type="button"
-                      style={{
-                        ...styles.rejectBtn,
-                        ...(isUpdating
-                          ? styles.disabledButton
-                          : {}),
-                      }}
-                      disabled={isUpdating}
-                      onClick={() =>
-                        rejectRequest(id)
-                      }
-                    >
-                      Reject
-                    </button>
-
-                    {status !== "PENDING" && (
-                      <button
-                        type="button"
-                        style={{
-                          ...styles.resetBtn,
-                          ...(isUpdating
-                            ? styles.disabledButton
-                            : {}),
-                        }}
-                        disabled={isUpdating}
-                        onClick={() =>
-                          resetRequest(id)
+                      <Link
+                        to={`/trips/${approvedTripId}`}
+                        style={
+                          pageTheme.buttonSecondary
                         }
                       >
-                        Reset to Pending
-                      </button>
-                    )}
+                        View Trip
+                      </Link>
+                    </div>
+                  </section>
+                ) : null}
+
+                <section
+                  style={{
+                    ...pageTheme.softSurface,
+                    marginTop: 14,
+                  }}
+                >
+                  <div style={styles.replyHeader}>
+                    <strong style={styles.boxLabel}>
+                      Result message
+                    </strong>
+                    <span style={styles.replyCount}>
+                      {(replyText[id] || "").length}
+                      /1000
+                    </span>
                   </div>
-                </article>
-              );
-            })}
-          </div>
-        )}
-      </main>
-    </div>
+
+                  <textarea
+                    value={
+                      replyText[id] || ""
+                    }
+                    onChange={(event) =>
+                      setReplyText(
+                        (current) => ({
+                          ...current,
+                          [id]:
+                            event.target.value,
+                        })
+                      )
+                    }
+                    placeholder="Write the result message..."
+                    maxLength={1000}
+                    disabled={busy}
+                    style={{
+                      ...pageTheme.control,
+                      ...styles.textarea,
+                    }}
+                  />
+
+                  <p style={styles.replyHint}>
+                    The organizer reply is saved when you approve, reject, or reset the request.
+                  </p>
+                </section>
+
+                <div style={styles.actions}>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() =>
+                      updateStatus(
+                        id,
+                        "APPROVED"
+                      )
+                    }
+                    style={{
+                      ...pageTheme.buttonSuccess,
+                      opacity: busy ? 0.7 : 1,
+                      cursor: busy
+                        ? "not-allowed"
+                        : "pointer",
+                    }}
+                  >
+                    Approve
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() =>
+                      updateStatus(
+                        id,
+                        "REJECTED"
+                      )
+                    }
+                    style={{
+                      ...pageTheme.buttonDanger,
+                      opacity: busy ? 0.7 : 1,
+                      cursor: busy
+                        ? "not-allowed"
+                        : "pointer",
+                    }}
+                  >
+                    Reject
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() =>
+                      updateStatus(
+                        id,
+                        "PENDING"
+                      )
+                    }
+                    style={{
+                      ...pageTheme.buttonWarning,
+                      opacity: busy ? 0.7 : 1,
+                      cursor: busy
+                        ? "not-allowed"
+                        : "pointer",
+                    }}
+                  >
+                    Reset to Pending
+                  </button>
+                </div>
+
+                <OrganizerChat
+                  requestId={id}
+                  refreshToken={
+                    request.updatedAt ||
+                    request.reviewedAt ||
+                    request.status
+                  }
+                />
+              </article>
+            );
+          })}
+        </div>
+      )}
+    </PublicPageLayout>
   );
 }
 
-function RequestChat({ requestId }) {
-  const [messages, setMessages] = useState([]);
+function OrganizerChat({
+  requestId,
+  refreshToken,
+}) {
+  const [messages, setMessages] =
+    useState([]);
+
   const [text, setText] = useState("");
-  const [loadingMessages, setLoadingMessages] =
+  const [loading, setLoading] =
     useState(true);
-  const [sending, setSending] = useState(false);
-  const [chatError, setChatError] = useState("");
+  const [sending, setSending] =
+    useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
+    let intervalId = null;
 
-    async function loadMessages() {
+    async function loadMessages(
+      silently = false
+    ) {
       try {
-        setLoadingMessages(true);
-        setChatError("");
+        if (
+          !cancelled &&
+          !silently
+        ) {
+          setLoading(true);
+        }
 
         const data =
-          await getPrivateTripMessages(requestId);
-
-        const receivedMessages = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.messages)
-            ? data.messages
-            : [];
+          await getPrivateTripMessages(
+            requestId
+          );
 
         if (!cancelled) {
-          setMessages(receivedMessages);
-        }
-      } catch (messageError) {
-        console.error(
-          "Loading messages failed:",
-          messageError
-        );
-
-        if (!cancelled) {
-          setMessages([]);
-
-          setChatError(
-            messageError?.message ||
-              "Could not load messages."
+          setMessages(
+            Array.isArray(data?.messages)
+              ? data.messages
+              : []
           );
         }
-      } finally {
+      } catch (requestError) {
         if (!cancelled) {
-          setLoadingMessages(false);
+          setError(requestError.message);
+        }
+      } finally {
+        if (
+          !cancelled &&
+          !silently
+        ) {
+          setLoading(false);
         }
       }
     }
 
     loadMessages();
+    intervalId = window.setInterval(() => {
+      loadMessages(true);
+    }, 10000);
 
     return () => {
       cancelled = true;
+      window.clearInterval(intervalId);
     };
-  }, [requestId]);
+  }, [requestId, refreshToken]);
 
   async function sendMessage(event) {
     event.preventDefault();
@@ -531,7 +913,7 @@ function RequestChat({ requestId }) {
 
     try {
       setSending(true);
-      setChatError("");
+      setError("");
 
       const data =
         await sendOrganizerTripMessage(
@@ -541,485 +923,311 @@ function RequestChat({ requestId }) {
           }
         );
 
-      const newMessage = data?.message || data;
-
-      setMessages((oldMessages) => [
-        ...oldMessages,
-        newMessage,
+      setMessages((current) => [
+        ...current,
+        data.message,
       ]);
 
       setText("");
-    } catch (messageError) {
-      console.error(
-        "Organizer message failed:",
-        messageError
-      );
-
-      setChatError(
-        messageError?.message ||
-          "Could not send the message."
-      );
+    } catch (requestError) {
+      setError(requestError.message);
     } finally {
       setSending(false);
     }
   }
 
   return (
-    <div style={styles.chatBox}>
-      <h3 style={styles.chatTitle}>
-        Client Chat
+    <section
+      style={{
+        ...pageTheme.softSurface,
+        marginTop: 18,
+      }}
+    >
+      <h3 style={pageTheme.smallTitle}>
+        Conversation
       </h3>
 
+      {error && (
+        <div style={pageTheme.errorBox}>
+          {error}
+        </div>
+      )}
+
       <div style={styles.messages}>
-        {loadingMessages ? (
-          <div style={styles.emptyChat}>
-            Loading messages...
+        {loading ? (
+          <div style={styles.chatEmpty}>
+            Loading conversation...
           </div>
         ) : messages.length === 0 ? (
-          <div style={styles.emptyChat}>
+          <div style={styles.chatEmpty}>
             No messages yet.
           </div>
         ) : (
-          messages.map((message) => {
-            const isOrganizer =
-              message.sender === "organizer";
+          messages.map((message) => (
+            <div
+              key={
+                message._id ||
+                `${message.createdAt}-${message.text}`
+              }
+              style={{
+                ...styles.message,
+                marginLeft:
+                  message.sender ===
+                  "organizer"
+                    ? "auto"
+                    : 0,
+                background:
+                  message.sender ===
+                  "organizer"
+                    ? "rgba(191, 219, 254, 0.72)"
+                    : "rgba(255, 255, 255, 0.88)",
+              }}
+            >
+              <strong>
+                {message.sender ===
+                "organizer"
+                  ? "Organizer"
+                  : "Client"}
+              </strong>
 
-            return (
-              <div
-                key={
-                  message._id ||
-                  message.id ||
-                  `${message.createdAt}-${message.text}`
-                }
-                style={{
-                  ...styles.messageRow,
-                  justifyContent: isOrganizer
-                    ? "flex-end"
-                    : "flex-start",
-                }}
-              >
-                <div
-                  style={{
-                    ...styles.bubble,
-                    ...(isOrganizer
-                      ? styles.organizerBubble
-                      : styles.clientBubble),
-                  }}
-                >
-                  <strong>
-                    {isOrganizer
-                      ? "Organizer"
-                      : "Client"}
-                  </strong>
+              <p style={styles.messageText}>
+                {message.text}
+              </p>
 
-                  <p style={styles.messageText}>
-                    {message.text}
-                  </p>
-
-                  <small style={styles.messageTime}>
-                    {formatDateTime(
-                      message.createdAt
-                    )}
-                  </small>
-                </div>
-              </div>
-            );
-          })
+              <small style={styles.messageTime}>
+                {formatDateTime(
+                  message.createdAt
+                )}
+              </small>
+            </div>
+          ))
         )}
       </div>
-
-      {chatError && (
-        <div style={styles.chatError}>
-          {chatError}
-        </div>
-      )}
 
       <form
         onSubmit={sendMessage}
         style={styles.chatForm}
       >
         <input
-          type="text"
           value={text}
           onChange={(event) =>
             setText(event.target.value)
           }
-          placeholder="Reply to the client..."
+          placeholder="Message the client..."
           maxLength={1000}
           disabled={sending}
-          style={styles.chatInput}
+          style={pageTheme.control}
         />
 
         <button
           type="submit"
-          disabled={sending || !text.trim()}
+          disabled={sending}
           style={{
-            ...styles.sendBtn,
-            ...(sending || !text.trim()
-              ? styles.disabledButton
-              : {}),
+            ...pageTheme.buttonPrimary,
+            opacity: sending ? 0.7 : 1,
+            cursor: sending
+              ? "not-allowed"
+              : "pointer",
           }}
         >
-          {sending ? "Sending..." : "Send"}
+          Send
         </button>
       </form>
-    </div>
-  );
-}
-
-function StatCard({ label, value }) {
-  return (
-    <div style={styles.statCard}>
-      <strong style={styles.statValue}>
-        {value}
-      </strong>
-
-      <span style={styles.statLabel}>
-        {label}
-      </span>
-    </div>
+    </section>
   );
 }
 
 function Info({ label, value }) {
   return (
-    <div style={styles.infoBox}>
+    <div style={styles.info}>
       <span style={styles.infoLabel}>
         {label}
       </span>
-
-      <strong style={styles.infoValue}>
-        {value}
+      <strong>
+        {value ?? "Not specified"}
       </strong>
     </div>
   );
 }
 
-function StatusBadge({ status }) {
+function Stat({ label, value }) {
   return (
-    <span
-      style={{
-        ...styles.status,
-        ...(status === "APPROVED"
-          ? styles.approved
-          : status === "REJECTED"
-            ? styles.rejected
-            : styles.pending),
-      }}
-    >
-      {formatStatus(status)}
-    </span>
+    <div style={styles.stat}>
+      <strong style={styles.statValue}>
+        {value}
+      </strong>
+      <span style={styles.infoLabel}>
+        {label}
+      </span>
+    </div>
   );
-}
-
-function getStatus(request) {
-  return String(
-    request?.status || "PENDING"
-  )
-    .trim()
-    .toUpperCase();
-}
-
-function formatStatus(status) {
-  const normalizedStatus = String(
-    status || "PENDING"
-  )
-    .trim()
-    .toUpperCase();
-
-  return (
-    normalizedStatus.charAt(0) +
-    normalizedStatus.slice(1).toLowerCase()
-  );
-}
-
-function formatDateTime(value) {
-  if (!value) {
-    return "";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
-  return date.toLocaleString([], {
-    dateStyle: "short",
-    timeStyle: "short",
-  });
-}
-
-function getUserData() {
-  const possibleKeys = [
-    "currentUser",
-    "tripUser",
-    "user",
-  ];
-
-  for (const key of possibleKeys) {
-    const value = localStorage.getItem(key);
-
-    if (!value || value === "null") {
-      continue;
-    }
-
-    try {
-      const parsedValue = JSON.parse(value);
-
-      if (
-        parsedValue &&
-        typeof parsedValue === "object"
-      ) {
-        return parsedValue;
-      }
-    } catch {
-      // Continue checking other stored values.
-    }
-  }
-
-  return {
-    name:
-      localStorage.getItem("tripUserName") ||
-      localStorage.getItem("userName") ||
-      "User",
-
-    email:
-      localStorage.getItem("tripUserEmail") ||
-      localStorage.getItem("userEmail") ||
-      "",
-
-    role:
-      localStorage.getItem("userRole") ||
-      "client",
-  };
 }
 
 const styles = {
-  page: {
-    width: "100%",
-    minHeight: "100vh",
-    color: "#1e293b",
-    fontFamily: "Inter, Arial, sans-serif",
+  headerCard: {
+    minWidth: 170,
+    padding: "18px 20px",
+    borderRadius: 18,
+    background: "rgba(255, 255, 255, 0.72)",
+    border: "1px solid rgba(147, 197, 253, 0.45)",
+    boxShadow:
+      "0 12px 30px rgba(96, 165, 250, 0.18)",
+    display: "grid",
+    gap: 4,
+    textAlign: "center",
   },
 
-  main: {
-    width: "100%",
-    maxWidth: 1180,
-    margin: "0 auto",
-    padding: "34px 26px 70px",
-    boxSizing: "border-box",
-  },
-
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 18,
-    flexWrap: "wrap",
-    marginBottom: 26,
-  },
-
-  title: {
-    margin: 0,
-    fontSize: 36,
-    fontWeight: 900,
+  headerValue: {
+    fontSize: 28,
     color: "#1e3a8a",
   },
 
-  subtitle: {
-    margin: "8px 0 0",
-    color: "#475569",
-    fontSize: 15,
-    lineHeight: 1.7,
-    maxWidth: 700,
+  headerText: {
+    color: "#64748b",
+    fontSize: 13,
+    fontWeight: 800,
+    lineHeight: 1.5,
+    textTransform: "uppercase",
+    letterSpacing: "0.04em",
   },
 
-  headerBadge: {
-    padding: "14px 18px",
-    borderRadius: 20,
-    background:
-      "linear-gradient(135deg, #93c5fd, #a78bfa)",
-    color: "#0f172a",
-    fontWeight: 900,
-  },
-
-  statsGrid: {
+  statistics: {
     display: "grid",
     gridTemplateColumns:
-      "repeat(auto-fit, minmax(160px, 1fr))",
-    gap: 16,
-    marginBottom: 26,
+      "repeat(auto-fit, minmax(130px, 1fr))",
+    gap: 12,
+    margin: "24px 0",
   },
 
-  statCard: {
-    padding: 20,
-    borderRadius: 22,
-    background: "rgba(255,255,255,0.78)",
-    border:
-      "1px solid rgba(147,197,253,0.45)",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: 6,
+  stat: {
+    display: "grid",
+    gap: 5,
+    padding: 18,
+    borderRadius: 14,
+    background: "rgba(255, 255, 255, 0.72)",
+    border: "1px solid rgba(147, 197, 253, 0.45)",
+    boxShadow:
+      "0 12px 30px rgba(96, 165, 250, 0.18)",
   },
 
   statValue: {
+    fontSize: 28,
     color: "#1e3a8a",
-    fontSize: 32,
-    fontWeight: 900,
-  },
-
-  statLabel: {
-    color: "#475569",
-    fontSize: 14,
-    fontWeight: 900,
   },
 
   grid: {
     display: "grid",
-    gridTemplateColumns:
-      "repeat(auto-fit, minmax(350px, 1fr))",
     gap: 24,
-  },
-
-  card: {
-    padding: 22,
-    borderRadius: 24,
-    background: "rgba(255,255,255,0.78)",
-    border:
-      "1px solid rgba(147,197,253,0.45)",
-    boxSizing: "border-box",
-    boxShadow:
-      "0 18px 45px rgba(59,130,246,0.14)",
   },
 
   cardTop: {
     display: "flex",
     justifyContent: "space-between",
-    gap: 12,
+    gap: 16,
     alignItems: "flex-start",
-    marginBottom: 18,
   },
 
-  clientName: {
-    margin: 0,
-    color: "#1e3a8a",
-    fontSize: 23,
+  cardTitle: {
+    margin: "0 0 8px",
+    fontSize: 24,
     fontWeight: 900,
+    color: "#1e3a8a",
   },
 
-  email: {
-    margin: "5px 0 0",
+  cardText: {
+    margin: 0,
+    color: "#475569",
+  },
+
+  metaRow: {
+    display: "flex",
+    gap: 10,
+    flexWrap: "wrap",
+    alignItems: "center",
+    marginTop: 12,
+  },
+
+  metaText: {
     color: "#64748b",
     fontSize: 13,
     fontWeight: 700,
   },
 
-  status: {
-    padding: "7px 12px",
-    borderRadius: 999,
-    fontSize: 12,
-    fontWeight: 900,
-    whiteSpace: "nowrap",
-  },
-
-  pending: {
-    background: "rgba(250,204,21,0.25)",
-    color: "#a16207",
-  },
-
-  approved: {
-    background: "rgba(34,197,94,0.18)",
-    color: "#15803d",
-  },
-
-  rejected: {
-    background: "rgba(239,68,68,0.15)",
-    color: "#dc2626",
+  tripSyncRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 14,
+    alignItems: "center",
+    flexWrap: "wrap",
   },
 
   infoGrid: {
     display: "grid",
     gridTemplateColumns:
-      "repeat(auto-fit, minmax(130px, 1fr))",
+      "repeat(auto-fit, minmax(170px, 1fr))",
     gap: 12,
+    margin: "20px 0",
   },
 
-  infoBox: {
-    padding: 13,
-    borderRadius: 15,
-    background: "rgba(255,255,255,0.82)",
-    border: "1px solid #bfdbfe",
+  editorGrid: {
+    display: "grid",
+    gridTemplateColumns:
+      "repeat(auto-fit, minmax(170px, 1fr))",
+    gap: 12,
+    marginBottom: 10,
+  },
+
+  info: {
+    display: "grid",
+    gap: 5,
+    padding: 16,
+    borderRadius: 16,
+    background: "rgba(255, 255, 255, 0.78)",
+    border: "1px solid rgba(147, 197, 253, 0.4)",
   },
 
   infoLabel: {
-    display: "block",
     color: "#64748b",
-    fontSize: 12,
-    fontWeight: 800,
-    marginBottom: 5,
-  },
-
-  infoValue: {
-    color: "#0f172a",
-    fontSize: 14,
-    fontWeight: 900,
-    wordBreak: "break-word",
-  },
-
-  notesBox: {
-    marginTop: 14,
-    padding: 15,
-    borderRadius: 17,
-    background: "rgba(239,246,255,0.8)",
-    border: "1px solid #bfdbfe",
-  },
-
-  replyBox: {
-    marginTop: 14,
-    padding: 15,
-    borderRadius: 17,
-    background: "rgba(250,250,255,0.85)",
-    border: "1px solid #ddd6fe",
-  },
-
-  boxTitle: {
-    display: "block",
-    color: "#1e3a8a",
-    marginBottom: 8,
-    fontWeight: 900,
-  },
-
-  boxText: {
-    margin: 0,
-    color: "#334155",
-    lineHeight: 1.6,
+    fontSize: 13,
   },
 
   textarea: {
     width: "100%",
-    minHeight: 90,
-    padding: 12,
-    borderRadius: 14,
-    border: "1px solid #bfdbfe",
-    resize: "vertical",
+    minHeight: 100,
     boxSizing: "border-box",
-    outline: "none",
-    fontFamily: "inherit",
+    resize: "vertical",
   },
 
-  replyFooter: {
+  actions: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 10,
+    marginTop: 12,
+  },
+
+  editorActions: {
+    display: "flex",
+    justifyContent: "flex-end",
+  },
+
+  boxLabel: {
+    display: "block",
+    marginBottom: 8,
+    color: "#1e3a8a",
+  },
+
+  boxText: {
+    margin: 0,
+    color: "#475569",
+    lineHeight: 1.7,
+  },
+
+  replyHeader: {
     display: "flex",
     justifyContent: "space-between",
     gap: 12,
-    marginTop: 7,
-  },
-
-  replyHint: {
-    color: "#64748b",
-    fontSize: 12,
-    fontWeight: 700,
+    alignItems: "center",
+    marginBottom: 10,
   },
 
   replyCount: {
@@ -1028,184 +1236,52 @@ const styles = {
     fontWeight: 800,
   },
 
-  currentReply: {
+  replyHint: {
     margin: "10px 0 0",
-    color: "#475569",
-    fontSize: 13,
-    fontWeight: 700,
-  },
-
-  actions: {
-    marginTop: 16,
-    display: "flex",
-    gap: 10,
-    flexWrap: "wrap",
-  },
-
-  approveBtn: {
-    padding: "11px 14px",
-    border: "none",
-    borderRadius: 13,
-    background: "#22c55e",
-    color: "#ffffff",
-    fontWeight: 900,
-    cursor: "pointer",
-  },
-
-  rejectBtn: {
-    padding: "11px 14px",
-    border: "none",
-    borderRadius: 13,
-    background: "#ef4444",
-    color: "#ffffff",
-    fontWeight: 900,
-    cursor: "pointer",
-  },
-
-  resetBtn: {
-    padding: "11px 14px",
-    border: "none",
-    borderRadius: 13,
-    background: "#64748b",
-    color: "#ffffff",
-    fontWeight: 900,
-    cursor: "pointer",
-  },
-
-  disabledButton: {
-    opacity: 0.55,
-    cursor: "not-allowed",
-  },
-
-  emptyBox: {
-    padding: 34,
-    borderRadius: 24,
-    background: "rgba(255,255,255,0.78)",
-    border:
-      "1px solid rgba(147,197,253,0.45)",
-    textAlign: "center",
-  },
-
-  emptyTitle: {
-    margin: 0,
-    color: "#1e3a8a",
-    fontSize: 24,
-    fontWeight: 900,
-  },
-
-  emptyText: {
-    margin: "10px auto 0",
     color: "#64748b",
-    fontWeight: 600,
-    maxWidth: 560,
-    lineHeight: 1.7,
-  },
-
-  errorBox: {
-    marginBottom: 18,
-    padding: 13,
-    borderRadius: 14,
-    background: "rgba(239,68,68,0.15)",
-    color: "#dc2626",
-    fontWeight: 900,
-  },
-
-  successBox: {
-    marginBottom: 18,
-    padding: 13,
-    borderRadius: 14,
-    background: "rgba(34,197,94,0.15)",
-    color: "#15803d",
-    fontWeight: 900,
-  },
-
-  chatBox: {
-    marginTop: 14,
-    padding: 15,
-    borderRadius: 17,
-    background: "rgba(255,255,255,0.86)",
-    border: "1px solid #bfdbfe",
-  },
-
-  chatTitle: {
-    margin: "0 0 12px",
-    color: "#1e3a8a",
-    fontSize: 16,
-    fontWeight: 900,
+    fontSize: 12,
+    fontWeight: 700,
+    lineHeight: 1.6,
   },
 
   messages: {
-    maxHeight: 220,
-    overflowY: "auto",
-    display: "flex",
-    flexDirection: "column",
+    display: "grid",
     gap: 10,
+    maxHeight: 260,
+    overflowY: "auto",
   },
 
-  emptyChat: {
-    color: "#64748b",
-    fontSize: 13,
-    fontWeight: 700,
-  },
-
-  messageRow: {
-    display: "flex",
-  },
-
-  bubble: {
+  message: {
+    width: "fit-content",
     maxWidth: "80%",
-    padding: 11,
-    borderRadius: 14,
-  },
-
-  organizerBubble: {
-    background: "#dbeafe",
-    color: "#1e3a8a",
-  },
-
-  clientBubble: {
-    background: "#f1f5f9",
-    color: "#0f172a",
+    padding: 12,
+    borderRadius: 12,
+    border: "1px solid rgba(147, 197, 253, 0.32)",
   },
 
   messageText: {
-    margin: "6px 0",
-    lineHeight: 1.5,
+    margin: "8px 0 0",
+    color: "#334155",
   },
 
   messageTime: {
+    display: "block",
+    marginTop: 8,
     color: "#64748b",
     fontSize: 11,
   },
 
-  chatError: {
-    marginTop: 8,
-    color: "#dc2626",
-    fontSize: 12,
-    fontWeight: 800,
+  chatEmpty: {
+    padding: 12,
+    borderRadius: 12,
+    color: "#64748b",
+    background: "rgba(255, 255, 255, 0.68)",
   },
 
   chatForm: {
-    marginTop: 12,
     display: "flex",
-    gap: 8,
-  },
-
-  chatInput: {
-    flex: 1,
-    padding: "11px 12px",
-    borderRadius: 13,
-    border: "1px solid #bfdbfe",
-    outline: "none",
-  },
-
-  sendBtn: {
-    padding: "11px 14px",
-    border: "none",
-    borderRadius: 13,
-    background: "#2563eb",
-    color: "#ffffff",
-    fontWeight: 900,
-    cursor: "pointer",
+    flexWrap: "wrap",
+    gap: 10,
+    marginTop: 12,
   },
 };

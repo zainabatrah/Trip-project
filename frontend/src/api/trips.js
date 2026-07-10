@@ -1,28 +1,28 @@
-import { apiRequest } from "./http";
+import { apiRequest } from "./http.js";
 
-export async function getTrips() {
+export function getTrips() {
   return apiRequest("/trips");
 }
 
-export async function getTripById(id) {
+export function getTripById(id) {
   return apiRequest(`/trips/${id}`);
 }
 
-export async function createTrip(tripData) {
+export function createTrip(tripData) {
   return apiRequest("/trips", {
     method: "POST",
-    body: JSON.stringify(tripData),
+    body: tripData,
   });
 }
 
-export async function updateTrip(id, tripData) {
+export function updateTrip(id, tripData) {
   return apiRequest(`/trips/${id}`, {
     method: "PUT",
-    body: JSON.stringify(tripData),
+    body: tripData,
   });
 }
 
-export async function deleteTrip(id) {
+export function deleteTrip(id) {
   return apiRequest(`/trips/${id}`, {
     method: "DELETE",
   });

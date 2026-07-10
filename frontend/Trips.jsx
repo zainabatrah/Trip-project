@@ -5,80 +5,140 @@ const trips = [
   {
     id: 1,
     title: "Mountain Adventure",
-    vehicle: "BUS",
-    icon: "🚌",
+    country: "USA",
+    transportation: "bus",
+    tripType: "adventure",
     from: "New York",
     to: "Denver",
     description: "Explore the breathtaking mountain trails with experienced guides",
-    date: "Sun, Mar 15",
+    date: "2026-03-15",
     price: 149.99,
-    seatsLeft: 39,
+    duration: 2,
+    numberOfTravelers: 48,
+    reservedTravelers: 9,
+    rating: 4.8,
   },
   {
     id: 2,
     title: "Coastal Express",
-    vehicle: "TRAIN",
-    icon: "🚆",
+    country: "USA",
+    transportation: "train",
+    tripType: "relax",
     from: "Los Angeles",
     to: "San Francisco",
     description: "A scenic journey along the beautiful coastline",
-    date: "Fri, Mar 20",
+    date: "2026-03-20",
     price: 89.99,
-    seatsLeft: 50,
+    duration: 1,
+    numberOfTravelers: 60,
+    reservedTravelers: 10,
+    rating: 4.6,
   },
   {
     id: 3,
     title: "Sky High Journey",
-    vehicle: "FLIGHT",
-    icon: "✈️",
+    country: "USA",
+    transportation: "flight",
+    tripType: "business",
     from: "Chicago",
     to: "Miami",
     description: "Premium flight experience with complimentary meals",
-    date: "Wed, Apr 1",
+    date: "2026-04-01",
     price: 299.99,
-    seatsLeft: 180,
+    duration: 1,
+    numberOfTravelers: 220,
+    reservedTravelers: 40,
+    rating: 4.9,
   },
   {
     id: 4,
     title: "Island Escape",
-    vehicle: "SHIP",
-    icon: "🚢",
+    country: "Greece",
+    transportation: "car",
+    tripType: "relax",
     from: "Athens",
     to: "Santorini",
     description: "Relaxing sea trip with beautiful island views",
-    date: "Mon, Apr 7",
+    date: "2026-04-07",
     price: 199.99,
-    seatsLeft: 62,
+    duration: 2,
+    numberOfTravelers: 70,
+    reservedTravelers: 8,
+    rating: 4.7,
   },
   {
     id: 5,
     title: "City Explorer",
-    vehicle: "BUS",
-    icon: "🚌",
+    country: "USA",
+    transportation: "bus",
+    tripType: "family",
     from: "Boston",
     to: "Washington",
     description: "Comfortable bus trip through historic city routes",
-    date: "Thu, Apr 10",
+    date: "2026-04-10",
     price: 79.99,
-    seatsLeft: 44,
+    duration: 1,
+    numberOfTravelers: 52,
+    reservedTravelers: 8,
+    rating: 4.5,
   },
   {
     id: 6,
     title: "Railway Discovery",
-    vehicle: "TRAIN",
-    icon: "🚆",
+    country: "France",
+    transportation: "train",
+    tripType: "business",
     from: "Paris",
     to: "Berlin",
     description: "Fast train ride with calm views and comfortable seats",
-    date: "Sat, Apr 12",
+    date: "2026-04-12",
     price: 129.99,
-    seatsLeft: 88,
+    duration: 1,
+    numberOfTravelers: 100,
+    reservedTravelers: 12,
+    rating: 4.4,
   },
 ];
 
+function getTransportIcon(type) {
+  if (type === "flight") return "✈️";
+  if (type === "train") return "🚆";
+  if (type === "car") return "🚗";
+  return "🚌";
+}
+
+function formatTripDate(value) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function capitalize(value) {
+  const text = String(value || "");
+  return text
+    ? text.charAt(0).toUpperCase() + text.slice(1)
+    : "";
+}
+
+function seatsLeft(trip) {
+  return Math.max(
+    Number(trip.numberOfTravelers || 0) -
+      Number(trip.reservedTravelers || 0),
+    0
+  );
+}
+
 export default function Trips() {
   const [search, setSearch] = useState("");
-  const [vehicle, setVehicle] = useState("All Vehicles");
+  const [transportation, setTransportation] = useState("all");
   const [sort, setSort] = useState("Latest");
 
   const filteredTrips = useMemo(() => {
@@ -88,10 +148,11 @@ export default function Trips() {
         trip.from.toLowerCase().includes(search.toLowerCase()) ||
         trip.to.toLowerCase().includes(search.toLowerCase());
 
-      const matchesVehicle =
-        vehicle === "All Vehicles" || trip.vehicle === vehicle;
+      const matchesTransportation =
+        transportation === "all" ||
+        trip.transportation === transportation;
 
-      return matchesSearch && matchesVehicle;
+      return matchesSearch && matchesTransportation;
     });
 
     if (sort === "Price Low") {
@@ -103,7 +164,7 @@ export default function Trips() {
     }
 
     return list;
-  }, [search, vehicle, sort]);
+  }, [search, transportation, sort]);
 
   return (
     <div style={styles.page}>
@@ -169,14 +230,14 @@ export default function Trips() {
           <div style={styles.selectGroup}>
             <select
               style={styles.select}
-              value={vehicle}
-              onChange={(e) => setVehicle(e.target.value)}
+              value={transportation}
+              onChange={(e) => setTransportation(e.target.value)}
             >
-              <option>All Vehicles</option>
-              <option>BUS</option>
-              <option>TRAIN</option>
-              <option>FLIGHT</option>
-              <option>SHIP</option>
+              <option value="all">All Transportation</option>
+              <option value="bus">Bus</option>
+              <option value="train">Train</option>
+              <option value="flight">Flight</option>
+              <option value="car">Car</option>
             </select>
 
             <select
@@ -195,17 +256,19 @@ export default function Trips() {
           {filteredTrips.map((trip) => (
             <div key={trip.id} style={styles.card}>
               <div style={styles.imageArea}>
-                <span style={styles.tripIcon}>{trip.icon}</span>
+                <span style={styles.tripIcon}>
+                  {getTransportIcon(trip.transportation)}
+                </span>
                 <span
                   style={{
                     ...styles.badge,
-                    ...(trip.vehicle === "BUS" ? styles.badgeBus : {}),
-                    ...(trip.vehicle === "TRAIN" ? styles.badgeTrain : {}),
-                    ...(trip.vehicle === "FLIGHT" ? styles.badgeFlight : {}),
-                    ...(trip.vehicle === "SHIP" ? styles.badgeShip : {}),
+                    ...(trip.transportation === "bus" ? styles.badgeBus : {}),
+                    ...(trip.transportation === "train" ? styles.badgeTrain : {}),
+                    ...(trip.transportation === "flight" ? styles.badgeFlight : {}),
+                    ...(trip.transportation === "car" ? styles.badgeShip : {}),
                   }}
                 >
-                  {trip.vehicle}
+                  {capitalize(trip.transportation)}
                 </span>
               </div>
 
@@ -220,7 +283,9 @@ export default function Trips() {
                 </div>
 
                 <p style={styles.description}>{trip.description}</p>
-                <p style={styles.date}>{trip.date}</p>
+                <p style={styles.date}>
+                  {formatTripDate(trip.date)}
+                </p>
 
                 <div style={styles.cardDivider} />
 
@@ -230,7 +295,9 @@ export default function Trips() {
                     <span style={styles.perSeat}>/seat</span>
                   </div>
 
-                  <span style={styles.seats}>{trip.seatsLeft} seats left</span>
+                  <span style={styles.seats}>
+                    {seatsLeft(trip)} seats left
+                  </span>
                 </div>
               </div>
             </div>

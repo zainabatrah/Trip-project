@@ -1,35 +1,89 @@
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = (
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:5000/api"
+).replace(/\/+$/, "");
 
-export async function apiRequest(path, options = {}) {
-  const response = await fetch(`${API_URL}${path}`, {
-    ...options,
+export async function apiRequest(
+  path,
+  options = {}
+) {
+  const token =
+    localStorage.getItem("token") ||
+    localStorage.getItem("authToken") ||
+    "";
 
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
-  });
+  const originalBody = options.body;
 
-  const contentType = response.headers.get("content-type");
+  const isFormData =
+    typeof FormData !== "undefined" &&
+    originalBody instanceof FormData;
+
+  let body = originalBody;
+
+  if (
+    body !== undefined &&
+    body !== null &&
+    !isFormData &&
+    typeof body !== "string"
+  ) {
+    body = JSON.stringify(body);
+  }
+
+  const headers = {
+    Accept: "application/json",
+    ...(isFormData
+      ? {}
+      : {
+          "Content-Type": "application/json",
+        }),
+    ...(token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : {}),
+    ...(options.headers || {}),
+  };
+
+  const response = await fetch(
+    `${API_URL}${path}`,
+    {
+      ...options,
+      body,
+      headers,
+    }
+  );
+
+  if (response.status === 204) {
+    return null;
+  }
+
+  const contentType =
+    response.headers.get("content-type") || "";
 
   let data;
 
-  if (contentType?.includes("application/json")) {
+  if (contentType.includes("application/json")) {
     data = await response.json();
   } else {
     const text = await response.text();
 
     data = {
       message:
-        text || `Request failed with status ${response.status}`,
+        text ||
+        `Request failed with status ${response.status}.`,
     };
   }
 
   if (!response.ok) {
-    throw new Error(
-      data.message || `Request failed with status ${response.status}`
+    const error = new Error(
+      data?.message ||
+        `Request failed with status ${response.status}.`
     );
+
+    error.status = response.status;
+    error.data = data;
+
+    throw error;
   }
 
   return data;

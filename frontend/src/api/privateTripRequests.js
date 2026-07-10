@@ -1,106 +1,109 @@
 import { apiRequest } from "./http.js";
 
-export function getPrivateTripRequests() {
-  return apiRequest("/private-trip-requests");
-}
+let privateTripRequestsPromise =
+  null;
 
-export function getPrivateTripRequestById(id) {
-  return apiRequest(`/private-trip-requests/${id}`);
-}
-
-export function createPrivateTripRequest(requestData) {
-  return apiRequest("/private-trip-requests", {
-    method: "POST",
-    body: JSON.stringify(requestData),
-  });
-}
-
-export function updatePrivateTripRequest(id, requestData) {
-  return apiRequest(`/private-trip-requests/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(requestData),
-  });
-}
-
-export function deletePrivateTripRequest(id) {
-  return apiRequest(`/private-trip-requests/${id}`, {
-    method: "DELETE",
-  });
-}
-
-/*
-Supports both:
-
-updatePrivateTripRequestStatus(id, "APPROVED", "Enjoy");
-
-and:
-
-updatePrivateTripRequestStatus(id, {
-  status: "APPROVED",
-  organizerReply: "Enjoy"
-});
-*/
-export function updatePrivateTripRequestStatus(
-  id,
-  statusOrData,
-  organizerReply = ""
+export function createPrivateTripRequest(
+  requestData
 ) {
-  let payload;
+  return apiRequest(
+    "/private-trip-requests",
+    {
+      method: "POST",
+      body: requestData,
+    }
+  );
+}
 
-  if (
-    statusOrData &&
-    typeof statusOrData === "object" &&
-    !Array.isArray(statusOrData)
-  ) {
-    payload = {
-      status: String(statusOrData.status || "").toUpperCase(),
-
-      organizerReply:
-        statusOrData.organizerReply ||
-        statusOrData.organizerMessage ||
-        "",
-    };
-  } else {
-    payload = {
-      status: String(statusOrData || "").toUpperCase(),
-      organizerReply,
-    };
+export function getPrivateTripRequests() {
+  if (!privateTripRequestsPromise) {
+    privateTripRequestsPromise =
+      apiRequest(
+        "/private-trip-requests"
+      ).finally(() => {
+        privateTripRequestsPromise =
+          null;
+      });
   }
 
-  return apiRequest(`/private-trip-requests/${id}/status`, {
-    method: "PATCH",
-    body: JSON.stringify(payload),
-  });
+  return privateTripRequestsPromise;
 }
 
-export function getPrivateTripMessages(requestId) {
+export function getMyPrivateTripRequests() {
   return apiRequest(
-    `/private-trip-requests/${requestId}/messages`
+    "/private-trip-requests/mine"
+  );
+}
+
+export function getPrivateTripRequest(id) {
+  return apiRequest(
+    `/private-trip-requests/${id}`
+  );
+}
+
+export function updatePrivateTripRequest(
+  id,
+  requestData
+) {
+  return apiRequest(
+    `/private-trip-requests/${id}`,
+    {
+      method: "PATCH",
+      body: requestData,
+    }
+  );
+}
+
+export function updatePrivateTripRequestStatus(
+  id,
+  statusData
+) {
+  return apiRequest(
+    `/private-trip-requests/${id}/status`,
+    {
+      method: "PATCH",
+      body: statusData,
+    }
+  );
+}
+
+export function getPrivateTripMessages(id) {
+  return apiRequest(
+    `/private-trip-requests/${id}/messages`
   );
 }
 
 export function sendPrivateTripMessage(
-  requestId,
+  id,
   messageData
 ) {
   return apiRequest(
-    `/private-trip-requests/${requestId}/messages`,
+    `/private-trip-requests/${id}/messages`,
     {
       method: "POST",
-      body: JSON.stringify(messageData),
+      body: messageData,
     }
   );
 }
 
 export function sendOrganizerTripMessage(
-  requestId,
+  id,
   messageData
 ) {
   return apiRequest(
-    `/private-trip-requests/${requestId}/organizer-messages`,
+    `/private-trip-requests/${id}/organizer-messages`,
     {
       method: "POST",
-      body: JSON.stringify(messageData),
+      body: messageData,
+    }
+  );
+}
+
+export function deletePrivateTripRequest(id) {
+  return apiRequest(
+    `/private-trip-requests/${id}`,
+    {
+      method: "DELETE",
     }
   );
 }

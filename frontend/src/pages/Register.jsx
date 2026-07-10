@@ -1,6 +1,15 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { registerUser, saveAuth } from "../api/auth";
+import {
+  Link,
+  useNavigate,
+} from "react-router-dom";
+
+import PublicPageLayout from "../components/PublicPageLayout.jsx";
+import { pageTheme } from "../components/publicPageTheme.js";
+import {
+  isOrganizerRole,
+  registerUser,
+} from "../api/auth.js";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -9,302 +18,318 @@ export default function Register() {
     fullName: "",
     email: "",
     password: "",
+    confirmPassword: "",
   });
 
-  const [idFile, setIdFile] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [idDocument, setIdDocument] =
+    useState(null);
+
+  const [loading, setLoading] =
+    useState(false);
+
   const [error, setError] = useState("");
 
-  const handleChange = (e) => {
-    setForm((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
+  function handleChange(event) {
+    const { name, value } = event.target;
+
+    setForm((current) => ({
+      ...current,
+      [name]: value,
     }));
-  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
     setError("");
+  }
 
-    const fullName = form.fullName.trim();
-    const email = form.email.trim().toLowerCase();
-    const password = form.password;
+  function handleFileChange(event) {
+    const file =
+      event.target.files?.[0] || null;
 
-    if (!fullName || !email || !password) {
-      setError("Please fill all fields.");
+    if (!file) {
+      setIdDocument(null);
       return;
     }
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "application/pdf",
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      event.target.value = "";
+      setIdDocument(null);
+      setError(
+        "Only JPG, PNG, and PDF files are allowed."
+      );
       return;
     }
 
-    if (!idFile) {
-      setError("Please upload your ID document.");
+    if (file.size > 5 * 1024 * 1024) {
+      event.target.value = "";
+      setIdDocument(null);
+      setError(
+        "The ID document cannot exceed 5 MB."
+      );
+      return;
+    }
+
+    setIdDocument(file);
+    setError("");
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+
+    if (loading) {
+      return;
+    }
+
+    const fullName =
+      form.fullName.trim();
+
+    const email = form.email
+      .trim()
+      .toLowerCase();
+
+    if (fullName.length < 2) {
+      setError(
+        "Full name must contain at least 2 characters."
+      );
+      return;
+    }
+
+    if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+        email
+      )
+    ) {
+      setError(
+        "Enter a valid email address."
+      );
+      return;
+    }
+
+    if (form.password.length < 6) {
+      setError(
+        "Password must contain at least 6 characters."
+      );
+      return;
+    }
+
+    if (
+      form.password !==
+      form.confirmPassword
+    ) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    if (!idDocument) {
+      setError("Upload your ID document.");
       return;
     }
 
     try {
       setLoading(true);
+      setError("");
 
       const formData = new FormData();
-      formData.append("fullName", fullName);
+
+      formData.append(
+        "fullName",
+        fullName
+      );
+
       formData.append("email", email);
-      formData.append("password", password);
-      formData.append("idDocument", idFile);
 
-      const data = await registerUser(formData);
-      saveAuth(data);
+      formData.append(
+        "password",
+        form.password
+      );
 
-      navigate("/trips", { replace: true });
-    } catch (err) {
-      setError(err.message || "Registration failed.");
+      formData.append(
+        "idDocument",
+        idDocument
+      );
+
+      const data =
+        await registerUser(formData);
+
+      navigate(
+        isOrganizerRole(
+          data.user.role
+        )
+          ? "/approve"
+          : "/trips",
+        {
+          replace: true,
+        }
+      );
+    } catch (requestError) {
+      setError(
+        requestError.message ||
+          "Registration failed."
+      );
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <div style={styles.logoBox}>T</div>
+    <PublicPageLayout
+      showHeader={false}
+      maxWidth={460}
+      mainStyle={styles.main}
+    >
+      <section style={styles.card}>
+        <h1 style={styles.title}>
+          Create Account
+        </h1>
 
-        <h2 style={styles.title}>Create Account</h2>
+        {error && (
+          <div style={pageTheme.errorBox}>
+            {error}
+          </div>
+        )}
 
-        <p style={styles.subtitle}>
-          Register your account to browse, plan, and book trips.
-        </p>
-
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <label style={styles.label}>Full Name</label>
-          <input
-            type="text"
+        <form onSubmit={handleSubmit}>
+          <Field
+            label="Full name"
             name="fullName"
-            placeholder="Enter your full name"
             value={form.fullName}
             onChange={handleChange}
-            required
-            style={styles.input}
+            disabled={loading}
           />
 
-          <label style={styles.label}>Email Address</label>
-          <input
-            type="email"
+          <Field
+            label="Email"
             name="email"
-            placeholder="Enter your email address"
+            type="email"
             value={form.email}
             onChange={handleChange}
-            required
-            style={styles.input}
+            disabled={loading}
           />
 
-          <label style={styles.label}>Password</label>
-          <input
-            type="password"
+          <Field
+            label="Password"
             name="password"
-            placeholder="Create a password"
+            type="password"
             value={form.password}
             onChange={handleChange}
-            required
-            style={styles.input}
+            disabled={loading}
           />
 
-          <label style={styles.label}>Upload ID Document</label>
-          <input
-            type="file"
-            accept=".jpg,.jpeg,.png,.pdf"
-            onChange={(e) => setIdFile(e.target.files?.[0] || null)}
-            required
-            style={styles.fileInput}
+          <Field
+            label="Confirm password"
+            name="confirmPassword"
+            type="password"
+            value={form.confirmPassword}
+            onChange={handleChange}
+            disabled={loading}
           />
 
-          {idFile && (
-            <p style={styles.fileName}>
-              Selected file:{" "}
-              <span style={styles.fileNameStrong}>{idFile.name}</span>
-            </p>
-          )}
+          <label style={pageTheme.field}>
+            <span>ID document</span>
 
-          {error && <p style={styles.error}>{error}</p>}
+            <input
+              type="file"
+              accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
+              onChange={handleFileChange}
+              disabled={loading}
+              style={styles.fileInput}
+            />
+          </label>
 
           <button
             type="submit"
             disabled={loading}
             style={{
-              ...styles.button,
-              opacity: loading ? 0.65 : 1,
-              cursor: loading ? "not-allowed" : "pointer",
+              ...pageTheme.buttonPrimary,
+              width: "100%",
+              opacity: loading ? 0.7 : 1,
+              cursor: loading
+                ? "not-allowed"
+                : "pointer",
             }}
           >
-            {loading ? "Registering..." : "Register"}
+            {loading
+              ? "Creating account..."
+              : "Register"}
           </button>
         </form>
 
         <p style={styles.bottomText}>
-          Already have an account?{" "}
+          Already registered?{" "}
           <Link to="/login" style={styles.link}>
             Login
           </Link>
         </p>
+      </section>
+    </PublicPageLayout>
+  );
+}
 
-        <Link to="/" style={styles.backLink}>
-          ← Back to home
-        </Link>
-      </div>
-    </div>
+function Field({
+  label,
+  name,
+  type = "text",
+  value,
+  onChange,
+  disabled,
+}) {
+  return (
+    <label style={pageTheme.field}>
+      <span>{label}</span>
+
+      <input
+        name={name}
+        type={type}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        style={pageTheme.control}
+      />
+    </label>
   );
 }
 
 const styles = {
-  page: {
-    width: "100%",
-    minHeight: "100vh",
-    display: "flex",
-    justifyContent: "center",
+  main: {
+    minHeight: "calc(100vh - 70px)",
+    display: "grid",
     alignItems: "center",
-    padding: "24px",
-    background:
-      "linear-gradient(135deg, #dbeafe 0%, #c7d2fe 55%, #e9d5ff 100%)",
-    color: "#1e293b",
-    fontFamily: "Inter, Arial, sans-serif",
-    boxSizing: "border-box",
   },
 
   card: {
     width: "100%",
-    maxWidth: "460px",
-    padding: "36px",
-    borderRadius: "24px",
+    padding: 28,
+    borderRadius: 20,
     background: "rgba(255, 255, 255, 0.72)",
     border: "1px solid rgba(147, 197, 253, 0.45)",
     boxShadow: "0 25px 70px rgba(59, 130, 246, 0.22)",
     backdropFilter: "blur(16px)",
     WebkitBackdropFilter: "blur(16px)",
-    boxSizing: "border-box",
-  },
-
-  logoBox: {
-    width: 54,
-    height: 54,
-    borderRadius: 18,
-    margin: "0 auto 18px",
-    background: "linear-gradient(135deg, #60a5fa, #a78bfa)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "#ffffff",
-    fontSize: 24,
-    fontWeight: 900,
   },
 
   title: {
-    textAlign: "center",
-    margin: 0,
-    fontSize: "28px",
+    margin: "0 0 18px",
+    fontSize: 28,
     fontWeight: 900,
     color: "#1e3a8a",
   },
 
-  subtitle: {
-    textAlign: "center",
-    margin: "8px 0 26px",
-    fontSize: "14px",
-    fontWeight: 500,
-    color: "#475569",
-    lineHeight: 1.6,
-  },
-
-  form: {
-    display: "flex",
-    flexDirection: "column",
-  },
-
-  label: {
-    marginBottom: "7px",
-    fontSize: "13px",
-    fontWeight: 800,
+  fileInput: {
+    padding: "12px 0",
     color: "#334155",
   },
 
-  input: {
-    marginBottom: "16px",
-    padding: "13px 14px",
-    borderRadius: "14px",
-    border: "1px solid #bfdbfe",
-    background: "rgba(255,255,255,0.9)",
-    color: "#0f172a",
-    outline: "none",
-    fontSize: "14px",
-    fontWeight: 500,
-    boxSizing: "border-box",
-  },
-
-  fileInput: {
-    marginBottom: "10px",
-    padding: "12px",
-    borderRadius: "14px",
-    border: "1px dashed #93c5fd",
-    background: "rgba(255,255,255,0.82)",
-    color: "#475569",
-    fontSize: "13px",
-  },
-
-  fileName: {
-    margin: "0 0 14px",
-    fontSize: "13px",
-    color: "#475569",
-    lineHeight: 1.5,
-  },
-
-  fileNameStrong: {
-    color: "#2563eb",
-    fontWeight: 800,
-  },
-
-  button: {
-    marginTop: "8px",
-    padding: "14px",
-    borderRadius: "14px",
-    border: "none",
-    background: "linear-gradient(135deg, #93c5fd, #a78bfa)",
-    color: "#0f172a",
-    fontSize: "15px",
-    fontWeight: 900,
-  },
-
-  error: {
-    padding: "11px 12px",
-    borderRadius: "12px",
-    background: "rgba(248, 113, 113, 0.14)",
-    border: "1px solid rgba(248, 113, 113, 0.35)",
-    color: "#dc2626",
-    margin: "0 0 14px",
-    fontSize: "14px",
-    textAlign: "center",
-    fontWeight: 700,
-  },
-
   bottomText: {
-    margin: "20px 0 0",
-    textAlign: "center",
-    fontSize: "14px",
+    margin: "18px 0 0",
     color: "#475569",
   },
 
   link: {
     color: "#2563eb",
-    textDecoration: "none",
     fontWeight: 900,
-  },
-
-  backLink: {
-    display: "block",
-    marginTop: "14px",
-    textAlign: "center",
-    color: "#6366f1",
-    textDecoration: "none",
-    fontSize: "14px",
-    fontWeight: 800,
   },
 };

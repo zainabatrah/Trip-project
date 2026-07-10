@@ -1,37 +1,140 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import TopNavbar from "../components/TopNavbar";
-import welcomeStyles from "../Styles/welcome.module.css";
-import { getTrips } from "../api/trips";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
-const badgeStyles = {
-  BUS: {
-    background: "rgba(129, 140, 248, 0.25)",
-    color: "#4f46e5",
-  },
-  VAN: {
-    background: "rgba(45, 212, 191, 0.25)",
-    color: "#0f766e",
-  },
-  MINIBUS: {
-    background: "rgba(96, 165, 250, 0.25)",
-    color: "#2563eb",
-  },
-  "PRIVATE CAR": {
-    background: "rgba(250, 204, 21, 0.28)",
-    color: "#a16207",
-  },
-};
+import { Link } from "react-router-dom";
+import PublicPageLayout from "../components/PublicPageLayout.jsx";
+import { pageTheme } from "../components/publicPageTheme.js";
+import { getTrips } from "../api/trips.js";
+
+const defaultTripImage =
+  "/Images/Libanon233.jpg";
+
+function formatDate(value) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Date unavailable";
+  }
+
+  return date.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+function capitalize(value) {
+  const text = String(value || "");
+
+  return text
+    ? text.charAt(0).toUpperCase() +
+        text.slice(1)
+    : "Not specified";
+}
+
+function seatsLeft(trip) {
+  return Math.max(
+    Number(trip.numberOfTravelers || 0) -
+      Number(trip.reservedTravelers || 0),
+    0
+  );
+}
+
+function resolveTripCardImage(trip, usedImages) {
+  const candidates = [];
+
+  function addCandidate(image) {
+    const normalized = String(
+      image || ""
+    ).trim();
+
+    if (
+      !normalized ||
+      candidates.includes(normalized)
+    ) {
+      return;
+    }
+
+    candidates.push(normalized);
+  }
+
+  addCandidate(trip?.photo);
+
+  if (Array.isArray(trip?.places)) {
+    for (const place of trip.places) {
+      addCandidate(place?.image);
+    }
+  }
+
+  addCandidate(defaultTripImage);
+
+  return (
+    candidates.find(
+      (image) => !usedImages.has(image)
+    ) ||
+    candidates[0] ||
+    defaultTripImage
+  );
+}
+
+function buildMapLink(trip) {
+  const firstPlace = Array.isArray(
+    trip.places
+  )
+    ? trip.places[0]
+    : null;
+
+  const params =
+    new URLSearchParams();
+
+  if (trip.title) {
+    params.set("title", trip.title);
+  }
+
+  if (trip.to) {
+    params.set("city", trip.to);
+  }
+
+  if (
+    firstPlace?.latitude !==
+      undefined &&
+    firstPlace?.longitude !==
+      undefined
+  ) {
+    params.set(
+      "lat",
+      String(firstPlace.latitude)
+    );
+    params.set(
+      "lng",
+      String(firstPlace.longitude)
+    );
+  }
+
+  const query = params.toString();
+
+  return query
+    ? `/map?${query}`
+    : "/map";
+}
 
 export default function Trips() {
   const [trips, setTrips] = useState([]);
   const [search, setSearch] = useState("");
-  const [vehicle, setVehicle] = useState("All Vehicles");
-  const [sort, setSort] = useState("Latest");
+  const [transportation, setTransportation] =
+    useState("all");
+  const [sort, setSort] = useState("date");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    let cancelled = false;
+
     async function loadTrips() {
       try {
         setLoading(true);
@@ -39,489 +142,547 @@ export default function Trips() {
 
         const data = await getTrips();
 
-        setTrips(data.trips || data || []);
-      } catch (err) {
-        setError(err.message || "Could not load trips.");
+        if (!cancelled) {
+          setTrips(
+            Array.isArray(data?.trips)
+              ? data.trips
+              : []
+          );
+        }
+      } catch (requestError) {
+        if (!cancelled) {
+          setError(
+            requestError.message ||
+              "Could not load trips."
+          );
+
+          setTrips([]);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
 
     loadTrips();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const filteredTrips = useMemo(() => {
-    let list = trips.filter((trip) => {
-      const searchValue = search.toLowerCase().trim();
+    const query = search
+      .trim()
+      .toLowerCase();
+
+    let result = trips.filter((trip) => {
+      const searchableText = [
+        trip.title,
+        trip.country,
+        trip.from,
+        trip.to,
+        trip.tripType,
+      ]
+        .join(" ")
+        .toLowerCase();
 
       const matchesSearch =
-        trip.title?.toLowerCase().includes(searchValue) ||
-        trip.from?.toLowerCase().includes(searchValue) ||
-        trip.to?.toLowerCase().includes(searchValue) ||
-        trip.category?.toLowerCase().includes(searchValue);
+        searchableText.includes(query);
 
-      const matchesVehicle =
-        vehicle === "All Vehicles" || trip.vehicle === vehicle;
+      const matchesTransportation =
+        transportation === "all" ||
+        trip.transportation ===
+          transportation;
 
-      return matchesSearch && matchesVehicle;
+      return (
+        matchesSearch &&
+        matchesTransportation
+      );
     });
 
-    if (sort === "Price Low") {
-      list = [...list].sort((a, b) => Number(a.price) - Number(b.price));
-    }
-
-    if (sort === "Price High") {
-      list = [...list].sort((a, b) => Number(b.price) - Number(a.price));
-    }
-
-    if (sort === "Latest") {
-      list = [...list].sort(
-        (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+    if (sort === "price-low") {
+      result = [...result].sort(
+        (first, second) =>
+          Number(first.price || 0) -
+          Number(second.price || 0)
       );
     }
 
-    return list;
-  }, [trips, search, vehicle, sort]);
+    if (sort === "price-high") {
+      result = [...result].sort(
+        (first, second) =>
+          Number(second.price || 0) -
+          Number(first.price || 0)
+      );
+    }
+
+    if (sort === "date") {
+      result = [...result].sort(
+        (first, second) =>
+          new Date(first.date) -
+          new Date(second.date)
+      );
+    }
+
+    if (sort === "latest") {
+      result = [...result].sort(
+        (first, second) =>
+          new Date(second.createdAt) -
+          new Date(first.createdAt)
+      );
+    }
+
+    return result;
+  }, [
+    trips,
+    search,
+    transportation,
+    sort,
+  ]);
+
+  const displayTrips = useMemo(
+    () => {
+      const usedImages = new Set();
+
+      return filteredTrips.map((trip) => {
+        const displayImage =
+          resolveTripCardImage(
+            trip,
+            usedImages
+          );
+
+        usedImages.add(displayImage);
+
+        return {
+          ...trip,
+          displayImage,
+        };
+      });
+    },
+    [filteredTrips]
+  );
 
   return (
-    <div className={welcomeStyles.body} style={styles.publicPage}>
-      <TopNavbar />
+    <PublicPageLayout
+      eyebrow="Trip Collection"
+      title="Trips Inside Lebanon"
+      subtitle="Browse available trips, destinations, dates, and transportation options."
+      headerAction={
+        <div style={styles.headerCard}>
+          <strong style={styles.headerValue}>
+            {filteredTrips.length}
+          </strong>
+          <span style={styles.headerLabel}>
+            trips shown
+          </span>
+        </div>
+      }
+    >
+      <section style={pageTheme.surface}>
+        <div style={styles.filters}>
+          <label style={pageTheme.field}>
+            <span>Search</span>
+            <input
+              type="search"
+              value={search}
+              onChange={(event) =>
+                setSearch(event.target.value)
+              }
+              placeholder="Search trips..."
+              style={pageTheme.control}
+            />
+          </label>
 
-      <main style={styles.publicMain}>
-        <div style={styles.page}>
-          <div style={styles.header}>
+          <label style={pageTheme.field}>
+            <span>Transportation</span>
+            <select
+              value={transportation}
+              onChange={(event) =>
+                setTransportation(
+                  event.target.value
+                )
+              }
+              style={pageTheme.control}
+            >
+              <option value="all">
+                All transportation
+              </option>
+              <option value="flight">
+                Flight
+              </option>
+              <option value="train">
+                Train
+              </option>
+              <option value="bus">Bus</option>
+              <option value="car">Car</option>
+            </select>
+          </label>
+
+          <label style={pageTheme.field}>
+            <span>Sort by</span>
+            <select
+              value={sort}
+              onChange={(event) =>
+                setSort(event.target.value)
+              }
+              style={pageTheme.control}
+            >
+              <option value="date">
+                Nearest date
+              </option>
+              <option value="latest">
+                Latest added
+              </option>
+              <option value="price-low">
+                Lowest price
+              </option>
+              <option value="price-high">
+                Highest price
+              </option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      {error && (
+        <div
+          style={{
+            ...pageTheme.errorBox,
+            marginTop: 18,
+          }}
+        >
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div
+          style={{
+            ...pageTheme.emptyBox,
+            marginTop: 18,
+          }}
+        >
+          Loading trips...
+        </div>
+      ) : displayTrips.length === 0 ? (
+        <div
+          style={{
+            ...pageTheme.emptyBox,
+            marginTop: 18,
+          }}
+        >
+          No trips found.
+        </div>
+      ) : (
+        <section
+          style={{
+            ...pageTheme.surface,
+            marginTop: 18,
+          }}
+        >
+          <div style={styles.resultsBar}>
             <div>
-              <h1 style={styles.title}>Trips Inside Lebanon</h1>
-
-              <p style={styles.subtitle}>
-                Browse local trips, check details, and view the map before booking.
+              <h2 style={styles.resultsTitle}>
+                Available trips
+              </h2>
+              <p style={styles.resultsText}>
+                Open a trip for full details or jump to the map directly from the card.
               </p>
             </div>
+
+            <span style={pageTheme.pill}>
+              {filteredTrips.length} visible
+            </span>
           </div>
 
-          <div style={styles.filters}>
-            <div style={styles.searchBox}>
-              <span style={styles.searchIcon}>⌕</span>
+          <div style={styles.grid}>
+            {displayTrips.map((trip) => {
+              const id = trip._id || trip.id;
+              const image =
+                trip.displayImage ||
+                defaultTripImage;
 
-              <input
-                style={styles.searchInput}
-                placeholder="Search by city, route, or category..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
+              return (
+                <article
+                  key={id}
+                  style={styles.card}
+                >
+                  <img
+                    src={image}
+                    alt={trip.title}
+                    style={styles.image}
+                    onError={(event) => {
+                      if (
+                        event.currentTarget.src.endsWith(
+                          encodeURI(image)
+                        )
+                      ) {
+                        event.currentTarget.src =
+                          defaultTripImage;
+                        return;
+                      }
 
-            <div style={styles.selectGroup}>
-              <select
-                style={styles.select}
-                value={vehicle}
-                onChange={(e) => setVehicle(e.target.value)}
-              >
-                <option>All Vehicles</option>
-                <option>BUS</option>
-                <option>VAN</option>
-                <option>MINIBUS</option>
-                <option>PRIVATE CAR</option>
-              </select>
+                      event.currentTarget.onerror = null;
+                    }}
+                  />
 
-              <select
-                style={styles.select}
-                value={sort}
-                onChange={(e) => setSort(e.target.value)}
-              >
-                <option>Latest</option>
-                <option>Price Low</option>
-                <option>Price High</option>
-              </select>
-            </div>
-          </div>
+                  <div style={styles.body}>
+                    <div style={styles.tags}>
+                      <span style={pageTheme.pill}>
+                        {capitalize(
+                          trip.tripType
+                        )}
+                      </span>
 
-          {error && <div style={styles.errorBox}>{error}</div>}
-
-          {loading ? (
-            <div style={styles.emptyBox}>Loading trips...</div>
-          ) : filteredTrips.length === 0 ? (
-            <div style={styles.emptyBox}>No trips found.</div>
-          ) : (
-            <div style={styles.grid}>
-              {filteredTrips.map((trip) => {
-                const id = trip._id || trip.id;
-
-                return (
-                  <div key={id} style={styles.card}>
-                    <div style={styles.imageArea}>
-                     <img
-  src={trip.image || "/Images/Libanon233.jpg"}
-  alt={trip.title || "Trip image"}
-  style={styles.tripImage}
-  onError={(e) => {
-    e.currentTarget.onerror = null;
-    e.currentTarget.src = "/Images/Libanon233.jpg";
-  }}
-/>
-
-                      <span
-                        style={{
-                          ...styles.badge,
-                          ...(badgeStyles[trip.vehicle] || {}),
-                        }}
-                      >
-                        {trip.vehicle}
+                      <span style={pageTheme.pill}>
+                        {capitalize(
+                          trip.status
+                        )}
                       </span>
                     </div>
 
-                    <div style={styles.cardBody}>
-                      <div style={styles.cardTopRow}>
-                        <span style={styles.category}>{trip.category}</span>
-                        <span style={styles.rating}>
-                          ★ {Number(trip.rating || 0).toFixed(1)}
-                        </span>
-                      </div>
+                    <h2 style={styles.title}>
+                      {trip.title}
+                    </h2>
 
-                      <h2 style={styles.cardTitle}>{trip.title}</h2>
+                    <p style={styles.route}>
+                      {trip.from} → {trip.to}
+                    </p>
 
-                      <div style={styles.route}>
-                        <span style={styles.dot}></span>
-                        <span>{trip.from}</span>
-                        <span style={styles.line}></span>
-                        <span>{trip.to}</span>
-                      </div>
+                    <p style={styles.description}>
+                      {trip.description ||
+                        "No description available."}
+                    </p>
 
-                      <p style={styles.description}>{trip.description}</p>
+                    <div style={styles.details}>
+                      <span>
+                        {formatDate(trip.date)}
+                      </span>
 
-                      <div style={styles.metaGrid}>
-                        <span>{trip.date}</span>
-                        <span>{trip.time}</span>
-                        <span>{trip.duration}</span>
-                      </div>
+                      <span>
+                        {Number(
+                          trip.duration || 0
+                        )}{" "}
+                        day(s)
+                      </span>
 
-                      <div style={styles.cardDivider} />
+                      <span>
+                        {capitalize(
+                          trip.transportation
+                        )}
+                      </span>
 
-                      <div style={styles.bottomRow}>
-                        <div>
-                          <span style={styles.price}>
-                            ${Number(trip.price || 0).toFixed(2)}
-                          </span>
-                          <span style={styles.perSeat}>/seat</span>
-                        </div>
+                      <span>
+                        Rating:{" "}
+                        {Number(
+                          trip.rating || 0
+                        ).toFixed(1)}
+                        /5
+                      </span>
+                    </div>
 
-                        <span style={styles.seats}>
-                          {trip.seatsLeft} seats left
-                        </span>
-                      </div>
+                    <div style={styles.bottom}>
+                      <strong style={styles.price}>
+                        $
+                        {Number(
+                          trip.price || 0
+                        ).toFixed(2)}
+                      </strong>
 
-                      <div style={styles.actions}>
-                        <Link to={`/trips/${id}`} style={styles.detailsBtn}>
-                          Trip Details
-                        </Link>
+                      <span style={styles.seats}>
+                        {seatsLeft(trip)} seats left
+                      </span>
+                    </div>
 
-                        <Link to="/map" style={styles.mapBtn}>
-                          View Map
-                        </Link>
-                      </div>
+                    <div style={styles.actions}>
+                      <Link
+                        to={`/trips/${id}`}
+                        style={{
+                          ...pageTheme.buttonPrimary,
+                          ...styles.actionButton,
+                        }}
+                      >
+                        Trip Details
+                      </Link>
+
+                      <Link
+                        to={buildMapLink(trip)}
+                        style={{
+                          ...pageTheme.buttonSecondary,
+                          ...styles.actionButton,
+                        }}
+                      >
+                        Open Map
+                      </Link>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </main>
-    </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      )}
+    </PublicPageLayout>
   );
 }
 
 const styles = {
-  publicPage: {
-    width: "100%",
-    minHeight: "100vh",
-    color: "#1e293b",
-    fontFamily: "Inter, Arial, sans-serif",
-    boxSizing: "border-box",
-    overflowX: "hidden",
+  headerCard: {
+    minWidth: 140,
+    padding: "18px 20px",
+    borderRadius: 18,
+    background: "rgba(255, 255, 255, 0.72)",
+    border: "1px solid rgba(147, 197, 253, 0.45)",
+    boxShadow:
+      "0 12px 30px rgba(96, 165, 250, 0.18)",
+    display: "grid",
+    gap: 4,
+    textAlign: "center",
   },
 
-  publicMain: {
-    width: "100%",
-    padding: "34px 26px",
-    boxSizing: "border-box",
-  },
-
-  page: {
-    width: "100%",
-    maxWidth: 1180,
-    margin: "0 auto",
-    boxSizing: "border-box",
-  },
-
-  header: {
-    marginBottom: 28,
-  },
-
-  title: {
-    margin: 0,
-    fontSize: 32,
-    fontWeight: 900,
+  headerValue: {
+    fontSize: 28,
     color: "#1e3a8a",
-    letterSpacing: "-0.04em",
   },
 
-  subtitle: {
-    margin: "8px 0 0",
-    color: "#475569",
-    fontSize: 15,
-    fontWeight: 500,
+  headerLabel: {
+    color: "#64748b",
+    fontSize: 13,
+    fontWeight: 800,
+    textTransform: "uppercase",
+    letterSpacing: "0.06em",
   },
 
   filters: {
+    display: "grid",
+    gridTemplateColumns:
+      "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: 16,
+  },
+
+  resultsBar: {
     display: "flex",
     justifyContent: "space-between",
     gap: 16,
-    alignItems: "center",
-    marginBottom: 26,
+    alignItems: "flex-start",
     flexWrap: "wrap",
+    marginBottom: 18,
   },
 
-  searchBox: {
-    width: 330,
-    height: 46,
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    padding: "0 14px",
-    borderRadius: 14,
-    background: "rgba(255, 255, 255, 0.72)",
-    border: "1px solid #bfdbfe",
-    boxShadow: "0 10px 24px rgba(96, 165, 250, 0.14)",
-    boxSizing: "border-box",
-  },
-
-  searchIcon: {
-    color: "#64748b",
-    fontSize: 18,
-  },
-
-  searchInput: {
-    width: "100%",
-    border: "none",
-    outline: "none",
-    background: "transparent",
-    color: "#0f172a",
-    fontSize: 14,
-    fontWeight: 600,
-  },
-
-  selectGroup: {
-    display: "flex",
-    gap: 12,
-    flexWrap: "wrap",
-  },
-
-  select: {
-    minWidth: 145,
-    padding: "12px 14px",
-    borderRadius: 12,
-    border: "1px solid #bfdbfe",
-    background: "rgba(255,255,255,0.75)",
-    color: "#0f172a",
-    fontSize: 14,
-    fontWeight: 800,
-    outline: "none",
-    boxShadow: "0 10px 24px rgba(96, 165, 250, 0.14)",
-  },
-
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(310px, 1fr))",
-    gap: 24,
-  },
-
-  card: {
-    borderRadius: 20,
-    background: "rgba(255, 255, 255, 0.72)",
-    border: "1px solid rgba(147, 197, 253, 0.45)",
-    boxShadow: "0 18px 42px rgba(59, 130, 246, 0.2)",
-    overflow: "hidden",
-    backdropFilter: "blur(16px)",
-    WebkitBackdropFilter: "blur(16px)",
-  },
-
-  imageArea: {
-    height: 190,
-    position: "relative",
-    overflow: "hidden",
-    background: "#dbeafe",
-  },
-
-  tripImage: {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-    display: "block",
-  },
-
-  badge: {
-    position: "absolute",
-    top: 16,
-    right: 16,
-    padding: "7px 11px",
-    borderRadius: 999,
-    fontSize: 12,
-    fontWeight: 900,
-    backdropFilter: "blur(10px)",
-    WebkitBackdropFilter: "blur(10px)",
-  },
-
-  cardBody: {
-    padding: 22,
-  },
-
-  cardTopRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-
-  category: {
-    padding: "6px 10px",
-    borderRadius: 999,
-    background: "rgba(96, 165, 250, 0.18)",
-    color: "#2563eb",
-    fontSize: 12,
-    fontWeight: 900,
-  },
-
-  rating: {
-    color: "#ca8a04",
-    fontSize: 13,
-    fontWeight: 900,
-  },
-
-  cardTitle: {
-    margin: 0,
+  resultsTitle: {
+    margin: "0 0 6px",
     fontSize: 20,
     fontWeight: 900,
     color: "#1e3a8a",
   },
 
-  route: {
-    marginTop: 14,
-    display: "flex",
-    alignItems: "center",
-    gap: 9,
+  resultsText: {
+    margin: 0,
     color: "#475569",
-    fontSize: 14,
+    lineHeight: 1.7,
+  },
+
+  grid: {
+    display: "grid",
+    gridTemplateColumns:
+      "repeat(auto-fit, minmax(280px, 1fr))",
+    gap: 22,
+  },
+
+  card: {
+    display: "flex",
+    flexDirection: "column",
+    minHeight: "100%",
+    overflow: "hidden",
+    borderRadius: 18,
+    background: "rgba(255, 255, 255, 0.72)",
+    border: "1px solid #bfdbfe",
+    boxShadow:
+      "0 18px 44px rgba(96, 165, 250, 0.16)",
+    backdropFilter: "blur(16px)",
+    WebkitBackdropFilter: "blur(16px)",
+  },
+
+  image: {
+    width: "100%",
+    height: 210,
+    objectFit: "cover",
+  },
+
+  body: {
+    display: "flex",
+    flexDirection: "column",
+    flex: 1,
+    padding: 22,
+    boxSizing: "border-box",
+  },
+
+  tags: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 10,
+    flexWrap: "wrap",
+  },
+
+  title: {
+    margin: "14px 0 8px",
+    fontSize: 22,
+    fontWeight: 900,
+    color: "#1e3a8a",
+  },
+
+  route: {
+    margin: "0 0 12px",
     fontWeight: 700,
-  },
-
-  dot: {
-    width: 7,
-    height: 7,
-    borderRadius: "50%",
-    background: "#6366f1",
-  },
-
-  line: {
-    width: 24,
-    height: 1,
-    background: "#94a3b8",
+    color: "#2563eb",
   },
 
   description: {
-    margin: "18px 0 0",
+    margin: 0,
     color: "#475569",
-    lineHeight: 1.55,
-    fontSize: 14,
-    fontWeight: 500,
+    lineHeight: 1.7,
+    minHeight: 72,
   },
 
-  metaGrid: {
-    marginTop: 16,
+  details: {
     display: "grid",
-    gridTemplateColumns: "repeat(3, 1fr)",
-    gap: 8,
-    color: "#1e3a8a",
-    fontSize: 12,
-    fontWeight: 900,
-  },
-
-  cardDivider: {
-    height: 1,
-    background: "#bfdbfe",
+    gap: 7,
     margin: "16px 0",
+    color: "#475569",
+    minHeight: 90,
   },
 
-  bottomRow: {
+  bottom: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
+    gap: 12,
+    flexWrap: "wrap",
+    marginBottom: 16,
   },
 
   price: {
-    fontSize: 24,
-    fontWeight: 900,
-    color: "#0891b2",
-  },
-
-  perSeat: {
-    fontSize: 12,
-    color: "#64748b",
-    fontWeight: 700,
+    fontSize: 20,
+    color: "#1e3a8a",
   },
 
   seats: {
-    fontSize: 13,
-    color: "#1e3a8a",
-    fontWeight: 900,
+    color: "#475569",
+    fontWeight: 700,
   },
 
   actions: {
-    marginTop: 18,
     display: "grid",
-    gridTemplateColumns: "1fr 1fr",
+    gridTemplateColumns:
+      "repeat(2, minmax(0, 1fr))",
     gap: 10,
+    marginTop: "auto",
   },
 
-  detailsBtn: {
-    padding: "12px 14px",
-    borderRadius: 14,
-    background: "linear-gradient(135deg, #93c5fd, #a78bfa)",
-    color: "#0f172a",
+  actionButton: {
+    display: "block",
     textAlign: "center",
-    textDecoration: "none",
-    fontSize: 14,
-    fontWeight: 900,
-  },
-
-  mapBtn: {
-    padding: "12px 14px",
-    borderRadius: 14,
-    background: "rgba(255,255,255,0.75)",
-    border: "1px solid #bfdbfe",
-    color: "#1e3a8a",
-    textAlign: "center",
-    textDecoration: "none",
-    fontSize: 14,
-    fontWeight: 900,
-  },
-
-  emptyBox: {
-    padding: 22,
-    borderRadius: 18,
-    background: "rgba(255, 255, 255, 0.72)",
-    border: "1px solid rgba(147, 197, 253, 0.45)",
-    color: "#475569",
-    fontWeight: 800,
-    textAlign: "center",
-  },
-
-  errorBox: {
-    marginBottom: 18,
-    padding: 13,
-    borderRadius: 14,
-    background: "rgba(239, 68, 68, 0.15)",
-    color: "#dc2626",
-    fontWeight: 900,
   },
 };

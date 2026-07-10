@@ -1,18 +1,83 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import {
+  useEffect,
+  useState,
+} from "react";
+import {
+  Link,
+} from "react-router-dom";
+import {
+  getAuthenticatedUser,
+  getCurrentUser,
+  isLoggedIn,
+  isOrganizerRole,
+  logoutUser,
+  subscribeToAuthChanges,
+} from "../api/auth.js";
 import styles from "../Styles/welcome.module.css";
 
 export default function TopNavbar() {
   const [open, setOpen] = useState(false);
-
-  const user = getUserData();
+  const [user, setUser] = useState(
+    () => getCurrentUser()
+  );
   const profileImage = getProfileImage(user);
   const profileLetter = getProfileLetter(user);
-
   const isOrganizer =
-    user?.role === "organizer" ||
-    user?.role === "admin" ||
-    localStorage.getItem("userRole") === "organizer";
+    isOrganizerRole(
+      user?.role
+    );
+
+  useEffect(
+    () =>
+      subscribeToAuthChanges(
+        setUser
+      ),
+    []
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function syncUser() {
+      if (!isLoggedIn()) {
+        if (!cancelled) {
+          setUser(null);
+        }
+
+        return;
+      }
+
+      try {
+        const data =
+          await getAuthenticatedUser();
+
+        if (!cancelled) {
+          setUser(
+            data?.user || null
+          );
+        }
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
+        if (error.status === 401) {
+          logoutUser();
+          setUser(null);
+
+          return;
+        }
+
+        setUser(getCurrentUser());
+      }
+    }
+
+    syncUser();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <nav className={styles.navbar}>
@@ -69,30 +134,6 @@ export default function TopNavbar() {
       </div>
     </nav>
   );
-}
-
-function getUserData() {
-  const possibleKeys = ["currentUser", "tripUser", "user"];
-
-  for (const key of possibleKeys) {
-    const value = localStorage.getItem(key);
-
-    if (!value || value === "null") continue;
-
-    try {
-      return JSON.parse(value);
-    } catch {
-      return {
-        name: value,
-      };
-    }
-  }
-
-  return {
-    name: localStorage.getItem("tripUserName") || "User",
-    email: localStorage.getItem("tripUserEmail") || "",
-    role: localStorage.getItem("userRole") || "client",
-  };
 }
 
 function getProfileImage(user) {

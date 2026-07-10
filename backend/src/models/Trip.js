@@ -1,73 +1,67 @@
-﻿import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const tripSchema = new mongoose.Schema(
   {
     title: {
       type: String,
       required: true,
-      trim: true,
+    },
+
+    country: {
+      type: String,
+      required: true,
     },
 
     from: {
       type: String,
       required: true,
-      trim: true,
     },
 
     to: {
       type: String,
       required: true,
-      trim: true,
-    },
-
-    category: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    vehicle: {
-      type: String,
-      required: true,
-      enum: ["BUS", "VAN", "MINIBUS", "PRIVATE CAR"],
-    },
-
-    description: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    image: {
-      type: String,
-      default: "",
     },
 
     date: {
-      type: String,
+      type: Date,
       required: true,
+      index: true,
     },
 
-    time: {
-      type: String,
-      required: true,
-    },
+    description: String,
 
-    duration: {
-      type: String,
-      required: true,
-    },
+    photo: String,
 
-    price: {
+    price: Number,
+
+    duration: Number,
+
+    numberOfTravelers: {
       type: Number,
-      required: true,
-      min: 0,
+      default: 1,
     },
 
-    seatsLeft: {
+    reservedTravelers: {
       type: Number,
-      required: true,
-      min: 0,
+      default: 0,
+    },
+
+    status: {
+      type: String,
+      enum: ["planned", "ongoing", "completed"],
+      default: "planned",
+    },
+
+    transportation: {
+      type: String,
+      enum: ["flight", "train", "bus", "car"],
+      default: "flight",
+    },
+
+    tripType: {
+      type: String,
+      enum: ["adventure", "relax", "business", "family"],
+      default: "adventure",
     },
 
     rating: {
@@ -76,12 +70,44 @@ const tripSchema = new mongoose.Schema(
       min: 0,
       max: 5,
     },
+
+    inclusions: [
+      {
+        type: String,
+      },
+    ],
+
+    places: [
+      {
+        city: {
+          type: String,
+          required: true,
+        },
+
+        image: {
+          type: String,
+          required: true,
+        },
+
+        latitude: {
+          type: Number,
+          required: true,
+        },
+
+        longitude: {
+          type: Number,
+          required: true,
+        },
+
+        days: {
+          type: Number,
+          required: true,
+        },
+      },
+    ],
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 const Trip = mongoose.model("Trip", tripSchema);
-
-export default Trip;
+module.exports = Trip;

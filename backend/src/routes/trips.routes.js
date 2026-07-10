@@ -1,36 +1,348 @@
-import express from "express";
-import Trip from "../models/Trip.js";
+const express = require("express");
+const bcrypt = require("bcryptjs");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+
+const User = require(
+  "../models/User"
+);
+
+const {
+  requireAuth,
+  signUserToken,
+} = require(
+  "../middleware/auth"
+);
 
 const router = express.Router();
 
-router.get("/", async (_req, res, next) => {
-  try {
-    const trips = await Trip.find({}).sort({ createdAt: -1 }).lean();
+const uploadDirectory = path.join(
+  __dirname,
+  "..",
+  "..",
+  "uploads",
+  "ids"
+);
 
-    res.json({
-      trips,
-    });
-  } catch (error) {
-    next(error);
-  }
+fs.mkdirSync(uploadDirectory, {
+  recursive: true,
 });
 
-router.get("/:id", async (req, res, next) => {
-  try {
-    const trip = await Trip.findById(req.params.id).lean();
+const storage =
+  multer.diskStorage({
+    destination(
+      _req,
+      _file,
+      callback
+    ) {
+      callback(
+        null,
+        uploadDirectory
+      );
+    },
 
-    if (!trip) {
-      return res.status(404).json({
-        message: "Trip not found.",
-      });
+    filename(
+      _req,
+      file,
+      callback
+    ) {
+      const extension =
+        path.extname(
+          file.originalname
+        );
+
+      const randomNumber =
+        Math.round(
+          Math.random() *
+            1_000_000_000
+        );
+
+      callback(
+        null,
+        `${Date.now()}-${randomNumber}${extension}`
+      );
+    },
+  });
+
+const upload = multer({
+  storage,
+
+  limits: {
+    fileSize:
+      5 * 1024 * 1024,
+  },
+
+  fileFilter(
+    _req,
+    file,
+    callback
+  ) {
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "application/pdf",
+    ];
+
+    if (
+      !allowedTypes.includes(
+        file.mimetype
+      )
+    ) {
+      return callback(
+        new Error(
+          "Only JPG, PNG, and PDF files are allowed."
+        )
+      );
     }
 
-    res.json({
-      trip,
-    });
-  } catch (error) {
-    next(error);
-  }
+    callback(null, true);
+  },
 });
 
-export default router;
+function publicUser(user) {
+  return {
+    id: user._id.toString(),
+    _id: user._id.toString(),
+    fullName: user.fullName,
+    name: user.fullName,
+    email: user.email,
+    role: user.role,
+    idDocument:
+      user.idDocument,
+  };
+}
+
+router.post(
+  "/register",
+  upload.single(
+    "idDocument"
+  ),
+  async (req, res, next) => {
+    try {
+      const fullName = String(
+        req.body.fullName || ""
+      ).trim();
+
+      const email = String(
+        req.body.email || ""
+      )
+        .trim()
+        .toLowerCase();
+
+      const password = String(
+        req.body.password || ""
+      );
+
+      if (
+        !fullName ||
+        !email ||
+        !password
+      ) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "Full name, email, and password are required.",
+          });
+      }
+
+      if (
+        fullName.length < 2
+      ) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "Full name must contain at least 2 characters.",
+          });
+      }
+
+      const validEmail =
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+          email
+        );
+
+      if (!validEmail) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "Enter a valid email address.",
+          });
+      }
+
+      if (
+        password.length < 6
+      ) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "Password must contain at least 6 characters.",
+          });
+      }
+
+      if (!req.file) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "Upload your ID document.",
+          });
+      }
+
+      const existingUser =
+        await User.findOne({
+          email,
+        });
+
+      if (existingUser) {
+        return res
+          .status(409)
+          .json({
+            success: false,
+            message:
+              "An account with this email already exists.",
+          });
+      }
+
+      const passwordHash =
+        await bcrypt.hash(
+          password,
+          12
+        );
+
+      const user =
+        await User.create({
+          fullName,
+          email,
+          passwordHash,
+          role: "client",
+
+          idDocument:
+            `/uploads/ids/${req.file.filename}`,
+        });
+
+      const token =
+        signUserToken(user);
+
+      return res
+        .status(201)
+        .json({
+          success: true,
+          message:
+            "Account created successfully.",
+          token,
+          user:
+            publicUser(user),
+        });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+router.post(
+  "/login",
+  async (req, res, next) => {
+    try {
+      const email = String(
+        req.body.email || ""
+      )
+        .trim()
+        .toLowerCase();
+
+      const password = String(
+        req.body.password || ""
+      );
+
+      if (
+        !email ||
+        !password
+      ) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "Email and password are required.",
+          });
+      }
+
+      const user =
+        await User.findOne({
+          email,
+        }).select(
+          "+passwordHash"
+        );
+
+      if (!user) {
+        return res
+          .status(401)
+          .json({
+            success: false,
+            message:
+              "Incorrect email or password.",
+          });
+      }
+
+      const passwordMatches =
+        await bcrypt.compare(
+          password,
+          user.passwordHash
+        );
+
+      if (
+        !passwordMatches
+      ) {
+        return res
+          .status(401)
+          .json({
+            success: false,
+            message:
+              "Incorrect email or password.",
+          });
+      }
+
+      const token =
+        signUserToken(user);
+
+      return res
+        .status(200)
+        .json({
+          success: true,
+          message:
+            "Login successful.",
+          token,
+          user:
+            publicUser(user),
+        });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+router.get(
+  "/me",
+  requireAuth,
+  async (req, res) => {
+    return res
+      .status(200)
+      .json({
+        success: true,
+        user:
+          publicUser(
+            req.user
+          ),
+      });
+  }
+);
+
+module.exports = router;

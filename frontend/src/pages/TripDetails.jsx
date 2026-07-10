@@ -4,6 +4,7 @@ import api from "../services/api";
 import "./tripdetail.css";
 
 import TopNavbar from "../components/TopNavbar";
+import DashboardLayout from "../components/DashboardLayout.jsx";
 import {
   FaBus,
   FaCar,

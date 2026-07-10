@@ -1,22 +1,40 @@
-const Trip = require("../models/Trips");
+const Trip = require("../src/models/Trip");
 
 async function getTrips(req, res) {
   try {
-    const trips = await Trip.find().sort({ createdAt: -1 });
-    return res.json(trips);
+    const trips = await Trip.find().sort({
+      date: 1,
+    });
+
+    return res.json({
+      success: true,
+      count: trips.length,
+      trips,
+    });
   } catch (error) {
     console.error("Get trips error:", error.message);
-    return res.status(500).json({ error: "Could not fetch trips" });
+    return res.status(500).json({
+      success: false,
+      message: "Could not fetch trips",
+    });
   }
 }
 
 async function createTrip(req, res) {
   try {
     const trip = await Trip.create(req.body);
-    return res.status(201).json(trip);
+
+    return res.status(201).json({
+      success: true,
+      message: "Trip created successfully.",
+      trip,
+    });
   } catch (error) {
     console.error("Create trip error:", error.message);
-    return res.status(500).json({ error: "Could not create trip" });
+    return res.status(500).json({
+      success: false,
+      message: "Could not create trip",
+    });
   }
 }
 
@@ -27,13 +45,23 @@ async function updateTrip(req, res) {
     });
 
     if (!trip) {
-      return res.status(404).json({ error: "Trip not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Trip not found",
+      });
     }
 
-    return res.json(trip);
+    return res.json({
+      success: true,
+      message: "Trip updated successfully.",
+      trip,
+    });
   } catch (error) {
     console.error("Update trip error:", error.message);
-    return res.status(500).json({ error: "Could not update trip" });
+    return res.status(500).json({
+      success: false,
+      message: "Could not update trip",
+    });
   }
 }
 
@@ -42,13 +70,22 @@ async function deleteTrip(req, res) {
     const trip = await Trip.findByIdAndDelete(req.params.id);
 
     if (!trip) {
-      return res.status(404).json({ error: "Trip not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Trip not found",
+      });
     }
 
-    return res.json({ message: "Trip deleted" });
+    return res.json({
+      success: true,
+      message: "Trip deleted",
+    });
   } catch (error) {
     console.error("Delete trip error:", error.message);
-    return res.status(500).json({ error: "Could not delete trip" });
+    return res.status(500).json({
+      success: false,
+      message: "Could not delete trip",
+    });
   }
 }
 

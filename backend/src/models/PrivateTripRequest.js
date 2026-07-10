@@ -1,123 +1,213 @@
-﻿import mongoose from "mongoose";
+﻿const mongoose = require("mongoose");
 
-const messageSchema = new mongoose.Schema(
-  {
-    sender: {
-      type: String,
-      enum: ["client", "organizer"],
-      required: true,
-    },
+const messageSchema =
+  new mongoose.Schema(
+    {
+      sender: {
+        type: String,
+        enum: [
+          "client",
+          "organizer",
+        ],
+        required: true,
+      },
 
-    text: {
-      type: String,
-      required: true,
-      trim: true,
-      maxlength: 1000,
-    },
-  },
-  {
-    timestamps: true,
-  }
-);
-
-const privateTripRequestSchema = new mongoose.Schema(
-  {
-    title: {
-      type: String,
-      required: [true, "Trip title is required."],
-      trim: true,
-      maxlength: 150,
-    },
-
-    destination: {
-      type: String,
-      required: [true, "Destination is required."],
-      trim: true,
-      maxlength: 150,
-    },
-
-    startDate: {
-      type: String,
-      required: [true, "Start date is required."],
-    },
-
-    endDate: {
-      type: String,
-      required: [true, "End date is required."],
-    },
-
-    transportation: {
-      type: String,
-      required: [true, "Transportation is required."],
-      enum: {
-        values: ["Car", "Van", "Minibus", "Bus"],
-        message: "Transportation must be Car, Van, Minibus, or Bus.",
+      text: {
+        type: String,
+        required: [
+          true,
+          "Message text is required.",
+        ],
+        trim: true,
+        maxlength: [
+          1000,
+          "Message cannot exceed 1000 characters.",
+        ],
       },
     },
+    {
+      timestamps: true,
+    }
+  );
 
-    travelers: {
-      type: Number,
-      required: [true, "Number of travelers is required."],
-      min: [1, "Travelers must be at least 1."],
-    },
+const privateTripRequestSchema =
+  new mongoose.Schema(
+    {
+      client: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+        index: true,
+      },
 
-    budget: {
-      type: Number,
-      required: [true, "Budget is required."],
-      min: [0, "Budget cannot be negative."],
-    },
+      title: {
+        type: String,
+        required: [
+          true,
+          "Trip title is required.",
+        ],
+        trim: true,
+        minlength: 3,
+        maxlength: 150,
+      },
 
-    notes: {
-      type: String,
-      default: "",
-      trim: true,
-      maxlength: [800, "Notes cannot exceed 800 characters."],
-    },
+      destination: {
+        type: String,
+        required: [
+          true,
+          "Destination is required.",
+        ],
+        trim: true,
+        maxlength: 150,
+      },
 
-    clientName: {
-      type: String,
-      default: "Client",
-      trim: true,
-    },
+      startDate: {
+        type: Date,
+        required: [
+          true,
+          "Start date is required.",
+        ],
+      },
 
-    email: {
-      type: String,
-      default: "",
-      trim: true,
-      lowercase: true,
-    },
+      endDate: {
+        type: Date,
+        required: [
+          true,
+          "End date is required.",
+        ],
+      },
 
-    status: {
-      type: String,
-      enum: ["PENDING", "APPROVED", "REJECTED"],
-      default: "PENDING",
-    },
+      transportation: {
+        type: String,
+        required: [
+          true,
+          "Transportation is required.",
+        ],
+        enum: {
+          values: [
+            "Car",
+            "Van",
+            "Minibus",
+            "Bus",
+          ],
+          message:
+            "Transportation must be Car, Van, Minibus, or Bus.",
+        },
+      },
 
-    organizerReply: {
-      type: String,
-      default: "",
-      trim: true,
-      maxlength: 1000,
-    },
+      travelers: {
+        type: Number,
+        required: [
+          true,
+          "Number of travelers is required.",
+        ],
+        min: [
+          1,
+          "Travelers must be at least 1.",
+        ],
+      },
 
-    reviewedAt: {
-      type: Date,
-      default: null,
-    },
+      budget: {
+        type: Number,
+        required: [
+          true,
+          "Budget is required.",
+        ],
+        min: [
+          0,
+          "Budget cannot be negative.",
+        ],
+      },
 
-    messages: {
-      type: [messageSchema],
-      default: [],
+      notes: {
+        type: String,
+        default: "",
+        trim: true,
+        maxlength: [
+          800,
+          "Notes cannot exceed 800 characters.",
+        ],
+      },
+
+      clientName: {
+        type: String,
+        required: true,
+        trim: true,
+        maxlength: 120,
+      },
+
+      email: {
+        type: String,
+        required: true,
+        trim: true,
+        lowercase: true,
+        index: true,
+      },
+
+      status: {
+        type: String,
+        enum: [
+          "PENDING",
+          "APPROVED",
+          "REJECTED",
+        ],
+        default: "PENDING",
+        index: true,
+      },
+
+      organizerReply: {
+        type: String,
+        default: "",
+        trim: true,
+        maxlength: [
+          1000,
+          "Organizer reply cannot exceed 1000 characters.",
+        ],
+      },
+
+      reviewedAt: {
+        type: Date,
+        default: null,
+      },
+
+      approvedTripId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Trip",
+        default: null,
+      },
+
+      messages: {
+        type: [messageSchema],
+        default: [],
+      },
     },
-  },
-  {
-    timestamps: true,
+    {
+      timestamps: true,
+    }
+  );
+
+privateTripRequestSchema.pre(
+  "validate",
+  function validateDates(next) {
+    if (
+      this.startDate &&
+      this.endDate &&
+      this.endDate < this.startDate
+    ) {
+      this.invalidate(
+        "endDate",
+        "End date cannot be before the start date."
+      );
+    }
+
+    next();
   }
 );
 
-const PrivateTripRequest = mongoose.model(
-  "PrivateTripRequest",
-  privateTripRequestSchema
-);
+const PrivateTripRequest =
+  mongoose.model(
+    "PrivateTripRequest",
+    privateTripRequestSchema
+  );
 
-export default PrivateTripRequest;
+module.exports = PrivateTripRequest;

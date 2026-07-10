@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { loginUser } from "../api/auth";
+import {
+  isOrganizerRole,
+  loginUser,
+} from "../api/auth";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -32,7 +35,11 @@ export default function Login() {
         password: form.password,
       });
 
-      if (data.user.role === "organizer" || data.user.role === "admin") {
+      if (
+        isOrganizerRole(
+          data.user.role
+        )
+      ) {
         navigate("/approve", { replace: true });
       } else {
         navigate("/trips", { replace: true });

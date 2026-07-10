@@ -1,63 +1,63 @@
-﻿import mongoose from "mongoose";
-
-const idDocumentSchema = new mongoose.Schema(
-  {
-    originalName: { type: String, required: true },
-    contentType: { type: String, required: true },
-    size: { type: Number, required: true },
-    data: { type: Buffer, required: true },
-  },
-  { _id: false }
-);
+﻿const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
     fullName: {
       type: String,
-      required: true,
+      required: [
+        true,
+        "Full name is required.",
+      ],
       trim: true,
+      minlength: 2,
+      maxlength: 120,
     },
 
     email: {
       type: String,
-      required: true,
+      required: [
+        true,
+        "Email is required.",
+      ],
       unique: true,
       lowercase: true,
       trim: true,
+      index: true,
     },
 
     passwordHash: {
       type: String,
       required: true,
+      select: false,
     },
 
     role: {
       type: String,
-      enum: ["client", "organizer", "admin"],
+      enum: [
+        "client",
+        "organizer",
+        "admin",
+      ],
       default: "client",
+      index: true,
     },
 
     idDocument: {
-      type: idDocumentSchema,
-      required: true,
+      type: String,
+      required: [
+        true,
+        "ID document is required.",
+      ],
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
-userSchema.methods.toPublicUser = function toPublicUser() {
-  return {
-    id: this._id.toString(),
-    _id: this._id.toString(),
-    fullName: this.fullName,
-    name: this.fullName,
-    email: this.email,
-    role: this.role,
-    idFileName: this.idDocument?.originalName,
-    createdAt: this.createdAt,
-  };
-};
+const User = mongoose.model(
+  "User",
+  userSchema
+);
 
-const User = mongoose.model("User", userSchema);
-
-export default User;
+module.exports = User;
