@@ -9,6 +9,11 @@ export default function TopNavbar() {
   const profileImage = getProfileImage(user);
   const profileLetter = getProfileLetter(user);
 
+  const isOrganizer =
+    user?.role === "organizer" ||
+    user?.role === "admin" ||
+    localStorage.getItem("userRole") === "organizer";
+
   return (
     <nav className={styles.navbar}>
       <div className={styles.navInner}>
@@ -29,6 +34,16 @@ export default function TopNavbar() {
             <Link to="/private-trip" className={styles.link}>
               Private Trip
             </Link>
+
+            {isOrganizer ? (
+              <Link to="/approve" className={styles.link}>
+                Approve
+              </Link>
+            ) : (
+              <Link to="/my-requests" className={styles.link}>
+                My Requests
+              </Link>
+            )}
           </div>
         </div>
 
@@ -76,6 +91,7 @@ function getUserData() {
   return {
     name: localStorage.getItem("tripUserName") || "User",
     email: localStorage.getItem("tripUserEmail") || "",
+    role: localStorage.getItem("userRole") || "client",
   };
 }
 

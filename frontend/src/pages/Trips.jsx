@@ -1,147 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import TopNavbar from "../components/TopNavbar";
 import welcomeStyles from "../Styles/welcome.module.css";
-
-const trips = [
-  {
-    id: 1,
-    title: "Beirut City Tour",
-    category: "City",
-    vehicle: "BUS",
-    image: "/Images/Lebanon-spring-1.jpg",
-    from: "Hamra",
-    to: "Downtown Beirut",
-    description:
-      "Explore Beirut’s streets, waterfront, cafes, and cultural landmarks in one comfortable city trip.",
-    date: "Sun, Mar 15",
-    time: "9:00 AM",
-    duration: "5 hours",
-    price: 25,
-    seatsLeft: 22,
-    rating: 4.8,
-  },
-  {
-    id: 2,
-    title: "Byblos Coastal Escape",
-    category: "Beach",
-    vehicle: "VAN",
-    image: "/Images/download.jpg",
-    from: "Beirut",
-    to: "Byblos",
-    description:
-      "A coastal trip to Byblos with time to visit the old souk, harbor, castle area, and seaside restaurants.",
-    date: "Fri, Mar 20",
-    time: "8:30 AM",
-    duration: "7 hours",
-    price: 35,
-    seatsLeft: 14,
-    rating: 4.7,
-  },
-  {
-    id: 3,
-    title: "Cedars Mountain Trip",
-    category: "Mountain",
-    vehicle: "BUS",
-    image:
-      "/Images/259630922_1135604446844746_4637020193812776409_n-2-e1662372322330.webp",
-    from: "Beirut",
-    to: "Cedars of God",
-    description:
-      "A mountain journey to Bcharre and the Cedars area with fresh air, nature views, and photo stops.",
-    date: "Wed, Apr 1",
-    time: "7:00 AM",
-    duration: "10 hours",
-    price: 45,
-    seatsLeft: 31,
-    rating: 4.9,
-  },
-  {
-    id: 4,
-    title: "Faraya Snow Trip",
-    category: "Winter",
-    vehicle: "MINIBUS",
-    image: "/Images/Faraya.jpg",
-    from: "Beirut",
-    to: "Faraya",
-    description:
-      "Enjoy snow views, mountain air, ski areas, and a calm winter experience in Faraya.",
-    date: "Sat, Apr 5",
-    time: "6:30 AM",
-    duration: "9 hours",
-    price: 50,
-    seatsLeft: 12,
-    rating: 4.6,
-  },
-  {
-    id: 5,
-    title: "Tyre Beach & Heritage",
-    category: "Beach",
-    vehicle: "VAN",
-    image: "/Images/Tyre-Beach-Lebanon.jpg",
-    from: "Beirut",
-    to: "Tyre",
-    description:
-      "A south Lebanon trip to Tyre with beach views, heritage areas, and time for walking near the coast.",
-    date: "Thu, Apr 10",
-    time: "8:00 AM",
-    duration: "8 hours",
-    price: 40,
-    seatsLeft: 16,
-    rating: 4.8,
-  },
-  {
-    id: 6,
-    title: "Mountain Adventure",
-    category: "Mountain",
-    vehicle: "BUS",
-    image: "/Images/download.avif",
-    from: "Beirut",
-    to: "Chouf Mountains",
-    description:
-      "A nature and adventure trip with mountain views, fresh air, and relaxing outdoor stops.",
-    date: "Sun, Apr 13",
-    time: "7:30 AM",
-    duration: "9 hours",
-    price: 42,
-    seatsLeft: 19,
-    rating: 4.7,
-  },
-  {
-    id: 7,
-    title: "Cultural Lebanon Trip",
-    category: "Cultural",
-    vehicle: "MINIBUS",
-    image: "/Images/images (4).jpg",
-    from: "Beirut",
-    to: "Baalbek",
-    description:
-      "Visit cultural and historical landmarks with a planned route and enough time for photos.",
-    date: "Mon, Apr 14",
-    time: "7:00 AM",
-    duration: "10 hours",
-    price: 55,
-    seatsLeft: 10,
-    rating: 4.9,
-  },
-  {
-    id: 8,
-    title: "Outdoor Adventure Day",
-    category: "Adventure",
-    vehicle: "PRIVATE CAR",
-    image: "/Images/Outdoor-Adventures-Lebanon_FT1_.webp",
-    from: "Beirut",
-    to: "Laklouk",
-    description:
-      "A private adventure route for travelers who want a flexible outdoor trip with scenic stops.",
-    date: "Sat, Apr 19",
-    time: "8:00 AM",
-    duration: "8 hours",
-    price: 70,
-    seatsLeft: 4,
-    rating: 4.8,
-  },
-];
+import { getTrips } from "../api/trips";
 
 const badgeStyles = {
   BUS: {
@@ -163,19 +24,41 @@ const badgeStyles = {
 };
 
 export default function Trips() {
+  const [trips, setTrips] = useState([]);
   const [search, setSearch] = useState("");
   const [vehicle, setVehicle] = useState("All Vehicles");
   const [sort, setSort] = useState("Latest");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function loadTrips() {
+      try {
+        setLoading(true);
+        setError("");
+
+        const data = await getTrips();
+
+        setTrips(data.trips || data || []);
+      } catch (err) {
+        setError(err.message || "Could not load trips.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadTrips();
+  }, []);
 
   const filteredTrips = useMemo(() => {
     let list = trips.filter((trip) => {
       const searchValue = search.toLowerCase().trim();
 
       const matchesSearch =
-        trip.title.toLowerCase().includes(searchValue) ||
-        trip.from.toLowerCase().includes(searchValue) ||
-        trip.to.toLowerCase().includes(searchValue) ||
-        trip.category.toLowerCase().includes(searchValue);
+        trip.title?.toLowerCase().includes(searchValue) ||
+        trip.from?.toLowerCase().includes(searchValue) ||
+        trip.to?.toLowerCase().includes(searchValue) ||
+        trip.category?.toLowerCase().includes(searchValue);
 
       const matchesVehicle =
         vehicle === "All Vehicles" || trip.vehicle === vehicle;
@@ -184,15 +67,21 @@ export default function Trips() {
     });
 
     if (sort === "Price Low") {
-      list = [...list].sort((a, b) => a.price - b.price);
+      list = [...list].sort((a, b) => Number(a.price) - Number(b.price));
     }
 
     if (sort === "Price High") {
-      list = [...list].sort((a, b) => b.price - a.price);
+      list = [...list].sort((a, b) => Number(b.price) - Number(a.price));
+    }
+
+    if (sort === "Latest") {
+      list = [...list].sort(
+        (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+      );
     }
 
     return list;
-  }, [search, vehicle, sort]);
+  }, [trips, search, vehicle, sort]);
 
   return (
     <div className={welcomeStyles.body} style={styles.publicPage}>
@@ -205,8 +94,7 @@ export default function Trips() {
               <h1 style={styles.title}>Trips Inside Lebanon</h1>
 
               <p style={styles.subtitle}>
-                Browse local trips, check details, and view the map before
-                booking.
+                Browse local trips, check details, and view the map before booking.
               </p>
             </div>
           </div>
@@ -248,79 +136,93 @@ export default function Trips() {
             </div>
           </div>
 
-          {filteredTrips.length === 0 ? (
+          {error && <div style={styles.errorBox}>{error}</div>}
+
+          {loading ? (
+            <div style={styles.emptyBox}>Loading trips...</div>
+          ) : filteredTrips.length === 0 ? (
             <div style={styles.emptyBox}>No trips found.</div>
           ) : (
             <div style={styles.grid}>
-              {filteredTrips.map((trip) => (
-                <div key={trip.id} style={styles.card}>
-                  <div style={styles.imageArea}>
-                    <img
-                      src={trip.image}
-                      alt={trip.title}
-                      style={styles.tripImage}
-                    />
+              {filteredTrips.map((trip) => {
+                const id = trip._id || trip.id;
 
-                    <span
-                      style={{
-                        ...styles.badge,
-                        ...badgeStyles[trip.vehicle],
-                      }}
-                    >
-                      {trip.vehicle}
-                    </span>
-                  </div>
+                return (
+                  <div key={id} style={styles.card}>
+                    <div style={styles.imageArea}>
+                     <img
+  src={trip.image || "/Images/Libanon233.jpg"}
+  alt={trip.title || "Trip image"}
+  style={styles.tripImage}
+  onError={(e) => {
+    e.currentTarget.onerror = null;
+    e.currentTarget.src = "/Images/Libanon233.jpg";
+  }}
+/>
 
-                  <div style={styles.cardBody}>
-                    <div style={styles.cardTopRow}>
-                      <span style={styles.category}>{trip.category}</span>
-                      <span style={styles.rating}>★ {trip.rating}</span>
-                    </div>
-
-                    <h2 style={styles.cardTitle}>{trip.title}</h2>
-
-                    <div style={styles.route}>
-                      <span style={styles.dot}></span>
-                      <span>{trip.from}</span>
-                      <span style={styles.line}></span>
-                      <span>{trip.to}</span>
-                    </div>
-
-                    <p style={styles.description}>{trip.description}</p>
-
-                    <div style={styles.metaGrid}>
-                      <span>{trip.date}</span>
-                      <span>{trip.time}</span>
-                      <span>{trip.duration}</span>
-                    </div>
-
-                    <div style={styles.cardDivider} />
-
-                    <div style={styles.bottomRow}>
-                      <div>
-                        <span style={styles.price}>
-                          ${trip.price.toFixed(2)}
-                        </span>
-                        <span style={styles.perSeat}>/seat</span>
-                      </div>
-
-                      <span style={styles.seats}>
-                        {trip.seatsLeft} seats left
+                      <span
+                        style={{
+                          ...styles.badge,
+                          ...(badgeStyles[trip.vehicle] || {}),
+                        }}
+                      >
+                        {trip.vehicle}
                       </span>
                     </div>
 
-                    <div style={styles.actions}>
-                      <Link to={`/trips/${trip.id}`} style={styles.detailsBtn}>
-                        Trip Details
-                      </Link>
+                    <div style={styles.cardBody}>
+                      <div style={styles.cardTopRow}>
+                        <span style={styles.category}>{trip.category}</span>
+                        <span style={styles.rating}>
+                          ★ {Number(trip.rating || 0).toFixed(1)}
+                        </span>
+                      </div>
 
-                      <Link to="/map" style={styles.mapBtn}>
-                        View Map
-                      </Link>
+                      <h2 style={styles.cardTitle}>{trip.title}</h2>
+
+                      <div style={styles.route}>
+                        <span style={styles.dot}></span>
+                        <span>{trip.from}</span>
+                        <span style={styles.line}></span>
+                        <span>{trip.to}</span>
+                      </div>
+
+                      <p style={styles.description}>{trip.description}</p>
+
+                      <div style={styles.metaGrid}>
+                        <span>{trip.date}</span>
+                        <span>{trip.time}</span>
+                        <span>{trip.duration}</span>
+                      </div>
+
+                      <div style={styles.cardDivider} />
+
+                      <div style={styles.bottomRow}>
+                        <div>
+                          <span style={styles.price}>
+                            ${Number(trip.price || 0).toFixed(2)}
+                          </span>
+                          <span style={styles.perSeat}>/seat</span>
+                        </div>
+
+                        <span style={styles.seats}>
+                          {trip.seatsLeft} seats left
+                        </span>
+                      </div>
+
+                      <div style={styles.actions}>
+                        <Link to={`/trips/${id}`} style={styles.detailsBtn}>
+                          Trip Details
+                        </Link>
+
+                        <Link to="/map" style={styles.mapBtn}>
+                          View Map
+                        </Link>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -612,5 +514,14 @@ const styles = {
     color: "#475569",
     fontWeight: 800,
     textAlign: "center",
+  },
+
+  errorBox: {
+    marginBottom: 18,
+    padding: 13,
+    borderRadius: 14,
+    background: "rgba(239, 68, 68, 0.15)",
+    color: "#dc2626",
+    fontWeight: 900,
   },
 };

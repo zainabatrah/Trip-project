@@ -1,23 +1,29 @@
 import { useMemo, useState } from "react";
+
 import TopNavbar from "../components/TopNavbar";
 import welcomeStyles from "../Styles/welcome.module.css";
+import { createPrivateTripRequest } from "../api/privateTripRequests.js";
+
+const EMPTY_TRIP = {
+  title: "",
+  destination: "",
+  startDate: "",
+  endDate: "",
+  transportation: "Car",
+  travelers: "",
+  budget: "",
+  notes: "",
+};
 
 export default function PrivateTrip() {
-  const [trip, setTrip] = useState({
-    title: "",
-    destination: "",
-    startDate: "",
-    endDate: "",
-    transportation: "Car",
-    notes: "",
-  });
-
+  const [trip, setTrip] = useState(EMPTY_TRIP);
   const [touched, setTouched] = useState({});
   const [saving, setSaving] = useState(false);
   const [serverMsg, setServerMsg] = useState("");
+  const [serverError, setServerError] = useState("");
 
-  function onChange(e) {
-    const { name, value } = e.target;
+  function onChange(event) {
+    const { name, value } = event.target;
 
     setTrip((previousTrip) => {
       const updatedTrip = {
@@ -35,31 +41,40 @@ export default function PrivateTrip() {
 
       return updatedTrip;
     });
+
+    setServerMsg("");
+    setServerError("");
   }
 
-  function onBlur(e) {
+  function onBlur(event) {
+    const { name } = event.target;
+
     setTouched((previousTouched) => ({
       ...previousTouched,
-      [e.target.name]: true,
+      [name]: true,
     }));
   }
 
   const errors = useMemo(() => {
     const newErrors = {};
 
-    const title = trip.title.trim();
-    const destination = trip.destination.trim();
+    const cleanTitle = trip.title.trim();
+    const cleanDestination = trip.destination.trim();
+    const travelers = Number(trip.travelers);
+    const budget = Number(trip.budget);
 
-    if (!title) {
-      newErrors.title = "Title is required.";
-    } else if (title.length < 3) {
-      newErrors.title = "Title must be at least 3 characters.";
+    if (!cleanTitle) {
+      newErrors.title = "Trip title is required.";
+    } else if (cleanTitle.length < 3) {
+      newErrors.title =
+        "Trip title must contain at least 3 characters.";
     }
 
-    if (!destination) {
+    if (!cleanDestination) {
       newErrors.destination = "Destination is required.";
-    } else if (destination.length < 2) {
-      newErrors.destination = "Destination must be at least 2 characters.";
+    } else if (cleanDestination.length < 2) {
+      newErrors.destination =
+        "Destination must contain at least 2 characters.";
     }
 
     if (!trip.startDate) {
@@ -70,12 +85,44 @@ export default function PrivateTrip() {
       newErrors.endDate = "End date is required.";
     }
 
-    if (trip.startDate && trip.endDate && trip.endDate < trip.startDate) {
-      newErrors.endDate = "End date must be after or same as start date.";
+    if (
+      trip.startDate &&
+      trip.endDate &&
+      trip.endDate < trip.startDate
+    ) {
+      newErrors.endDate =
+        "End date cannot be before the start date.";
     }
 
-    if (trip.notes && trip.notes.length > 800) {
-      newErrors.notes = "Notes are too long. Max 800 characters.";
+    const allowedTransportation = [
+      "Car",
+      "Van",
+      "Minibus",
+      "Bus",
+    ];
+
+    if (!allowedTransportation.includes(trip.transportation)) {
+      newErrors.transportation =
+        "Select Car, Van, Minibus, or Bus.";
+    }
+
+    if (trip.travelers === "") {
+      newErrors.travelers = "Number of travelers is required.";
+    } else if (!Number.isInteger(travelers) || travelers < 1) {
+      newErrors.travelers =
+        "Travelers must be a whole number greater than 0.";
+    }
+
+    if (trip.budget === "") {
+      newErrors.budget = "Budget is required.";
+    } else if (!Number.isFinite(budget) || budget < 0) {
+      newErrors.budget =
+        "Budget must be a valid non-negative number.";
+    }
+
+    if (trip.notes.length > 800) {
+      newErrors.notes =
+        "Notes cannot contain more than 800 characters.";
     }
 
     return newErrors;
@@ -84,13 +131,14 @@ export default function PrivateTrip() {
   const isValid = Object.keys(errors).length === 0;
 
   function showError(field) {
-    return touched[field] && errors[field];
+    return touched[field] ? errors[field] : "";
   }
 
-  async function onSubmit(e) {
-    e.preventDefault();
+  async function onSubmit(event) {
+    event.preventDefault();
 
     setServerMsg("");
+    setServerError("");
 
     setTouched({
       title: true,
@@ -98,229 +146,260 @@ export default function PrivateTrip() {
       startDate: true,
       endDate: true,
       transportation: true,
+      travelers: true,
+      budget: true,
       notes: true,
     });
 
-    if (!isValid) return;
+    if (!isValid || saving) {
+      return;
+    }
 
     try {
       setSaving(true);
 
       const payload = {
-        ...trip,
         title: trip.title.trim(),
         destination: trip.destination.trim(),
-        createdAt: new Date().toISOString(),
+        startDate: trip.startDate,
+        endDate: trip.endDate,
+        transportation: trip.transportation,
+        travelers: Number(trip.travelers),
+        budget: Number(trip.budget),
+        notes: trip.notes.trim(),
+        clientName:
+          getStoredUser()?.name ||
+          localStorage.getItem("tripUserName") ||
+          localStorage.getItem("userName") ||
+          "Client",
+        email:
+          getStoredUser()?.email ||
+          localStorage.getItem("tripUserEmail") ||
+          localStorage.getItem("userEmail") ||
+          "",
       };
 
-      const storageKey = "private_trips";
-      const existingTrips = JSON.parse(
-        localStorage.getItem(storageKey) || "[]"
+      const response = await createPrivateTripRequest(payload);
+
+      setServerMsg(
+        response?.message ||
+          "Private trip request sent successfully."
       );
 
-      localStorage.setItem(
-        storageKey,
-        JSON.stringify([payload, ...existingTrips])
-      );
-
-      setServerMsg("Saved successfully.");
-
-      setTrip({
-        title: "",
-        destination: "",
-        startDate: "",
-        endDate: "",
-        transportation: "Car",
-        notes: "",
-      });
-
+      setTrip(EMPTY_TRIP);
       setTouched({});
-    } catch {
-      setServerMsg("Could not save. Try again.");
+    } catch (error) {
+      console.error("Private trip submission failed:", error);
+
+      setServerError(
+        error?.message ||
+          "Could not send the private trip request."
+      );
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <div className={welcomeStyles.body} style={styles.publicPage}>
+    <div
+      className={welcomeStyles.body}
+      style={styles.page}
+    >
       <TopNavbar />
 
-      <main style={styles.publicMain}>
+      <main style={styles.main}>
         <div style={styles.container}>
-          <div style={styles.header}>
-            <div>
-              <h1 style={styles.title}>Create Private Trip</h1>
+          <h1 style={styles.title}>Create Private Trip</h1>
 
-              <p style={styles.subtitle}>
-                Plan trips privately, compare options, and save your travel
-                ideas.
-              </p>
-            </div>
-          </div>
+          <p style={styles.subtitle}>
+            Submit a private trip request. The organizer will
+            review it and send you a result message.
+          </p>
 
-          <form onSubmit={onSubmit} style={styles.card}>
-            <div style={styles.iconBox}>✈</div>
-
-            <h2 style={styles.cardTitle}>Trip Details</h2>
-
-            <p style={styles.cardSubtitle}>
-              This trip is saved privately and is not visible to other users.
-            </p>
-
+          <form
+            onSubmit={onSubmit}
+            noValidate
+            style={styles.card}
+          >
             <div style={styles.grid}>
-              <div>
-                <label style={styles.label}>Trip title</label>
+              <Field
+                label="Trip title"
+                name="title"
+                value={trip.title}
+                onChange={onChange}
+                onBlur={onBlur}
+                error={showError("title")}
+                placeholder="My Summer Trip"
+                disabled={saving}
+              />
 
-                <input
-                  style={{
-                    ...styles.input,
-                    ...(showError("title") ? styles.inputErr : {}),
-                  }}
-                  name="title"
-                  value={trip.title}
-                  onChange={onChange}
-                  onBlur={onBlur}
-                  placeholder="My Summer Trip"
-                  required
-                />
+              <Field
+                label="Destination"
+                name="destination"
+                value={trip.destination}
+                onChange={onChange}
+                onBlur={onBlur}
+                error={showError("destination")}
+                placeholder="Beirut, Baalbek, Byblos..."
+                disabled={saving}
+              />
 
-                {showError("title") && (
-                  <div style={styles.errText}>{errors.title}</div>
-                )}
-              </div>
+              <Field
+                label="Start date"
+                type="date"
+                name="startDate"
+                value={trip.startDate}
+                onChange={onChange}
+                onBlur={onBlur}
+                error={showError("startDate")}
+                disabled={saving}
+              />
 
-              <div>
-                <label style={styles.label}>Destination</label>
-
-                <input
-                  style={{
-                    ...styles.input,
-                    ...(showError("destination") ? styles.inputErr : {}),
-                  }}
-                  name="destination"
-                  value={trip.destination}
-                  onChange={onChange}
-                  onBlur={onBlur}
-                  placeholder="Beirut, Istanbul, Paris..."
-                  required
-                />
-
-                {showError("destination") && (
-                  <div style={styles.errText}>{errors.destination}</div>
-                )}
-              </div>
-
-              <div>
-                <label style={styles.label}>Start date</label>
-
-                <input
-                  style={{
-                    ...styles.input,
-                    ...(showError("startDate") ? styles.inputErr : {}),
-                  }}
-                  type="date"
-                  name="startDate"
-                  value={trip.startDate}
-                  onChange={onChange}
-                  onBlur={onBlur}
-                  required
-                />
-
-                {showError("startDate") && (
-                  <div style={styles.errText}>{errors.startDate}</div>
-                )}
-              </div>
+              <Field
+                label="End date"
+                type="date"
+                name="endDate"
+                value={trip.endDate}
+                onChange={onChange}
+                onBlur={onBlur}
+                error={showError("endDate")}
+                min={trip.startDate || undefined}
+                disabled={saving}
+              />
 
               <div>
-                <label style={styles.label}>End date</label>
-
-                <input
-                  style={{
-                    ...styles.input,
-                    ...(showError("endDate") ? styles.inputErr : {}),
-                  }}
-                  type="date"
-                  name="endDate"
-                  value={trip.endDate}
-                  onChange={onChange}
-                  onBlur={onBlur}
-                  min={trip.startDate || undefined}
-                  required
-                />
-
-                {showError("endDate") && (
-                  <div style={styles.errText}>{errors.endDate}</div>
-                )}
-              </div>
-
-              <div>
-                <label style={styles.label}>Transportation</label>
+                <label
+                  htmlFor="transportation"
+                  style={styles.label}
+                >
+                  Transportation
+                </label>
 
                 <select
-                  style={styles.input}
+                  id="transportation"
                   name="transportation"
                   value={trip.transportation}
                   onChange={onChange}
                   onBlur={onBlur}
-                >
-                  <option>Car</option>
-                  <option>Bus</option>
-                  <option>Plane</option>
-                  <option>Train</option>
-                  <option>Boat</option>
-                </select>
-              </div>
-
-              <div style={styles.summaryBox}>
-                <span style={styles.summaryLabel}>Selected vehicle</span>
-                <strong style={styles.summaryValue}>
-                  {trip.transportation}
-                </strong>
-              </div>
-
-              <div style={styles.fullWidth}>
-                <label style={styles.label}>Notes</label>
-
-                <textarea
+                  disabled={saving}
                   style={{
                     ...styles.input,
-                    ...styles.textarea,
-                    ...(showError("notes") ? styles.inputErr : {}),
+                    ...(showError("transportation")
+                      ? styles.inputErr
+                      : {}),
                   }}
+                >
+                  <option value="Car">Car</option>
+                  <option value="Van">Van</option>
+                  <option value="Minibus">Minibus</option>
+                  <option value="Bus">Bus</option>
+                </select>
+
+                {showError("transportation") && (
+                  <div style={styles.errText}>
+                    {showError("transportation")}
+                  </div>
+                )}
+              </div>
+
+              <Field
+                label="Travelers"
+                type="number"
+                name="travelers"
+                value={trip.travelers}
+                onChange={onChange}
+                onBlur={onBlur}
+                error={showError("travelers")}
+                placeholder="Example: 3"
+                min="1"
+                step="1"
+                disabled={saving}
+              />
+
+              <Field
+                label="Budget"
+                type="number"
+                name="budget"
+                value={trip.budget}
+                onChange={onChange}
+                onBlur={onBlur}
+                error={showError("budget")}
+                placeholder="Example: 500"
+                min="0"
+                step="0.01"
+                disabled={saving}
+              />
+
+              <div style={styles.fullWidth}>
+                <label
+                  htmlFor="notes"
+                  style={styles.label}
+                >
+                  Notes
+                </label>
+
+                <textarea
+                  id="notes"
                   name="notes"
                   value={trip.notes}
                   onChange={onChange}
                   onBlur={onBlur}
+                  disabled={saving}
                   placeholder="Restaurants, stops, budget, ideas..."
                   maxLength={800}
+                  style={{
+                    ...styles.input,
+                    ...styles.textarea,
+                    ...(showError("notes")
+                      ? styles.inputErr
+                      : {}),
+                  }}
                 />
 
                 <div style={styles.hintRow}>
-                  {showError("notes") ? (
-                    <span style={styles.errText}>{errors.notes}</span>
-                  ) : (
-                    <span style={styles.hintText}>
-                      Optional. Max 800 characters.
-                    </span>
-                  )}
+                  <span
+                    style={
+                      showError("notes")
+                        ? styles.errText
+                        : styles.hintText
+                    }
+                  >
+                    {showError("notes") ||
+                      "Optional. Maximum 800 characters."}
+                  </span>
 
-                  <span style={styles.counter}>{trip.notes.length}/800</span>
+                  <span style={styles.counter}>
+                    {trip.notes.length}/800
+                  </span>
                 </div>
               </div>
             </div>
 
-            {serverMsg && <div style={styles.toast}>{serverMsg}</div>}
+            {serverMsg && (
+              <div style={styles.successBox}>
+                {serverMsg}
+              </div>
+            )}
+
+            {serverError && (
+              <div style={styles.errorBox}>
+                {serverError}
+              </div>
+            )}
 
             <button
-              style={{
-                ...styles.btn,
-                ...(saving || !isValid ? styles.btnDisabled : {}),
-              }}
               type="submit"
               disabled={saving || !isValid}
+              style={{
+                ...styles.btn,
+                ...(saving || !isValid
+                  ? styles.btnDisabled
+                  : {}),
+              }}
             >
-              {saving ? "Saving..." : "Save Private Trip"}
+              {saving
+                ? "Sending..."
+                : "Send Private Trip Request"}
             </button>
           </form>
         </div>
@@ -329,17 +408,92 @@ export default function PrivateTrip() {
   );
 }
 
+function Field({
+  label,
+  name,
+  value,
+  onChange,
+  onBlur,
+  error,
+  type = "text",
+  placeholder = "",
+  min,
+  step,
+  disabled = false,
+}) {
+  return (
+    <div>
+      <label
+        htmlFor={name}
+        style={styles.label}
+      >
+        {label}
+      </label>
+
+      <input
+        id={name}
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        onBlur={onBlur}
+        placeholder={placeholder}
+        min={min}
+        step={step}
+        disabled={disabled}
+        style={{
+          ...styles.input,
+          ...(error ? styles.inputErr : {}),
+        }}
+      />
+
+      {error && (
+        <div style={styles.errText}>{error}</div>
+      )}
+    </div>
+  );
+}
+
+function getStoredUser() {
+  const possibleKeys = [
+    "currentUser",
+    "tripUser",
+    "user",
+  ];
+
+  for (const key of possibleKeys) {
+    const value = localStorage.getItem(key);
+
+    if (!value || value === "null") {
+      continue;
+    }
+
+    try {
+      const parsedUser = JSON.parse(value);
+
+      if (
+        parsedUser &&
+        typeof parsedUser === "object"
+      ) {
+        return parsedUser;
+      }
+    } catch {
+      // Ignore invalid stored JSON.
+    }
+  }
+
+  return null;
+}
+
 const styles = {
-  publicPage: {
+  page: {
     width: "100%",
     minHeight: "100vh",
     color: "#1e293b",
     fontFamily: "Inter, Arial, sans-serif",
-    boxSizing: "border-box",
-    overflowX: "hidden",
   },
 
-  publicMain: {
+  main: {
     width: "100%",
     padding: "34px 26px",
     boxSizing: "border-box",
@@ -349,17 +503,6 @@ const styles = {
     width: "100%",
     maxWidth: 1000,
     margin: "0 auto",
-    color: "#1e293b",
-    boxSizing: "border-box",
-  },
-
-  header: {
-    width: "100%",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 14,
-    marginBottom: 22,
   },
 
   title: {
@@ -367,62 +510,31 @@ const styles = {
     fontSize: 34,
     fontWeight: 900,
     color: "#1e3a8a",
-    letterSpacing: "-0.04em",
   },
 
   subtitle: {
-    margin: "8px 0 0",
+    margin: "8px 0 22px",
     color: "#475569",
     fontSize: 15,
-    fontWeight: 500,
     lineHeight: 1.7,
-    maxWidth: 650,
   },
 
   card: {
     width: "100%",
     padding: 24,
     borderRadius: 22,
-    background: "rgba(255, 255, 255, 0.72)",
-    border: "1px solid rgba(147, 197, 253, 0.45)",
-    boxShadow: "0 25px 70px rgba(59, 130, 246, 0.22)",
-    backdropFilter: "blur(16px)",
-    WebkitBackdropFilter: "blur(16px)",
+    background: "rgba(255, 255, 255, 0.78)",
+    border:
+      "1px solid rgba(147, 197, 253, 0.45)",
+    boxShadow:
+      "0 25px 70px rgba(59, 130, 246, 0.18)",
     boxSizing: "border-box",
-  },
-
-  iconBox: {
-    width: 58,
-    height: 58,
-    borderRadius: 18,
-    background: "linear-gradient(135deg, #60a5fa, #a78bfa)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "#ffffff",
-    fontSize: 26,
-    fontWeight: 900,
-    marginBottom: 16,
-    boxShadow: "0 14px 30px rgba(96, 165, 250, 0.35)",
-  },
-
-  cardTitle: {
-    margin: 0,
-    fontSize: 22,
-    fontWeight: 900,
-    color: "#1e3a8a",
-  },
-
-  cardSubtitle: {
-    margin: "7px 0 22px",
-    color: "#475569",
-    fontSize: 14,
-    lineHeight: 1.6,
   },
 
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+    gridTemplateColumns:
+      "repeat(auto-fit, minmax(260px, 1fr))",
     gap: 16,
   },
 
@@ -434,112 +546,94 @@ const styles = {
     display: "block",
     marginBottom: 7,
     fontSize: 13,
-    fontWeight: 800,
-    color: "#334155",
+    fontWeight: 900,
+    color: "#1e3a8a",
   },
 
   input: {
     width: "100%",
-    padding: "13px 14px",
+    minHeight: 46,
+    padding: "12px 14px",
     borderRadius: 14,
     border: "1px solid #bfdbfe",
-    background: "rgba(255,255,255,0.9)",
-    color: "#0f172a",
     outline: "none",
     fontSize: 14,
-    fontWeight: 500,
+    fontWeight: 600,
     boxSizing: "border-box",
+    background: "#ffffff",
+    color: "#0f172a",
   },
 
   textarea: {
     minHeight: 120,
     resize: "vertical",
-    fontFamily: "Inter, Arial, sans-serif",
   },
 
   inputErr: {
-    border: "1px solid rgba(220, 38, 38, 0.65)",
-    background: "rgba(254, 242, 242, 0.95)",
+    borderColor: "#ef4444",
   },
 
   errText: {
     marginTop: 6,
+    color: "#dc2626",
     fontSize: 12,
     fontWeight: 800,
-    color: "#dc2626",
   },
 
   hintRow: {
-    marginTop: 8,
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 10,
-  },
-
-  hintText: {
-    fontSize: 12,
-    color: "#475569",
-    fontWeight: 500,
-  },
-
-  counter: {
-    fontSize: 12,
-    color: "#2563eb",
-    fontWeight: 900,
-  },
-
-  summaryBox: {
-    padding: 16,
-    borderRadius: 18,
-    background: "rgba(255,255,255,0.72)",
-    border: "1px solid #bfdbfe",
+    marginTop: 6,
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
     gap: 12,
   },
 
-  summaryLabel: {
-    color: "#475569",
-    fontSize: 13,
+  hintText: {
+    color: "#64748b",
+    fontSize: 12,
     fontWeight: 700,
   },
 
-  summaryValue: {
-    color: "#2563eb",
-    fontSize: 15,
+  counter: {
+    color: "#64748b",
+    fontSize: 12,
+    fontWeight: 800,
+  },
+
+  successBox: {
+    marginTop: 16,
+    padding: 13,
+    borderRadius: 14,
+    background: "rgba(34, 197, 94, 0.15)",
+    color: "#15803d",
     fontWeight: 900,
   },
 
-  toast: {
+  errorBox: {
     marginTop: 16,
-    padding: "12px 14px",
+    padding: 13,
     borderRadius: 14,
-    background: "rgba(34, 197, 94, 0.14)",
-    border: "1px solid rgba(34, 197, 94, 0.35)",
-    color: "#15803d",
+    background: "rgba(239, 68, 68, 0.15)",
+    color: "#dc2626",
     fontWeight: 900,
-    textAlign: "center",
   },
 
   btn: {
+    marginTop: 20,
     width: "100%",
-    marginTop: 16,
-    padding: "14px 16px",
-    borderRadius: 16,
+    padding: "14px 18px",
     border: "none",
-    background: "linear-gradient(135deg, #93c5fd, #a78bfa)",
-    color: "#0f172a",
+    borderRadius: 16,
+    background:
+      "linear-gradient(135deg, #2563eb, #7c3aed)",
+    color: "#ffffff",
+    fontSize: 15,
     fontWeight: 900,
     cursor: "pointer",
-    fontSize: 15,
-    boxShadow: "0 12px 28px rgba(96, 165, 250, 0.35)",
   },
 
   btnDisabled: {
     opacity: 0.55,
     cursor: "not-allowed",
-    boxShadow: "none",
   },
 };

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { registerUser, saveAuth } from "../api/auth";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -21,15 +22,21 @@ export default function Register() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
     const fullName = form.fullName.trim();
     const email = form.email.trim().toLowerCase();
+    const password = form.password;
 
-    if (!fullName || !email || !form.password) {
+    if (!fullName || !email || !password) {
       setError("Please fill all fields.");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
       return;
     }
 
@@ -38,48 +45,24 @@ export default function Register() {
       return;
     }
 
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const registeredUser = {
-      id: Date.now(),
-      fullName,
-      email,
-      idFileName: idFile.name,
-      createdAt: new Date().toISOString(),
-    };
+      const formData = new FormData();
+      formData.append("fullName", fullName);
+      formData.append("email", email);
+      formData.append("password", password);
+      formData.append("idDocument", idFile);
 
-    const loginUser = {
-      fullName,
-      email,
-      password: form.password,
-    };
+      const data = await registerUser(formData);
+      saveAuth(data);
 
-    const existingUsers = JSON.parse(
-      localStorage.getItem("registeredUsers") || "[]"
-    );
-
-    const emailExists = existingUsers.some((user) => user.email === email);
-
-    if (emailExists) {
-      setError("This email is already registered. Please login.");
+      navigate("/trips", { replace: true });
+    } catch (err) {
+      setError(err.message || "Registration failed.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    localStorage.setItem(
-      "registeredUsers",
-      JSON.stringify([loginUser, ...existingUsers])
-    );
-
-    localStorage.setItem("isRegistered", "true");
-    localStorage.setItem("user", JSON.stringify(registeredUser));
-    localStorage.setItem("tripUser", JSON.stringify(registeredUser));
-    localStorage.setItem("tripUserName", registeredUser.fullName);
-    localStorage.setItem("tripUserEmail", registeredUser.email);
-
-    setLoading(false);
-
-    navigate("/trips", { replace: true });
   };
 
   return (
@@ -213,7 +196,6 @@ const styles = {
     color: "#ffffff",
     fontSize: 24,
     fontWeight: 900,
-    boxShadow: "0 14px 30px rgba(96, 165, 250, 0.35)",
   },
 
   title: {
@@ -222,7 +204,6 @@ const styles = {
     fontSize: "28px",
     fontWeight: 900,
     color: "#1e3a8a",
-    letterSpacing: "-0.03em",
   },
 
   subtitle: {
@@ -290,7 +271,6 @@ const styles = {
     color: "#0f172a",
     fontSize: "15px",
     fontWeight: 900,
-    boxShadow: "0 12px 28px rgba(96, 165, 250, 0.35)",
   },
 
   error: {
