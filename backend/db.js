@@ -4,7 +4,9 @@ async function connectDB() {
   const mongoUri = process.env.MONGODB_URI;
 
   if (!mongoUri) {
-    throw new Error("MONGODB_URI is missing from backend/.env");
+    throw new Error(
+      "MONGODB_URI is missing from backend/.env"
+    );
   }
 
   await mongoose.connect(mongoUri);

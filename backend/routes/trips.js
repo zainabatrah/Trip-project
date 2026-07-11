@@ -256,6 +256,31 @@ function normalizeDurationValue(value) {
   return 0;
 }
 
+function buildDurationField(
+  value,
+  fallbackUnit = "days"
+) {
+  const normalizedValue =
+    normalizeDurationValue(value);
+
+  const normalizedUnit = String(
+    typeof value === "object" &&
+      value !== null
+      ? value.unit || fallbackUnit
+      : fallbackUnit
+  )
+    .trim()
+    .toLowerCase();
+
+  return {
+    value: normalizedValue,
+    unit:
+      normalizedUnit === "hours"
+        ? "hours"
+        : "days",
+  };
+}
+
 function resolveDestinationImage(
   ...values
 ) {
@@ -341,6 +366,29 @@ function normalizePlace(
   };
 }
 
+function normalizePlaceForPersistence(
+  place,
+  trip
+) {
+  const fallbackImage =
+    resolveDestinationImage(
+      place?.city,
+      trip?.to,
+      trip?.title
+    );
+
+  return {
+    ...place,
+    image: normalizeImagePath(
+      place?.image,
+      fallbackImage
+    ),
+    duration: buildDurationField(
+      place?.duration ?? place?.days ?? 1
+    ),
+  };
+}
+
 function normalizeTripResponse(
   trip
 ) {
@@ -386,6 +434,38 @@ function normalizeTripResponse(
     )
       ? trip.places.map((place) =>
           normalizePlace(
+            place,
+            trip
+          )
+        )
+      : [],
+  };
+}
+
+function normalizeTripForPersistence(
+  trip
+) {
+  const fallbackImage =
+    resolveDestinationImage(
+      trip?.to,
+      trip?.title,
+      trip?.country
+    );
+
+  return {
+    ...trip,
+    photo: normalizeImagePath(
+      trip?.photo,
+      fallbackImage
+    ),
+    duration: buildDurationField(
+      trip?.duration
+    ),
+    places: Array.isArray(
+      trip?.places
+    )
+      ? trip.places.map((place) =>
+          normalizePlaceForPersistence(
             place,
             trip
           )
@@ -468,7 +548,6 @@ function normalizeTripData(data) {
 
   const numericFields = [
     "price",
-    "duration",
     "numberOfTravelers",
     "reservedTravelers",
     "rating",
@@ -495,6 +574,17 @@ function normalizeTripData(data) {
     normalized.date =
       new Date(
         normalized.date
+      );
+  }
+
+  if (
+    normalized.duration !==
+      undefined &&
+    normalized.duration !== ""
+  ) {
+    normalized.duration =
+      normalizeDurationValue(
+        normalized.duration
       );
   }
 
@@ -799,7 +889,9 @@ router.post(
 
       const trip =
         await Trip.create(
-          tripData
+          normalizeTripForPersistence(
+            tripData
+          )
         );
 
       return res
@@ -808,7 +900,10 @@ router.post(
           success: true,
           message:
             "Trip created successfully.",
-          trip,
+          trip:
+            normalizeTripResponse(
+              trip.toObject()
+            ),
         });
     } catch (error) {
       next(error);
@@ -865,7 +960,9 @@ router.put(
 
       const completeData =
         addDefaults({
-          ...existingTrip.toObject(),
+          ...normalizeTripResponse(
+            existingTrip.toObject()
+          ),
           ...updateData,
         });
 
@@ -886,15 +983,14 @@ router.put(
           });
       }
 
-      const updatedTrip =
-        await Trip.findByIdAndUpdate(
-          req.params.id,
-          updateData,
-          {
-            new: true,
-            runValidators: true,
-          }
-        );
+      Object.assign(
+        existingTrip,
+        normalizeTripForPersistence(
+          completeData
+        )
+      );
+
+      await existingTrip.save();
 
       return res
         .status(200)
@@ -903,7 +999,9 @@ router.put(
           message:
             "Trip updated successfully.",
           trip:
-            updatedTrip,
+            normalizeTripResponse(
+              existingTrip.toObject()
+            ),
         });
     } catch (error) {
       next(error);

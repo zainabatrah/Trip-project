@@ -15,7 +15,6 @@ const router = express.Router();
 const uploadDirectory = path.join(
   __dirname,
   "..",
-  "..",
   "uploads",
   "ids"
 );

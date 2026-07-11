@@ -290,6 +290,18 @@ function calculateDuration(
   );
 }
 
+function createTripDuration(
+  value
+) {
+  return {
+    value: Math.max(
+      1,
+      Number(value) || 1
+    ),
+    unit: "days",
+  };
+}
+
 function resolveDestinationPreset(
   destination
 ) {
@@ -492,7 +504,10 @@ function buildTripFromRequest(
     price: Number(
       request.budget || 0
     ),
-    duration,
+    duration:
+      createTripDuration(
+        duration
+      ),
     numberOfTravelers:
       Number(
         request.travelers || 1
@@ -524,7 +539,10 @@ function buildTripFromRequest(
           destinationPreset.latitude,
         longitude:
           destinationPreset.longitude,
-        days: duration,
+        duration:
+          createTripDuration(
+            duration
+          ),
       },
     ],
   };

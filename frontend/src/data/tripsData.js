@@ -142,4 +142,4 @@ const trips = [
   },
 ];
 
-module.exports = trips;
+export default trips;

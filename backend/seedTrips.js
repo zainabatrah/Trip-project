@@ -5,6 +5,16 @@ const mongoose = require("mongoose");
 const connectDB = require("./db");
 const Trip = require("./models/Trip");
 
+function createDuration(days) {
+  return {
+    value: Math.max(
+      1,
+      Number(days) || 1
+    ),
+    unit: "days",
+  };
+}
+
 function createPlace(
   city,
   image,
@@ -17,6 +27,28 @@ function createPlace(
     latitude,
     longitude,
     days: 1,
+  };
+}
+
+function normalizeSeedTrip(trip) {
+  return {
+    ...trip,
+    duration: createDuration(
+      trip.duration
+    ),
+    places: Array.isArray(
+      trip.places
+    )
+      ? trip.places.map((place) => ({
+          ...place,
+          duration:
+            createDuration(
+              place.duration ??
+                place.days ??
+                1
+            ),
+        }))
+      : [],
   };
 }
 
@@ -425,7 +457,11 @@ async function seedTrips() {
     console.log("Old trips removed.");
 
     const insertedTrips =
-      await Trip.insertMany(trips);
+      await Trip.insertMany(
+        trips.map(
+          normalizeSeedTrip
+        )
+      );
 
     console.log(
       `${insertedTrips.length} trips inserted successfully.`
