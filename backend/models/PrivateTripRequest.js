@@ -36,7 +36,7 @@ const privateTripRequestSchema =
       client: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        required: true,
+        default: null,
         index: true,
       },
 
@@ -150,6 +150,7 @@ const privateTripRequestSchema =
           "PENDING",
           "APPROVED",
           "REJECTED",
+          "POSTPONED",
         ],
         default: "PENDING",
         index: true,

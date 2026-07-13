@@ -80,9 +80,10 @@ export default function TopNavbar() {
   }, []);
 
   return (
-    <nav className={styles.navbar}>
+   <nav className={`${styles.navbar} ${open ? styles.open : ""}`}>
       <div className={styles.navInner}>
-        <div className={`${styles.menu} ${open ? styles.open : ""}`}>
+       <div className={`${styles.menu} ${open ? styles.open : ""}`}>
+  
           <div className={styles.leftLinks}>
             <Link to="/" className={styles.link}>
               Home
@@ -91,46 +92,89 @@ export default function TopNavbar() {
             <Link to="/about" className={styles.link}>
               About Us
             </Link>
+              <Link to="/private-trip" className={styles.link}>
+      Private Trip
+    </Link>
 
-            <Link to="/trips" className={styles.link}>
+{user && (
+  <>
+   <Link to="/trips" className={styles.link}>
               Trips
             </Link>
+            <Link 
+    to="/my-trips" 
+    className={styles.link}
+>
+    My Trips
+</Link>
 
-            <Link to="/private-trip" className={styles.link}>
-              Private Trip
-            </Link>
+    {isOrganizer ? (
+      <Link to="/approve" className={styles.link}>
+        Approve
+      </Link>
+    ) : (
+      <Link to="/my-requests" className={styles.link}>
+        My Requests
+      </Link>
+      
+    )}
+  </>
+)}
+    </div>     
+<div className={styles.rightlinks}>
+    {user ? (
+  <>
+    <Link to="/Profile" className={`{styles.profileCircle} ${styles.circles}`}>
+      {profileImage ? (
+        <img
+          src={profileImage}
+          alt="User Profile"
+          className={styles.profileImage}
+        />
+      ) : (
+        <span className={styles.profileLetter}>
+          {profileLetter}
+        </span>
+      )}
+    </Link>
 
-            {isOrganizer ? (
-              <Link to="/approve" className={styles.link}>
-                Approve
-              </Link>
-            ) : (
-              <Link to="/my-requests" className={styles.link}>
-                My Requests
-              </Link>
-            )}
-          </div>
+    <button
+      className={styles.secondaryBtn}
+      onClick={() => {
+        logoutUser();
+        setUser(null);
+        window.location.href = "/";
+      }}
+    >
+      Logout
+    </button>
+  </>
+) : (
+  <>
+    <Link
+      to="/login"
+      className={styles.primaryBtn}
+    >
+      Login
+    </Link>
+
+    <Link
+      to="/register"
+      className={styles.secondaryBtn}
+    >
+      Register
+    </Link>
+  </>
+)}
+  </div>
         </div>
 
-        <Link to="/profile" className={styles.profileCircle}>
-          {profileImage ? (
-            <img
-              src={profileImage}
-              alt="User Profile"
-              className={styles.profileImage}
-            />
-          ) : (
-            <span className={styles.profileLetter}>{profileLetter}</span>
-          )}
-        </Link>
-
-        <button
-          type="button"
-          className={styles.hamburger}
-          onClick={() => setOpen(!open)}
-        >
-          {open ? "✕" : "☰"}
-        </button>
+     <div 
+  className={styles.hamburger}
+  onClick={() => setOpen(!open)}
+>
+  {open ? "✕" : "☰"}
+</div>
       </div>
     </nav>
   );

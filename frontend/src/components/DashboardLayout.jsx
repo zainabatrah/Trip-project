@@ -1,8 +1,7 @@
 import TopNavbar from "./TopNavbar.jsx";
+import { Outlet } from "react-router-dom";
 
-export default function DashboardLayout({
-  children,
-}) {
+export default function DashboardLayout() {
   return (
     <div
       style={{
@@ -10,9 +9,13 @@ export default function DashboardLayout({
         width: "100%",
       }}
     >
+
       <TopNavbar />
 
-      <main>{children}</main>
+      <main>
+        <Outlet />
+      </main>
+
     </div>
   );
 }

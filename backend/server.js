@@ -68,7 +68,9 @@ const tripRoutes = require(
 const privateTripRequestRoutes = require(
   "./routes/privateTripRequests"
 );
-
+const paymentRoutes = require("./routes/paymentRoutes");
+const bookingRoute = require("./routes/bookingRoutes");
+const userRoutes=require("./routes/userRoutes");
 const app = express();
 
 const PORT =
@@ -288,6 +290,12 @@ app.use(
   privateTripRequestRoutes
 );
 
+app.use("/api/payment", paymentRoutes);
+app.use("/api/bookings", bookingRoute);
+app.use(
+    "/api/users",
+    userRoutes
+);
 /*
 |--------------------------------------------------------------------------
 | Route-not-found handler

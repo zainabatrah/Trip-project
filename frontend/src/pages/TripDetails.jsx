@@ -1,10 +1,19 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
+
 import {
   useNavigate,
   useParams,
 } from "react-router-dom";
-import { getTripById } from "../api/trips.js";
-import DashboardLayout from "../components/DashboardLayout.jsx";
+
+import {
+  getTripById,
+} from "../api/trips.js";
+
+
+
 import "./tripdetail.css";
 
 import {
@@ -25,7 +34,106 @@ import {
   FaCheckCircle,
 } from "react-icons/fa";
 
-function getErrorMessage(error) {
+/*
+|--------------------------------------------------------------------------
+| Final browser fallback
+|--------------------------------------------------------------------------
+*/
+
+const defaultTripImage =
+  "/Images/Libanon233.jpg";
+
+/*
+|--------------------------------------------------------------------------
+| Main trip image
+|--------------------------------------------------------------------------
+|
+| The backend already resolves images in this order:
+|
+| 1. trip.photo
+| 2. an image from trip.places
+| 3. destination image
+| 4. unused frontend/public/Images image
+| 5. Libanon233.jpg
+|
+| This helper provides an additional frontend safety check.
+|
+*/
+
+function getTripDisplayImage(
+  trip
+) {
+  const tripPhoto =
+    String(
+      trip?.photo || ""
+    ).trim();
+
+  if (tripPhoto) {
+    return tripPhoto;
+  }
+
+  const places =
+    Array.isArray(
+      trip?.places
+    )
+      ? trip.places
+      : [];
+
+  const placeImage =
+    places
+      .map(
+        (place) =>
+          String(
+            place?.image || ""
+          ).trim()
+      )
+      .find(Boolean);
+
+  return (
+    placeImage ||
+    defaultTripImage
+  );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Place image
+|--------------------------------------------------------------------------
+*/
+
+function getPlaceDisplayImage(
+  place,
+  trip
+) {
+  const placeImage =
+    String(
+      place?.image || ""
+    ).trim();
+
+  if (placeImage) {
+    return placeImage;
+  }
+
+  const tripImage =
+    String(
+      trip?.photo || ""
+    ).trim();
+
+  return (
+    tripImage ||
+    defaultTripImage
+  );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Request error messages
+|--------------------------------------------------------------------------
+*/
+
+function getErrorMessage(
+  error
+) {
   if (
     error?.status === 400 ||
     error?.status === 404
@@ -33,15 +141,21 @@ function getErrorMessage(error) {
     return "Trip not found.";
   }
 
-  if (error?.status === 401) {
+  if (
+    error?.status === 401
+  ) {
     return "Please log in to view this trip.";
   }
 
-  if (error?.status === 403) {
+  if (
+    error?.status === 403
+  ) {
     return "You are not allowed to view this trip.";
   }
 
-  if (error?.status >= 500) {
+  if (
+    error?.status >= 500
+  ) {
     return "Server error. Please try again.";
   }
 
@@ -51,13 +165,20 @@ function getErrorMessage(error) {
   );
 }
 
+/*
+|--------------------------------------------------------------------------
+| Duration formatting
+|--------------------------------------------------------------------------
+*/
+
 function getDurationData(
   value,
   fallbackUnit = "days"
 ) {
   if (
     value &&
-    typeof value === "object"
+    typeof value ===
+      "object"
   ) {
     const durationValue =
       value.value ??
@@ -66,17 +187,23 @@ function getDurationData(
       value.hours;
 
     if (
-      durationValue !== undefined &&
-      durationValue !== null &&
-      durationValue !== ""
+      durationValue !==
+        undefined &&
+      durationValue !==
+        null &&
+      durationValue !==
+        ""
     ) {
       return {
-        value: durationValue,
+        value:
+          durationValue,
+
         unit:
           String(
             value.unit ||
               fallbackUnit
-          ).trim() || fallbackUnit,
+          ).trim() ||
+          fallbackUnit,
       };
     }
   }
@@ -88,36 +215,86 @@ function getDurationData(
   ) {
     return {
       value,
-      unit: fallbackUnit,
+      unit:
+        fallbackUnit,
     };
   }
 
   return {
     value: 0,
-    unit: fallbackUnit,
+    unit:
+      fallbackUnit,
   };
 }
 
-export default function TripDetails() {
-  const { id } = useParams();
+/*
+|--------------------------------------------------------------------------
+| Trip Details
+|--------------------------------------------------------------------------
+*/
 
-  const [trip, setTrip] = useState(null);
-  const [forecast, setForecast] = useState([]);
-  const [weatherMessage, setWeatherMessage] =
-    useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const navigate = useNavigate();
+export default function TripDetails() {
+  const {
+    id,
+  } = useParams();
+
+  const [
+    trip,
+    setTrip,
+  ] = useState(null);
+
+  const [
+    forecast,
+    setForecast,
+  ] = useState([]);
+
+  const [
+    weatherMessage,
+    setWeatherMessage,
+  ] = useState("");
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
+
+  const [
+    error,
+    setError,
+  ] = useState("");
+
+  /*
+   * The verified image used by
+   * the hero background.
+   */
+  const [
+    heroImage,
+    setHeroImage,
+  ] = useState(
+    defaultTripImage
+  );
+
+  const navigate =
+    useNavigate();
+
+  /*
+  |--------------------------------------------------------------------------
+  | Load trip
+  |--------------------------------------------------------------------------
+  */
 
   useEffect(() => {
-    let cancelled = false;
+    let cancelled =
+      false;
 
     async function fetchTrip() {
       if (!id) {
         setTrip(null);
         setForecast([]);
         setWeatherMessage("");
-        setError("Trip not found.");
+        setError(
+          "Trip not found."
+        );
         setLoading(false);
 
         return;
@@ -128,7 +305,9 @@ export default function TripDetails() {
         setError("");
 
         const data =
-          await getTripById(id);
+          await getTripById(
+            id
+          );
 
         if (cancelled) {
           return;
@@ -138,16 +317,29 @@ export default function TripDetails() {
           setTrip(null);
           setForecast([]);
           setWeatherMessage("");
-          setError("Trip not found.");
+          setError(
+            "Trip not found."
+          );
 
           return;
         }
 
-        setTrip(data.trip);
+        setTrip(
+          data.trip
+        );
 
-        if (Array.isArray(data.weather)) {
-          setForecast(data.weather);
-          setWeatherMessage("");
+        if (
+          Array.isArray(
+            data.weather
+          )
+        ) {
+          setForecast(
+            data.weather
+          );
+
+          setWeatherMessage(
+            ""
+          );
         } else if (
           data.weather &&
           typeof data.weather ===
@@ -155,21 +347,30 @@ export default function TripDetails() {
           data.weather.message
         ) {
           setWeatherMessage(
-            data.weather.message
+            data.weather
+              .message
           );
+
           setForecast([]);
         } else {
           setForecast([]);
-          setWeatherMessage("");
+          setWeatherMessage(
+            ""
+          );
         }
-      } catch (requestError) {
+      } catch (
+        requestError
+      ) {
         if (cancelled) {
           return;
         }
 
         setTrip(null);
         setForecast([]);
-        setWeatherMessage("");
+        setWeatherMessage(
+          ""
+        );
+
         setError(
           getErrorMessage(
             requestError
@@ -177,7 +378,9 @@ export default function TripDetails() {
         );
       } finally {
         if (!cancelled) {
-          setLoading(false);
+          setLoading(
+            false
+          );
         }
       }
     }
@@ -185,148 +388,451 @@ export default function TripDetails() {
     fetchTrip();
 
     return () => {
-      cancelled = true;
+      cancelled =
+        true;
     };
   }, [id]);
 
-  if (loading) return <h2>Loading...</h2>;
+  /*
+  |--------------------------------------------------------------------------
+  | Verify hero image
+  |--------------------------------------------------------------------------
+  |
+  | A CSS background does not provide an onError event.
+  | Therefore, the image is tested before being assigned.
+  |
+  */
 
-  if (error) return <h2>{error}</h2>;
+  useEffect(() => {
+    if (!trip) {
+      setHeroImage(
+        defaultTripImage
+      );
 
-  if (!trip) return <h2>Trip not found.</h2>;
+      return undefined;
+    }
 
-  const getWeatherIcon = (temp) => {
-    if (temp >= 38)
-      return <span className="weather-main-icon">🔥</span>;
+    let cancelled =
+      false;
 
-    if (temp >= 32)
-      return <span className="weather-main-icon">🥵</span>;
+    const selectedImage =
+      getTripDisplayImage(
+        trip
+      );
 
-    if (temp >= 27)
-      return <span className="weather-main-icon">☀️</span>;
+    /*
+     * Show the default while checking
+     * the selected image.
+     */
+    setHeroImage(
+      defaultTripImage
+    );
 
-    if (temp >= 23)
-      return <span className="weather-main-icon">🌤️</span>;
+    const imageLoader =
+      new window.Image();
 
-    if (temp >= 18)
-      return <span className="weather-main-icon">⛅</span>;
+    imageLoader.onload =
+      () => {
+        if (!cancelled) {
+          setHeroImage(
+            selectedImage
+          );
+        }
+      };
 
-    if (temp >= 15)
-      return <span className="weather-main-icon">☁️</span>;
+    imageLoader.onerror =
+      () => {
+        if (!cancelled) {
+          setHeroImage(
+            defaultTripImage
+          );
+        }
+      };
 
-    if (temp >= 12)
-      return <span className="weather-main-icon">🌦️</span>;
+    imageLoader.src =
+      selectedImage;
 
-    if (temp >= 9)
-      return <span className="weather-main-icon">🌧️</span>;
+    return () => {
+      cancelled =
+        true;
 
-    if (temp >= 6)
-      return <span className="weather-main-icon">⛈️</span>;
+      imageLoader.onload =
+        null;
 
-    if (temp >= 3)
-      return <span className="weather-main-icon">🌨️</span>;
+      imageLoader.onerror =
+        null;
+    };
+  }, [trip]);
 
-    if (temp >= -5)
-      return <span className="weather-main-icon">❄️</span>;
+  if (loading) {
+    return (
+      <h2>
+        Loading...
+      </h2>
+    );
+  }
 
-    return <span className="weather-main-icon">🥶</span>;
-  };
+  if (error) {
+    return (
+      <h2>
+        {error}
+      </h2>
+    );
+  }
 
-  const getStatusIcon = (status) => {
-    const s = String(
-      status || ""
-    ).toLowerCase();
+  if (!trip) {
+    return (
+      <h2>
+        Trip not found.
+      </h2>
+    );
+  }
 
-    if (s === "completed")
-      return <FaCheckCircle color="green" />;
+  console.log(trip);
 
-    if (s === "ongoing")
-      return <FaPlayCircle color="orange" />;
+  /*
+  |--------------------------------------------------------------------------
+  | Weather icon
+  |--------------------------------------------------------------------------
+  */
 
-    if (s === "planned")
-      return <FaHourglassHalf color="blue" />;
+  const getWeatherIcon =
+    (temp) => {
+      if (temp >= 38) {
+        return (
+          <span className="weather-main-icon">
+            🔥
+          </span>
+        );
+      }
 
-    return <FaTimesCircle color="red" />;
-  };
+      if (temp >= 32) {
+        return (
+          <span className="weather-main-icon">
+            🥵
+          </span>
+        );
+      }
 
-  const getTransportIcon = (type) => {
-    const t = type?.toLowerCase();
+      if (temp >= 27) {
+        return (
+          <span className="weather-main-icon">
+            ☀️
+          </span>
+        );
+      }
 
-    if (t?.includes("flight") || t?.includes("plane"))
+      if (temp >= 23) {
+        return (
+          <span className="weather-main-icon">
+            🌤️
+          </span>
+        );
+      }
+
+      if (temp >= 18) {
+        return (
+          <span className="weather-main-icon">
+            ⛅
+          </span>
+        );
+      }
+
+      if (temp >= 15) {
+        return (
+          <span className="weather-main-icon">
+            ☁️
+          </span>
+        );
+      }
+
+      if (temp >= 12) {
+        return (
+          <span className="weather-main-icon">
+            🌦️
+          </span>
+        );
+      }
+
+      if (temp >= 9) {
+        return (
+          <span className="weather-main-icon">
+            🌧️
+          </span>
+        );
+      }
+
+      if (temp >= 6) {
+        return (
+          <span className="weather-main-icon">
+            ⛈️
+          </span>
+        );
+      }
+
+      if (temp >= 3) {
+        return (
+          <span className="weather-main-icon">
+            🌨️
+          </span>
+        );
+      }
+
+      if (temp >= -5) {
+        return (
+          <span className="weather-main-icon">
+            ❄️
+          </span>
+        );
+      }
+
+      return (
+        <span className="weather-main-icon">
+          🥶
+        </span>
+      );
+    };
+
+  /*
+  |--------------------------------------------------------------------------
+  | Status icon
+  |--------------------------------------------------------------------------
+  */
+
+  const getStatusIcon =
+    (status) => {
+      const normalizedStatus =
+        String(
+          status || ""
+        ).toLowerCase();
+
+      if (
+        normalizedStatus ===
+        "completed"
+      ) {
+        return (
+          <FaCheckCircle
+            color="green"
+          />
+        );
+      }
+
+      if (
+        normalizedStatus ===
+        "ongoing"
+      ) {
+        return (
+          <FaPlayCircle
+            color="orange"
+          />
+        );
+      }
+
+      if (
+        normalizedStatus ===
+        "planned"
+      ) {
+        return (
+          <FaHourglassHalf
+            color="blue"
+          />
+        );
+      }
+
+      return (
+        <FaTimesCircle
+          color="red"
+        />
+      );
+    };
+
+  /*
+  |--------------------------------------------------------------------------
+  | Transportation icon
+  |--------------------------------------------------------------------------
+  */
+
+  const getTransportIcon =
+    (type) => {
+      const normalizedType =
+        type?.toLowerCase();
+
+      if (
+        normalizedType?.includes(
+          "flight"
+        ) ||
+        normalizedType?.includes(
+          "plane"
+        )
+      ) {
+        return <FaPlane />;
+      }
+
+      if (
+        normalizedType?.includes(
+          "bus"
+        )
+      ) {
+        return <FaBus />;
+      }
+
+      if (
+        normalizedType?.includes(
+          "car"
+        )
+      ) {
+        return <FaCar />;
+      }
+
+      if (
+        normalizedType?.includes(
+          "ship"
+        ) ||
+        normalizedType?.includes(
+          "boat"
+        )
+      ) {
+        return <FaShip />;
+      }
+
       return <FaPlane />;
+    };
 
-    if (t?.includes("bus"))
-      return <FaBus />;
+  /*
+  |--------------------------------------------------------------------------
+  | Inclusion icon
+  |--------------------------------------------------------------------------
+  */
 
-    if (t?.includes("car"))
-      return <FaCar />;
+  const getInclusionIcon =
+    (item) => {
+      const text =
+        String(
+          item || ""
+        ).toLowerCase();
 
-    if (t?.includes("ship") || t?.includes("boat"))
-      return <FaShip />;
+      if (
+        text.includes(
+          "food"
+        ) ||
+        text.includes(
+          "meal"
+        )
+      ) {
+        return (
+          <FaUtensils
+            color="orange"
+          />
+        );
+      }
 
-    return <FaPlane />;
-  };
+      if (
+        text.includes(
+          "hotel"
+        ) ||
+        text.includes(
+          "stay"
+        )
+      ) {
+        return (
+          <FaHotel
+            color="purple"
+          />
+        );
+      }
 
-  const getInclusionIcon = (item) => {
-    const text = String(
-      item || ""
-    ).toLowerCase();
+      if (
+        text.includes(
+          "transport"
+        ) ||
+        text.includes(
+          "bus"
+        ) ||
+        text.includes(
+          "flight"
+        )
+      ) {
+        return (
+          <FaBus
+            color="blue"
+          />
+        );
+      }
 
-    if (text.includes("food") || text.includes("meal"))
-      return <FaUtensils color="orange" />;
+      if (
+        text.includes(
+          "guide"
+        )
+      ) {
+        return (
+          <FaMapMarkedAlt
+            color="green"
+          />
+        );
+      }
 
-    if (text.includes("hotel") || text.includes("stay"))
-      return <FaHotel color="purple" />;
+      return (
+        <FaCheckCircle
+          color="green"
+        />
+      );
+    };
 
-    if (
-      text.includes("transport") ||
-      text.includes("bus") ||
-      text.includes("flight")
-    )
-      return <FaBus color="blue" />;
-
-    if (text.includes("guide"))
-      return <FaMapMarkedAlt color="green" />;
-
-    return <FaCheckCircle color="green" />;
-  };
-
-  const leftSeat = Math.max(
-    Number(
-      trip.numberOfTravelers || 0
-    ) -
+  const leftSeat =
+    Math.max(
       Number(
-        trip.reservedTravelers || 0
-      ),
-    0
-  );
+        trip.numberOfTravelers ||
+          0
+      ) -
+        Number(
+          trip.reservedTravelers ||
+            0
+        ),
+      0
+    );
 
   const tripDuration =
-    getDurationData(trip.duration);
+    getDurationData(
+      trip.duration
+    );
 
   const tripId =
-    trip._id || trip.id || id;
+    trip._id ||
+    trip.id ||
+    id;
 
   return (
     <div className="trip-page">
-      <DashboardLayout>
+
+        {/* Hero image */}
+
         <div
           className="hero"
           style={{
-            backgroundImage: ` url(${trip.photo})`,
+            backgroundImage:
+              `url("${heroImage}")`,
           }}
         >
           <div className="hero-content">
-            <h1>{trip.title}</h1>
+            <h1>
+              {trip.title}
+            </h1>
 
             <div className="price-section">
               <div>
-                <h2>${trip.price}</h2>
-                <p>Per Person</p>
+                <h2>
+                  ${trip.price}
+                </h2>
+
+                <p>
+                  Per Person
+                </p>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Main information */}
 
         <div className="top-info-grid">
           <div className="top-info-card">
@@ -337,8 +843,13 @@ export default function TripDetails() {
             </div>
 
             <div className="top-info-text">
-              <p>Transportation</p>
-              <h4>{trip.transportation}</h4>
+              <p>
+                Transportation
+              </p>
+
+              <h4>
+                {trip.transportation}
+              </h4>
             </div>
           </div>
 
@@ -348,8 +859,13 @@ export default function TripDetails() {
             </div>
 
             <div className="top-info-text">
-              <p>Trip Type</p>
-              <h4>{trip.tripType}</h4>
+              <p>
+                Trip Type
+              </p>
+
+              <h4>
+                {trip.tripType}
+              </h4>
             </div>
           </div>
 
@@ -361,8 +877,13 @@ export default function TripDetails() {
             </div>
 
             <div className="top-info-text">
-              <p>Status</p>
-              <h4>{trip.status}</h4>
+              <p>
+                Status
+              </p>
+
+              <h4>
+                {trip.status}
+              </h4>
             </div>
           </div>
 
@@ -372,11 +893,21 @@ export default function TripDetails() {
             </div>
 
             <div className="top-info-text">
-              <p>Travelers</p>
+              <p>
+                Travelers
+              </p>
+
               <h5>
-                Total Travelers : {trip.numberOfTravelers}{" "}
+                Total Travelers :{" "}
+                {
+                  trip.numberOfTravelers
+                }
               </h5>
-              <h5>Left Seat : {leftSeat} </h5>
+
+              <h5>
+                Left Seat :{" "}
+                {leftSeat}
+              </h5>
             </div>
           </div>
 
@@ -386,11 +917,18 @@ export default function TripDetails() {
             </div>
 
             <div className="top-info-text">
-              <p>Price</p>
-              <h4>${trip.price}</h4>
+              <p>
+                Price
+              </p>
+
+              <h4>
+                ${trip.price}
+              </h4>
             </div>
           </div>
         </div>
+
+        {/* Description and inclusions */}
 
         <div className="about-inclusions">
           <div className="card about-box">
@@ -398,7 +936,11 @@ export default function TripDetails() {
               <span className="about-tag">
                 ✨ Travel Experience
               </span>
-              <h2>About This Trip</h2>
+
+              <h2>
+                About This Trip
+              </h2>
+
               <p className="about-text">
                 {trip.description}
               </p>
@@ -409,11 +951,19 @@ export default function TripDetails() {
                 <div className="icon-box clock">
                   <FaClock />
                 </div>
+
                 <div>
-                  <span>Total Duration</span>
+                  <span>
+                    Total Duration
+                  </span>
+
                   <h5>
-                    {tripDuration.value}{" "}
-                    {tripDuration.unit}
+                    {
+                      tripDuration.value
+                    }{" "}
+                    {
+                      tripDuration.unit
+                    }
                   </h5>
                 </div>
               </div>
@@ -422,14 +972,22 @@ export default function TripDetails() {
                 <div className="icon-box users">
                   <FaUsers />
                 </div>
+
                 <div>
-                  <span>Travelers</span>
+                  <span>
+                    Travelers
+                  </span>
+
                   <h5>
-                    Total Travelers :
-                    {trip.numberOfTravelers}{" "}
+                    Total Travelers :{" "}
+                    {
+                      trip.numberOfTravelers
+                    }
                   </h5>
+
                   <h5>
-                    Left Seat :{leftSeat}{" "}
+                    Left Seat :{" "}
+                    {leftSeat}
                   </h5>
                 </div>
               </div>
@@ -438,10 +996,19 @@ export default function TripDetails() {
                 <div className="icon-box map">
                   <FaMapMarkerAlt />
                 </div>
+
                 <div>
-                  <span>Destinations</span>
+                  <span>
+                    Destinations
+                  </span>
+
                   <h5>
-                    {trip.places?.length || 0} Cities
+                    {
+                      trip.places
+                        ?.length ||
+                      0
+                    }{" "}
+                    Cities
                   </h5>
                 </div>
               </div>
@@ -449,18 +1016,27 @@ export default function TripDetails() {
           </div>
 
           <div className="card">
-            <h3>Inclusions</h3>
+            <h3>
+              Inclusions
+            </h3>
 
             <div className="inclusions-grid">
               {trip.inclusions?.map(
-                (item, index) => (
+                (
+                  item,
+                  index
+                ) => (
                   <div
                     className="inclusion-row"
                     key={index}
                   >
-                    {getInclusionIcon(item)}
+                    {getInclusionIcon(
+                      item
+                    )}
 
-                    <span>{item}</span>
+                    <span>
+                      {item}
+                    </span>
                   </div>
                 )
               )}
@@ -468,16 +1044,29 @@ export default function TripDetails() {
           </div>
         </div>
 
+        {/* Itinerary and weather */}
+
         <div className="card card3">
-          <h3>Itinerary & Weather Forecast</h3>
+          <h3>
+            Itinerary &amp; Weather Forecast
+          </h3>
 
           <div className="timeline">
             {trip.places?.map(
-              (place, index) => {
+              (
+                place,
+                index
+              ) => {
                 const stayDuration =
                   getDurationData(
                     place.duration ??
                       place.days
+                  );
+
+                const placeImage =
+                  getPlaceDisplayImage(
+                    place,
+                    trip
                   );
 
                 return (
@@ -491,7 +1080,9 @@ export default function TripDetails() {
                       </div>
 
                       {index !==
-                        trip.places.length - 1 && (
+                        trip.places
+                          .length -
+                          1 && (
                         <div className="line"></div>
                       )}
                     </div>
@@ -499,16 +1090,40 @@ export default function TripDetails() {
                     <div className="timeline-content">
                       <div className="place-info">
                         <img
-                          src={place.image}
-                          alt={place.city}
+                          src={
+                            placeImage
+                          }
+                          alt={
+                            place.city ||
+                            "Trip destination"
+                          }
+                          loading="lazy"
+                          onError={(
+                            event
+                          ) => {
+                            event.currentTarget.onerror =
+                              null;
+
+                            event.currentTarget.src =
+                              defaultTripImage;
+                          }}
                         />
 
                         <div>
-                          <h4>{place.city}</h4>
+                          <h4>
+                            {
+                              place.city
+                            }
+                          </h4>
 
                           <p>
-                            {stayDuration.value}{" "}
-                            {stayDuration.unit} Stay
+                            {
+                              stayDuration.value
+                            }{" "}
+                            {
+                              stayDuration.unit
+                            }{" "}
+                            Stay
                           </p>
                         </div>
                       </div>
@@ -526,7 +1141,9 @@ export default function TripDetails() {
                               </h4>
 
                               <p>
-                                {weatherMessage}
+                                {
+                                  weatherMessage
+                                }
                               </p>
 
                               <span>
@@ -537,31 +1154,48 @@ export default function TripDetails() {
                         ) : (
                           forecast
                             ?.filter(
-                              (w) =>
-                                w.city ===
+                              (
+                                weather
+                              ) =>
+                                weather.city ===
                                 place.city
                             )
                             .map(
-                              (cityWeather) =>
+                              (
+                                cityWeather
+                              ) =>
                                 cityWeather.forecast.map(
-                                  (f, j) => (
+                                  (
+                                    weather,
+                                    weatherIndex
+                                  ) => (
                                     <div
-                                      key={j}
+                                      key={
+                                        weatherIndex
+                                      }
                                       className="forecast-card"
                                     >
                                       <p>
-                                        {f.date}
+                                        {
+                                          weather.date
+                                        }
                                       </p>
 
                                       <div className="weather-icon-box">
                                         {getWeatherIcon(
-                                          f.maxTemp
+                                          weather.maxTemp
                                         )}
                                       </div>
 
                                       <span>
-                                        {f.maxTemp}° /{" "}
-                                        {f.minTemp}°
+                                        {
+                                          weather.maxTemp
+                                        }
+                                        ° /{" "}
+                                        {
+                                          weather.minTemp
+                                        }
+                                        °
                                       </span>
                                     </div>
                                   )
@@ -577,6 +1211,8 @@ export default function TripDetails() {
           </div>
         </div>
 
+        {/* Booking */}
+
         <div className="book-section">
           <button
             className="book-btn"
@@ -591,7 +1227,7 @@ export default function TripDetails() {
             Book This Trip
           </button>
         </div>
-      </DashboardLayout>
+     
     </div>
   );
 }

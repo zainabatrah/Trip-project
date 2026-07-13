@@ -49,6 +49,21 @@ const userSchema = new mongoose.Schema(
         "ID document is required.",
       ],
     },
+    profileImage: {
+    type: String,
+    default: "",
+},
+
+bio: {
+    type: String,
+    default: "",
+    maxlength: 300,
+},
+
+country: {
+    type: String,
+    default: "",
+},
   },
   {
     timestamps: true,

@@ -1,16 +1,15 @@
 ﻿const express = require("express");
 const mongoose = require("mongoose");
+const axios = require("axios");
+const fs = require("fs");
+const path = require("path");
 
-const Trip = require(
-  "../models/Trip"
-);
+const Trip = require("../models/Trip");
 
 const {
   requireAuth,
   requireOrganizer,
-} = require(
-  "../middleware/auth"
-);
+} = require("../middleware/auth");
 
 const router = express.Router();
 
@@ -54,120 +53,222 @@ const allowedTripTypes = [
   "family",
 ];
 
+/*
+|--------------------------------------------------------------------------
+| Image configuration
+|--------------------------------------------------------------------------
+*/
+
 const defaultTripImage =
   "/Images/Libanon233.jpg";
 
-const availableTripImages = [
-  "/Images/Faraya.jpg",
-  "/Images/Batroun.jpg",
-  "/Images/52de2359f6d93ff4a4b06402d9c80bfbfdbb5463_1200x630.jpg",
-  "/Images/qadisha-kadisha-valley.jpg",
-  "/Images/Saida.jpg",
-  "/Images/Tyre-Beach-Lebanon.jpg",
-  "/Images/AnfehSeaEscape.jpg",
-  "/Images/Lebanon-spring-1.jpg",
-  "/Images/download.avif",
-  "/Images/download.jpg",
-  "/Images/E0ZceKeWYAc9XPV.jpg",
-  "/Images/68.jpg",
-  "/Images/Outdoor-Adventures-Lebanon_FT1_.webp",
-  "/Images/mosque-and-shops-in-the-medina-old-town-of-tripoli-libya-north-africa-BPMJ5G.jpg",
-  defaultTripImage,
-];
-
-const imageAliasMap = new Map(
-  [
-    [
-      "/images/tyre.jpg",
-      "/Images/Tyre-Beach-Lebanon.jpg",
-    ],
-    [
-      "/images/sidon.jpg",
-      "/Images/Saida.jpg",
-    ],
-    [
-      "/images/jeita-byblos.jpg",
-      "/Images/Batroun.jpg",
-    ],
-    [
-      "/images/jeita.jpg",
-      "/Images/download.jpg",
-    ],
-    [
-      "/images/byblos.jpg",
-      "/Images/Batroun.jpg",
-    ],
-    [
-      "/images/cedars.jpg",
-      "/Images/Outdoor-Adventures-Lebanon_FT1_.webp",
-    ],
-    [
-      "/images/bcharre.jpg",
-      "/Images/download.avif",
-    ],
-    [
-      "/images/cedars-of-god.jpg",
-      "/Images/download.avif",
-    ],
-    [
-      "/images/baalbek.jpg",
-      "/Images/52de2359f6d93ff4a4b06402d9c80bfbfdbb5463_1200x630.jpg",
-    ],
-    [
-      "/images/baalbek-temples.jpg",
-      "/Images/52de2359f6d93ff4a4b06402d9c80bfbfdbb5463_1200x630.jpg",
-    ],
-    [
-      "/images/chouf.jpg",
-      "/Images/Lebanon-spring-1.jpg",
-    ],
-    [
-      "/images/beiteddine.jpg",
-      "/Images/images (3).jpg",
-    ],
-    [
-      "/images/deir-el-qamar.jpg",
-      "/Images/images (4).jpg",
-    ],
-  ]
-);
-
-const availableTripImageMap =
-  new Map(
-    availableTripImages.map((image) => [
-      image.toLowerCase(),
-      image,
-    ])
+const publicImagesDirectory =
+  path.resolve(
+    __dirname,
+    "../../frontend/public/Images"
   );
 
+const imageAliasMap = new Map([
+  [
+    "/images/tyre.jpg",
+    "/Images/Tyre-Beach-Lebanon.jpg",
+  ],
+  [
+    "/images/sidon.jpg",
+    "/Images/Saida.jpg",
+  ],
+  [
+    "/images/jeita-byblos.jpg",
+    "/Images/Batroun.jpg",
+  ],
+  [
+    "/images/jeita.jpg",
+    "/Images/download.jpg",
+  ],
+  [
+    "/images/byblos.jpg",
+    "/Images/Batroun.jpg",
+  ],
+  [
+    "/images/cedars.jpg",
+    "/Images/Outdoor-Adventures-Lebanon_FT1_.webp",
+  ],
+  [
+    "/images/bcharre.jpg",
+    "/Images/download.avif",
+  ],
+  [
+    "/images/cedars-of-god.jpg",
+    "/Images/download.avif",
+  ],
+  [
+    "/images/baalbek.jpg",
+    "/Images/52de2359f6d93ff4a4b06402d9c80bfbfdbb5463_1200x630.jpg",
+  ],
+  [
+    "/images/baalbek-temples.jpg",
+    "/Images/52de2359f6d93ff4a4b06402d9c80bfbfdbb5463_1200x630.jpg",
+  ],
+  [
+    "/images/chouf.jpg",
+    "/Images/Lebanon-spring-1.jpg",
+  ],
+  [
+    "/images/beiteddine.jpg",
+    "/Images/images (3).jpg",
+  ],
+  [
+    "/images/deir-el-qamar.jpg",
+    "/Images/images (4).jpg",
+  ],
+]);
+
 const destinationImageMap = {
-  faraya: "/Images/Faraya.jpg",
-  batroun: "/Images/Batroun.jpg",
-  byblos: "/Images/Batroun.jpg",
+  faraya:
+    "/Images/Faraya.jpg",
+
+  batroun:
+    "/Images/Batroun.jpg",
+
+  byblos:
+    "/Images/Batroun.jpg",
+
   baalbek:
     "/Images/52de2359f6d93ff4a4b06402d9c80bfbfdbb5463_1200x630.jpg",
+
   qadisha:
     "/Images/qadisha-kadisha-valley.jpg",
-  saida: "/Images/Saida.jpg",
-  sidon: "/Images/Saida.jpg",
-  tyre: "/Images/Tyre-Beach-Lebanon.jpg",
-  anfeh: "/Images/AnfehSeaEscape.jpg",
-  chouf: "/Images/Lebanon-spring-1.jpg",
-  bcharre: "/Images/download.avif",
-  ehden: "/Images/E0ZceKeWYAc9XPV.jpg",
-  jezzine: "/Images/68.jpg",
+
+  saida:
+    "/Images/Saida.jpg",
+
+  sidon:
+    "/Images/Saida.jpg",
+
+  tyre:
+    "/Images/Tyre-Beach-Lebanon.jpg",
+
+  anfeh:
+    "/Images/AnfehSeaEscape.jpg",
+
+  chouf:
+    "/Images/Lebanon-spring-1.jpg",
+
+  bcharre:
+    "/Images/download.avif",
+
+  ehden:
+    "/Images/E0ZceKeWYAc9XPV.jpg",
+
+  jezzine:
+    "/Images/68.jpg",
+
   laklouk:
     "/Images/Outdoor-Adventures-Lebanon_FT1_.webp",
-  jeita: "/Images/download.jpg",
+
+  jeita:
+    "/Images/download.jpg",
+
   cedars:
     "/Images/Outdoor-Adventures-Lebanon_FT1_.webp",
+
   beiteddine:
     "/Images/images (3).jpg",
+
   "deir el qamar":
     "/Images/images (4).jpg",
+
   beirut:
     "/Images/mosque-and-shops-in-the-medina-old-town-of-tripoli-libya-north-africa-BPMJ5G.jpg",
 };
+
+/*
+|--------------------------------------------------------------------------
+| Read actual images from frontend/public/Images
+|--------------------------------------------------------------------------
+*/
+
+function readAvailableTripImages() {
+  try {
+    const entries =
+      fs.readdirSync(
+        publicImagesDirectory,
+        {
+          withFileTypes: true,
+        }
+      );
+
+    const images =
+      entries
+        .filter(
+          (entry) =>
+            entry.isFile() &&
+            /\.(avif|gif|jpe?g|png|webp)$/i.test(
+              entry.name
+            )
+        )
+        .map(
+          (entry) =>
+            `/Images/${entry.name}`
+        )
+        .sort(
+          (first, second) =>
+            first.localeCompare(
+              second
+            )
+        );
+
+    const hasDefaultImage =
+      images.some(
+        (image) =>
+          image.toLowerCase() ===
+          defaultTripImage.toLowerCase()
+      );
+
+    if (!hasDefaultImage) {
+      images.push(
+        defaultTripImage
+      );
+    }
+
+    return images;
+  } catch (error) {
+    console.warn(
+      "Could not read frontend/public/Images:",
+      error.message
+    );
+
+    return [
+      defaultTripImage,
+    ];
+  }
+}
+
+const availableTripImages =
+  readAvailableTripImages();
+
+const availableTripImageMap =
+  new Map(
+    availableTripImages.map(
+      (image) => [
+        image.toLowerCase(),
+        image,
+      ]
+    )
+  );
+
+const nonDefaultTripImages =
+  availableTripImages.filter(
+    (image) =>
+      image.toLowerCase() !==
+      defaultTripImage.toLowerCase()
+  );
+
+/*
+|--------------------------------------------------------------------------
+| General helpers
+|--------------------------------------------------------------------------
+*/
 
 function validId(id) {
   return mongoose.Types.ObjectId.isValid(
@@ -176,21 +277,31 @@ function validId(id) {
 }
 
 function hashString(value) {
+  const text =
+    String(value || "");
+
   let hash = 0;
 
   for (
     let index = 0;
-    index < value.length;
+    index < text.length;
     index += 1
   ) {
     hash =
-      (hash * 31 +
-        value.charCodeAt(index)) >>>
-      0;
+      (
+        hash * 31 +
+        text.charCodeAt(index)
+      ) >>> 0;
   }
 
   return hash;
 }
+
+/*
+|--------------------------------------------------------------------------
+| Duration helpers
+|--------------------------------------------------------------------------
+*/
 
 function normalizeDurationValue(value) {
   if (
@@ -205,14 +316,19 @@ function normalizeDurationValue(value) {
     typeof value === "number" &&
     Number.isFinite(value)
   ) {
-    return Math.max(0, value);
+    return Math.max(
+      0,
+      value
+    );
   }
 
   const numericValue =
     Number(value);
 
   if (
-    Number.isFinite(numericValue)
+    Number.isFinite(
+      numericValue
+    )
   ) {
     return Math.max(
       0,
@@ -223,27 +339,33 @@ function normalizeDurationValue(value) {
   if (
     typeof value === "object"
   ) {
-    const amount = Number(
-      value.value ??
+    const amount =
+      Number(
+        value.value ??
         value.amount ??
         value.days ??
         value.hours
-    );
+      );
 
-    if (!Number.isFinite(amount)) {
+    if (
+      !Number.isFinite(amount)
+    ) {
       return 0;
     }
 
-    const unit = String(
-      value.unit || ""
-    ).toLowerCase();
+    const unit =
+      String(
+        value.unit || ""
+      ).toLowerCase();
 
     if (
       unit.includes("hour")
     ) {
       return Math.max(
         1,
-        Math.ceil(amount / 24)
+        Math.ceil(
+          amount / 24
+        )
       );
     }
 
@@ -261,218 +383,585 @@ function buildDurationField(
   fallbackUnit = "days"
 ) {
   const normalizedValue =
-    normalizeDurationValue(value);
+    normalizeDurationValue(
+      value
+    );
 
-  const normalizedUnit = String(
-    typeof value === "object" &&
-      value !== null
-      ? value.unit || fallbackUnit
-      : fallbackUnit
-  )
-    .trim()
-    .toLowerCase();
+  const normalizedUnit =
+    String(
+      typeof value ===
+          "object" &&
+        value !== null
+        ? value.unit ||
+            fallbackUnit
+        : fallbackUnit
+    )
+      .trim()
+      .toLowerCase();
 
   return {
-    value: normalizedValue,
+    value:
+      normalizedValue,
+
     unit:
-      normalizedUnit === "hours"
+      normalizedUnit ===
+      "hours"
         ? "hours"
         : "days",
   };
 }
 
-function resolveDestinationImage(
+/*
+|--------------------------------------------------------------------------
+| Image helpers
+|--------------------------------------------------------------------------
+*/
+
+function isRemoteImage(value) {
+  return /^https?:\/\//i.test(
+    String(
+      value || ""
+    ).trim()
+  );
+}
+
+function normalizeImagePath(value) {
+  const normalized =
+    String(
+      value || ""
+    )
+      .trim()
+      .replace(
+        /\\/g,
+        "/"
+      );
+
+  if (!normalized) {
+    return "";
+  }
+
+  /*
+   * Keep complete external image URLs.
+   */
+  if (
+    isRemoteImage(
+      normalized
+    )
+  ) {
+    return normalized;
+  }
+
+  const imagePath =
+    normalized.startsWith("/")
+      ? normalized.replace(
+          /\/+/g,
+          "/"
+        )
+      : `/${normalized}`.replace(
+          /\/+/g,
+          "/"
+        );
+
+  const lower =
+    imagePath.toLowerCase();
+
+  /*
+   * Repair old image paths.
+   */
+  if (
+    imageAliasMap.has(lower)
+  ) {
+    const alias =
+      imageAliasMap.get(
+        lower
+      );
+
+    return (
+      availableTripImageMap.get(
+        alias.toLowerCase()
+      ) ||
+      ""
+    );
+  }
+
+  /*
+   * Local path is accepted only when
+   * the image exists in public/Images.
+   */
+  return (
+    availableTripImageMap.get(
+      lower
+    ) ||
+    ""
+  );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Find destination image
+|--------------------------------------------------------------------------
+*/
+
+function getDestinationImage(
   ...values
 ) {
-  const combined = values
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
+  const combined =
+    values
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
 
-  for (const [key, image] of Object.entries(
-    destinationImageMap
-  )) {
+  for (
+    const [
+      destination,
+      image,
+    ] of Object.entries(
+      destinationImageMap
+    )
+  ) {
     if (
-      combined.includes(key)
+      combined.includes(
+        destination
+      )
+    ) {
+      const validImage =
+        normalizeImagePath(
+          image
+        );
+
+      if (validImage) {
+        return validImage;
+      }
+    }
+  }
+
+  return "";
+}
+
+/*
+|--------------------------------------------------------------------------
+| Find an unused public image
+|--------------------------------------------------------------------------
+*/
+
+function getUnusedPublicImage(
+  seed,
+  usedImages
+) {
+  if (
+    nonDefaultTripImages.length ===
+    0
+  ) {
+    return "";
+  }
+
+  const startIndex =
+    hashString(
+      seed
+    ) %
+    nonDefaultTripImages.length;
+
+  for (
+    let offset = 0;
+    offset <
+      nonDefaultTripImages.length;
+    offset += 1
+  ) {
+    const image =
+      nonDefaultTripImages[
+        (
+          startIndex +
+          offset
+        ) %
+        nonDefaultTripImages.length
+      ];
+
+    if (
+      !usedImages ||
+      !usedImages.has(image)
     ) {
       return image;
     }
   }
 
-  return availableTripImages[
-    hashString(
-      combined || "trip"
-    ) %
-      availableTripImages.length
-  ];
+  return "";
 }
 
-function normalizeImagePath(
-  value,
-  fallback
+/*
+|--------------------------------------------------------------------------
+| Resolve the main image in the required order
+|--------------------------------------------------------------------------
+|
+| 1. trip.photo
+| 2. any trip.places image
+| 3. destination image
+| 4. another unused public image
+| 5. Libanon233.jpg
+|
+*/
+
+function resolveTripPhoto(
+  trip,
+  usedImages = null
 ) {
-  const normalized = String(
-    value || ""
-  ).trim();
+  /*
+   * 1. Image saved in trip.photo.
+   */
+  const savedTripPhoto =
+    normalizeImagePath(
+      trip?.photo
+    );
 
-  if (!normalized) {
-    return fallback;
+  if (savedTripPhoto) {
+    usedImages?.add(
+      savedTripPhoto
+    );
+
+    return savedTripPhoto;
   }
 
-  const lower =
-    normalized.toLowerCase();
+  /*
+   * 2. Image saved in any place.
+   */
+  const places =
+    Array.isArray(
+      trip?.places
+    )
+      ? trip.places
+      : [];
 
-  if (
-    imageAliasMap.has(lower)
+  for (
+    const place of places
   ) {
-    return imageAliasMap.get(lower);
+    const savedPlaceImage =
+      normalizeImagePath(
+        place?.image
+      );
+
+    if (savedPlaceImage) {
+      usedImages?.add(
+        savedPlaceImage
+      );
+
+      return savedPlaceImage;
+    }
   }
 
+  /*
+   * 3. Image matching the destination.
+   */
+  const destinationImage =
+    getDestinationImage(
+      trip?.to,
+      trip?.title,
+      trip?.country
+    );
+
   if (
-    availableTripImageMap.has(
-      lower
+    destinationImage &&
+    (
+      !usedImages ||
+      !usedImages.has(
+        destinationImage
+      )
     )
   ) {
-    return availableTripImageMap.get(
-      lower
+    usedImages?.add(
+      destinationImage
     );
+
+    return destinationImage;
   }
 
-  return fallback;
+  /*
+   * 4. Another unused public image.
+   */
+  const unusedImage =
+    getUnusedPublicImage(
+      [
+        trip?._id,
+        trip?.title,
+        trip?.to,
+        trip?.country,
+      ].join(" "),
+      usedImages
+    );
+
+  if (unusedImage) {
+    usedImages?.add(
+      unusedImage
+    );
+
+    return unusedImage;
+  }
+
+  /*
+   * 5. Final fallback.
+   */
+  return defaultTripImage;
 }
+
+/*
+|--------------------------------------------------------------------------
+| Resolve each place image
+|--------------------------------------------------------------------------
+*/
+
+function resolvePlaceImage(
+  place,
+  trip
+) {
+  const savedPlaceImage =
+    normalizeImagePath(
+      place?.image
+    );
+
+  if (savedPlaceImage) {
+    return savedPlaceImage;
+  }
+
+  const destinationImage =
+    getDestinationImage(
+      place?.city,
+      trip?.to,
+      trip?.title,
+      trip?.country
+    );
+
+  if (destinationImage) {
+    return destinationImage;
+  }
+
+  return (
+    getUnusedPublicImage(
+      [
+        place?.city,
+        trip?._id,
+        trip?.title,
+        trip?.to,
+      ].join(" "),
+      null
+    ) ||
+    defaultTripImage
+  );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Apply image fallbacks without changing other fields
+|--------------------------------------------------------------------------
+*/
+
+function applyImagesOnly(trip) {
+  const places =
+    Array.isArray(
+      trip?.places
+    )
+      ? trip.places.map(
+          (place) => ({
+            ...place,
+
+            image:
+              resolvePlaceImage(
+                place,
+                trip
+              ),
+          })
+        )
+      : [];
+
+  return {
+    ...trip,
+
+    photo:
+      resolveTripPhoto(
+        trip
+      ),
+
+    places,
+  };
+}
+
+/*
+|--------------------------------------------------------------------------
+| Existing normalization
+|--------------------------------------------------------------------------
+*/
 
 function normalizePlace(
   place,
   trip
 ) {
-  const fallbackImage =
-    resolveDestinationImage(
-      place?.city,
-      trip?.to,
-      trip?.title
-    );
-
   return {
     ...place,
-    image: normalizeImagePath(
-      place?.image,
-      fallbackImage
-    ),
+
+    image:
+      resolvePlaceImage(
+        place,
+        trip
+      ),
+
     days:
       normalizeDurationValue(
         place?.days ??
-          place?.duration
-      ) || 1,
+        place?.duration
+      ) ||
+      1,
   };
 }
+
+/*
+|--------------------------------------------------------------------------
+| Save place data
+|--------------------------------------------------------------------------
+|
+| Generated fallback images are not saved.
+| Only the actual image submitted in place.image is saved.
+|
+*/
 
 function normalizePlaceForPersistence(
-  place,
-  trip
+  place
 ) {
-  const fallbackImage =
-    resolveDestinationImage(
-      place?.city,
-      trip?.to,
-      trip?.title
-    );
-
   return {
     ...place,
-    image: normalizeImagePath(
-      place?.image,
-      fallbackImage
-    ),
-    duration: buildDurationField(
-      place?.duration ?? place?.days ?? 1
-    ),
+
+    image:
+      normalizeImagePath(
+        place?.image
+      ),
+
+    duration:
+      buildDurationField(
+        place?.duration ??
+        place?.days ??
+        1
+      ),
   };
 }
 
-function normalizeTripResponse(
-  trip
-) {
-  const fallbackImage =
-    resolveDestinationImage(
-      trip?.to,
-      trip?.title,
-      trip?.country
-    );
+/*
+|--------------------------------------------------------------------------
+| Normalize trip returned by list/create/update
+|--------------------------------------------------------------------------
+*/
 
+function normalizeTripResponse(
+  trip,
+  usedImages = null
+) {
   return {
     ...trip,
-    description: String(
-      trip?.description || ""
-    ),
-    photo: normalizeImagePath(
-      trip?.photo,
-      fallbackImage
-    ),
+
+    description:
+      String(
+        trip?.description ||
+        ""
+      ),
+
+    photo:
+      resolveTripPhoto(
+        trip,
+        usedImages
+      ),
+
     duration:
       normalizeDurationValue(
         trip?.duration
-      ) || 1,
-    price: Number(
-      trip?.price || 0
-    ),
-    rating: Number(
-      trip?.rating || 0
-    ),
-    numberOfTravelers: Number(
-      trip?.numberOfTravelers || 0
-    ),
-    reservedTravelers: Number(
-      trip?.reservedTravelers || 0
-    ),
-    inclusions: Array.isArray(
-      trip?.inclusions
-    )
-      ? trip.inclusions
-      : [],
-    places: Array.isArray(
-      trip?.places
-    )
-      ? trip.places.map((place) =>
-          normalizePlace(
-            place,
-            trip
+      ) ||
+      1,
+
+    price:
+      Number(
+        trip?.price ||
+        0
+      ),
+
+    rating:
+      Number(
+        trip?.rating ||
+        0
+      ),
+
+    numberOfTravelers:
+      Number(
+        trip?.numberOfTravelers ||
+        0
+      ),
+
+    reservedTravelers:
+      Number(
+        trip?.reservedTravelers ||
+        0
+      ),
+
+    inclusions:
+      Array.isArray(
+        trip?.inclusions
+      )
+        ? trip.inclusions
+        : [],
+
+    places:
+      Array.isArray(
+        trip?.places
+      )
+        ? trip.places.map(
+            (place) =>
+              normalizePlace(
+                place,
+                trip
+              )
           )
-        )
-      : [],
+        : [],
   };
 }
+
+/*
+|--------------------------------------------------------------------------
+| Normalize data saved to MongoDB
+|--------------------------------------------------------------------------
+|
+| A generated fallback is not saved into MongoDB.
+| This keeps the fallback order working every time trips are displayed.
+|
+*/
 
 function normalizeTripForPersistence(
   trip
 ) {
-  const fallbackImage =
-    resolveDestinationImage(
-      trip?.to,
-      trip?.title,
-      trip?.country
-    );
-
   return {
     ...trip,
-    photo: normalizeImagePath(
-      trip?.photo,
-      fallbackImage
-    ),
-    duration: buildDurationField(
-      trip?.duration
-    ),
-    places: Array.isArray(
-      trip?.places
-    )
-      ? trip.places.map((place) =>
-          normalizePlaceForPersistence(
-            place,
-            trip
+
+    photo:
+      normalizeImagePath(
+        trip?.photo
+      ),
+
+    duration:
+      buildDurationField(
+        trip?.duration
+      ),
+
+    places:
+      Array.isArray(
+        trip?.places
+      )
+        ? trip.places.map(
+            (place) =>
+              normalizePlaceForPersistence(
+                place
+              )
           )
-        )
-      : [],
+        : [],
   };
 }
+
+/*
+|--------------------------------------------------------------------------
+| Input helpers
+|--------------------------------------------------------------------------
+*/
 
 function getAllowedFields(body) {
   const result = {};
@@ -529,21 +1018,24 @@ function normalizeTripData(data) {
     normalized.status
   ) {
     normalized.status =
-      normalized.status.toLowerCase();
+      normalized.status
+        .toLowerCase();
   }
 
   if (
     normalized.transportation
   ) {
     normalized.transportation =
-      normalized.transportation.toLowerCase();
+      normalized.transportation
+        .toLowerCase();
   }
 
   if (
     normalized.tripType
   ) {
     normalized.tripType =
-      normalized.tripType.toLowerCase();
+      normalized.tripType
+        .toLowerCase();
   }
 
   const numericFields = [
@@ -570,7 +1062,9 @@ function normalizeTripData(data) {
     }
   }
 
-  if (normalized.date) {
+  if (
+    normalized.date
+  ) {
     normalized.date =
       new Date(
         normalized.date
@@ -580,7 +1074,8 @@ function normalizeTripData(data) {
   if (
     normalized.duration !==
       undefined &&
-    normalized.duration !== ""
+    normalized.duration !==
+      ""
   ) {
     normalized.duration =
       normalizeDurationValue(
@@ -600,13 +1095,16 @@ function addDefaults(data) {
       "",
 
     photo:
-      data.photo || "",
+      data.photo ||
+      "",
 
     price:
-      data.price ?? 0,
+      data.price ??
+      0,
 
     duration:
-      data.duration ?? 0,
+      data.duration ??
+      0,
 
     numberOfTravelers:
       data.numberOfTravelers ??
@@ -629,7 +1127,8 @@ function addDefaults(data) {
       "adventure",
 
     rating:
-      data.rating ?? 0,
+      data.rating ??
+      0,
 
     inclusions:
       Array.isArray(
@@ -647,6 +1146,12 @@ function addDefaults(data) {
   };
 }
 
+/*
+|--------------------------------------------------------------------------
+| Validation
+|--------------------------------------------------------------------------
+*/
+
 function validateTrip(data) {
   const requiredFields = [
     "title",
@@ -661,7 +1166,8 @@ function validateTrip(data) {
   ) {
     if (
       !String(
-        data[field] || ""
+        data[field] ||
+        ""
       ).trim()
     ) {
       return `${field} is required.`;
@@ -669,7 +1175,9 @@ function validateTrip(data) {
   }
 
   const date =
-    new Date(data.date);
+    new Date(
+      data.date
+    );
 
   if (
     !data.date ||
@@ -768,9 +1276,20 @@ function validateTrip(data) {
   return null;
 }
 
+/*
+|--------------------------------------------------------------------------
+| GET all trips
+| GET /api/trips
+|--------------------------------------------------------------------------
+*/
+
 router.get(
   "/",
-  async (_req, res, next) => {
+  async (
+    _req,
+    res,
+    next
+  ) => {
     try {
       const trips =
         await Trip.find({})
@@ -779,81 +1298,331 @@ router.get(
           })
           .lean();
 
+      /*
+       * Tracks the images already used
+       * while building this response.
+       */
+      const usedImages =
+        new Set();
+
       const normalizedTrips =
         trips.map(
-          normalizeTripResponse
+          (trip) =>
+            normalizeTripResponse(
+              trip,
+              usedImages
+            )
         );
 
       return res
         .status(200)
         .json({
           success: true,
+
           count:
             normalizedTrips.length,
+
           trips:
             normalizedTrips,
         });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 );
 
+/*
+|--------------------------------------------------------------------------
+| GET one trip and weather
+| GET /api/trips/:id
+|--------------------------------------------------------------------------
+*/
+
 router.get(
   "/:id",
-  async (req, res, next) => {
+  async (
+    req,
+    res
+  ) => {
     try {
       if (
-        !validId(
+        !mongoose.Types.ObjectId.isValid(
           req.params.id
         )
       ) {
         return res
           .status(400)
           .json({
-            success: false,
             message:
-              "Invalid trip ID.",
+              "Invalid ID",
           });
       }
 
       const trip =
         await Trip.findById(
           req.params.id
-        ).lean();
+        );
 
       if (!trip) {
         return res
           .status(404)
           .json({
-            success: false,
             message:
-              "Trip not found.",
+              "Trip not found",
           });
       }
 
-      return res
-        .status(200)
-        .json({
-          success: true,
-          trip:
-            normalizeTripResponse(
-              trip
-            ),
+      const currentDate =
+        new Date(
+          trip.date
+        );
 
-          weather: [],
-        });
+      if (
+        Number.isNaN(
+          currentDate.getTime()
+        )
+      ) {
+        return res
+          .status(400)
+          .json({
+            message:
+              "Invalid trip date",
+          });
+      }
+
+      /*
+       * Calculate days until trip.
+       */
+      const today =
+        new Date();
+
+      const daysUntilTrip =
+        (
+          currentDate -
+          today
+        ) /
+        (
+          1000 *
+          60 *
+          60 *
+          24
+        );
+
+      let weather;
+
+      /*
+       * Only get weather when the trip
+       * is within seven days.
+       */
+      if (
+        daysUntilTrip <= 7 &&
+        daysUntilTrip >= 0
+      ) {
+        const tripStartDate =
+          new Date(
+            trip.date
+          );
+
+        weather =
+          await Promise.all(
+            trip.places.map(
+              async (
+                place,
+                index
+              ) => {
+                /*
+                 * Calculate the starting
+                 * date of this city.
+                 */
+                const cityStartDate =
+                  new Date(
+                    tripStartDate
+                  );
+
+                /*
+                 * Add previous cities'
+                 * durations.
+                 */
+                for (
+                  let previousIndex =
+                    0;
+                  previousIndex <
+                    index;
+                  previousIndex +=
+                    1
+                ) {
+                  const previousDays =
+                    trip.places[
+                      previousIndex
+                    ].duration
+                      ?.value ||
+                    1;
+
+                  cityStartDate.setDate(
+                    cityStartDate.getDate() +
+                    previousDays
+                  );
+                }
+
+                const days =
+                  place.duration
+                    ?.value ||
+                  1;
+
+                const startDate =
+                  cityStartDate
+                    .toISOString()
+                    .split("T")[0];
+
+                const endDateObject =
+                  new Date(
+                    cityStartDate
+                  );
+
+                endDateObject.setDate(
+                  endDateObject.getDate() +
+                  days -
+                  1
+                );
+
+                const endDate =
+                  endDateObject
+                    .toISOString()
+                    .split("T")[0];
+
+                console.log(
+                  place.city,
+                  startDate,
+                  endDate
+                );
+
+                let forecast = [];
+
+                try {
+                  const response =
+                    await axios.get(
+                      "https://api.open-meteo.com/v1/forecast",
+                      {
+                        params: {
+                          latitude:
+                            place.latitude,
+
+                          longitude:
+                            place.longitude,
+
+                          daily:
+                            "temperature_2m_max,temperature_2m_min",
+
+                          start_date:
+                            startDate,
+
+                          end_date:
+                            endDate,
+
+                          timezone:
+                            "auto",
+                        },
+                      }
+                    );
+
+                  const daily =
+                    response.data
+                      .daily;
+
+                  forecast =
+                    daily.time.map(
+                      (
+                        date,
+                        weatherIndex
+                      ) => ({
+                        date,
+
+                        maxTemp:
+                          daily
+                            .temperature_2m_max[
+                            weatherIndex
+                          ],
+
+                        minTemp:
+                          daily
+                            .temperature_2m_min[
+                            weatherIndex
+                          ],
+                      })
+                    );
+                } catch (
+                  weatherError
+                ) {
+                  console.log(
+                    "Weather error:",
+                    place.city,
+                    weatherError
+                      .response
+                      ?.data ||
+                    weatherError
+                      .message
+                  );
+                }
+
+                return {
+                  city:
+                    place.city,
+
+                  forecast,
+                };
+              }
+            )
+          );
+      } else {
+        weather = {
+          message:
+            "Weather forecast will be available 7 days before your trip",
+        };
+      }
+
+      return res.json({
+        /*
+         * Only the image fields are
+         * changed here. Other GET-by-ID
+         * fields keep their structure.
+         */
+        trip:
+          applyImagesOnly(
+            trip.toObject()
+          ),
+
+        weather,
+      });
     } catch (error) {
-      next(error);
+      return res
+        .status(500)
+        .json({
+          message:
+            "Server Error",
+
+          error:
+            error.message,
+        });
     }
   }
 );
+
+/*
+|--------------------------------------------------------------------------
+| Create trip
+| POST /api/trips
+|--------------------------------------------------------------------------
+*/
 
 router.post(
   "/",
   requireAuth,
   requireOrganizer,
-  async (req, res, next) => {
+  async (
+    req,
+    res,
+    next
+  ) => {
     try {
       let tripData =
         getAllowedFields(
@@ -882,6 +1651,7 @@ router.post(
           .status(400)
           .json({
             success: false,
+
             message:
               validationError,
           });
@@ -898,24 +1668,37 @@ router.post(
         .status(201)
         .json({
           success: true,
+
           message:
             "Trip created successfully.",
+
           trip:
             normalizeTripResponse(
               trip.toObject()
             ),
         });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 );
+
+/*
+|--------------------------------------------------------------------------
+| Update trip
+| PUT /api/trips/:id
+|--------------------------------------------------------------------------
+*/
 
 router.put(
   "/:id",
   requireAuth,
   requireOrganizer,
-  async (req, res, next) => {
+  async (
+    req,
+    res,
+    next
+  ) => {
     try {
       if (
         !validId(
@@ -926,6 +1709,7 @@ router.put(
           .status(400)
           .json({
             success: false,
+
             message:
               "Invalid trip ID.",
           });
@@ -943,6 +1727,7 @@ router.put(
           .status(404)
           .json({
             success: false,
+
             message:
               "Trip not found.",
           });
@@ -958,11 +1743,32 @@ router.put(
           updateData
         );
 
+      const existingData =
+        existingTrip.toObject();
+
+      /*
+       * Preserve the real stored image
+       * values when the update does not
+       * include image fields.
+       */
       const completeData =
         addDefaults({
           ...normalizeTripResponse(
-            existingTrip.toObject()
+            existingData
           ),
+
+          photo:
+            normalizeImagePath(
+              existingData.photo
+            ),
+
+          places:
+            Array.isArray(
+              existingData.places
+            )
+              ? existingData.places
+              : [],
+
           ...updateData,
         });
 
@@ -978,6 +1784,7 @@ router.put(
           .status(400)
           .json({
             success: false,
+
             message:
               validationError,
           });
@@ -996,24 +1803,37 @@ router.put(
         .status(200)
         .json({
           success: true,
+
           message:
             "Trip updated successfully.",
+
           trip:
             normalizeTripResponse(
               existingTrip.toObject()
             ),
         });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 );
+
+/*
+|--------------------------------------------------------------------------
+| Delete trip
+| DELETE /api/trips/:id
+|--------------------------------------------------------------------------
+*/
 
 router.delete(
   "/:id",
   requireAuth,
   requireOrganizer,
-  async (req, res, next) => {
+  async (
+    req,
+    res,
+    next
+  ) => {
     try {
       if (
         !validId(
@@ -1024,6 +1844,7 @@ router.delete(
           .status(400)
           .json({
             success: false,
+
             message:
               "Invalid trip ID.",
           });
@@ -1039,6 +1860,7 @@ router.delete(
           .status(404)
           .json({
             success: false,
+
             message:
               "Trip not found.",
           });
@@ -1048,11 +1870,12 @@ router.delete(
         .status(200)
         .json({
           success: true,
+
           message:
             "Trip deleted successfully.",
         });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 );

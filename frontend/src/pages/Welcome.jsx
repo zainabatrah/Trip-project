@@ -11,20 +11,7 @@ export default function Welcome() {
   <div className={styles.body}>
      
 
-<nav className={styles.navbar}>
-  <div className={styles.leftLinks}>
-    <Link to="/" className={styles.link}>Home</Link>
-    <Link to="/about" className={styles.link}>About Us</Link>
-    <Link to="/private-trip" className={styles.link}>Private Trip</Link>
-  </div>
 
-
-  <div className={styles.rightButtons}>
-    <Link to="/login" className={styles.primaryBtn}>Login</Link>
-    <Link to="/register" className={styles.secondaryBtn}>Register</Link>
-  </div>
-
-</nav>
       
 
       

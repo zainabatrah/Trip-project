@@ -9,6 +9,368 @@
 }
 
 
+.navbar {
+  width: 100%;
+  height: 70px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 0 40px;
+  box-sizing: border-box;
+
+  backdrop-filter: blur(12px);
+}
+
+/* ========================= */
+/* NAVBAR INNER */
+/* ========================= */
+
+.navInner {
+  width: 100%;
+  max-width: 1400px;
+
+  display: flex;
+  align-items: center;
+}
+
+/* ========================= */
+/* MENU */
+/* ========================= */
+
+.menu {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+/* ========================= */
+/* CENTER LINKS */
+/* ========================= */
+
+.leftLinks {
+  flex: 1;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  gap: 40px;
+}
+
+.link,
+.linkButton {
+  font-size: 22px;
+  font-weight: bold;
+  text-decoration: none;
+
+  background: linear-gradient(
+    135deg,
+    #7ccbff,
+    #5c9dff,
+    #8e7cff
+  );
+
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  transition: .3s;
+}
+
+.linkButton {
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.link:hover,
+.linkButton:hover {
+  opacity: .7;
+}
+
+/* ========================= */
+/* RIGHT SIDE */
+/* ========================= */
+
+.rightButtons {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-left: auto;
+}
+
+/* ========================= */
+/* BUTTONS */
+/* ========================= */
+
+.primaryBtn,
+.secondaryBtn {
+
+  padding: 10px 24px;
+
+  border-radius: 10px;
+
+  text-decoration: none;
+
+  font-weight: bold;
+
+  color: black;
+
+  background: linear-gradient(
+    135deg,
+    rgb(184,225,255),
+    rgb(167,199,255),
+    rgb(195,177,255)
+  );
+
+  transition: .3s;
+  margin-left: 25px;
+}
+
+.primaryBtn:hover,
+.secondaryBtn:hover {
+  transform: translateY(-3px);
+}
+
+/* ========================= */
+/* PROFILE */
+/* ========================= */
+
+.profileCircle {
+
+  width: 46px;
+  height: 46px;
+
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+
+  text-decoration: none;
+
+  background: linear-gradient(
+    135deg,
+    rgb(184,225,255),
+    rgb(167,199,255),
+    rgb(195,177,255)
+  );
+
+  border: 2px solid rgba(255,255,255,.9);
+
+  box-shadow: 0 10px 25px rgba(92,157,255,.35);
+
+  transition: .3s;
+}
+
+.profileCircle:hover {
+  transform: translateY(-3px);
+}
+
+.profileImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profileLetter {
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+/* ========================= */
+/* HAMBURGER */
+/* ========================= */
+
+.hamburger {
+
+  display: none;
+
+  border: none;
+  background: transparent;
+
+  cursor: pointer;
+
+  font-size: 30px;
+}
+
+/* ========================= */
+/* MOBILE */
+/* ========================= */
+
+@media (max-width:768px) {
+
+  .navbar {
+    height: 70px;
+    padding: 0 20px;
+    justify-content: flex-start;
+  }
+
+
+  /* hamburger */
+  .hamburger {
+
+    display: block;
+
+    position: fixed;
+
+    top: 20px;
+    left: 20px;
+
+    z-index: 3000;
+
+    font-size: 28px;
+  }
+
+
+
+  /* SIDEBAR */
+
+  .menu {
+
+    position: fixed;
+
+    top: 0;
+    left: -280px;
+
+    width: 260px;
+    height: 100vh;
+
+    background: white;
+
+    display: flex;
+
+    flex-direction: column;
+
+    padding: 25px 20px;
+
+    box-shadow: 10px 0 30px rgba(0,0,0,.1);
+
+    transition: .4s;
+
+    z-index: 2500;
+
+  }
+
+
+
+  .menu.open {
+
+    left: 0;
+
+  }
+
+
+
+  /* logo inside sidebar */
+
+  .navInner {
+
+    width: 100%;
+
+  }
+
+
+
+  .leftLinks {
+
+    margin-top: 80px;
+
+    width: 100%;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    gap: 12px;
+
+  }
+
+
+
+  .link,
+  .linkButton {
+
+    width: 100%;
+
+    padding: 14px 15px;
+
+    font-size: 17px;
+
+    color: #333;
+
+    background: none;
+
+    -webkit-text-fill-color: initial;
+
+    border-radius: 12px;
+
+  }
+
+
+
+  /* active style */
+
+  .link:hover,
+  .linkButton:hover {
+
+    background: #eee8ff;
+
+  }
+
+
+
+  /* buttons */
+
+  .rightButtons {
+
+    margin-top: auto;
+
+    width: 100%;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 15px;
+
+  }
+
+
+
+  .primaryBtn,
+  .secondaryBtn {
+
+    width: 100%;
+
+    text-align: center;
+
+    margin-left: 0;
+
+  }
+
+
+
+  .profileCircle {
+
+    width: 45px;
+    height:45px;
+
+    align-self:center;
+
+  }
+
+}
 
 
 /* HERO */
