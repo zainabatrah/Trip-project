@@ -6,6 +6,8 @@ const fs = require("fs");
 
 const User = require("../models/User");
 const {
+  getEffectiveUserRole,
+  normalizeAuthEmail,
   requireAuth,
   signUserToken,
 } = require("../middleware/auth");
@@ -70,8 +72,14 @@ function publicUser(user) {
     _id: user._id.toString(),
     fullName: user.fullName,
     name: user.fullName,
-    email: user.email,
-    role: user.role,
+    email: normalizeAuthEmail(
+      user.email
+    ),
+    profileImage:
+      user.profileImage || "",
+    role: getEffectiveUserRole(
+      user
+    ),
   };
 }
 
@@ -84,9 +92,10 @@ router.post(
         req.body.fullName || ""
       ).trim();
 
-      const email = String(req.body.email || "")
-        .trim()
-        .toLowerCase();
+      const email =
+        normalizeAuthEmail(
+          req.body.email
+        );
 
       const password = String(
         req.body.password || ""
@@ -177,9 +186,10 @@ router.post(
 
 router.post("/login", async (req, res, next) => {
   try {
-    const email = String(req.body.email || "")
-      .trim()
-      .toLowerCase();
+    const email =
+      normalizeAuthEmail(
+        req.body.email
+      );
 
     const password = String(
       req.body.password || ""
@@ -199,7 +209,8 @@ router.post("/login", async (req, res, next) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: "Incorrect email or password.",
+        message:
+          "This email does not exist. Please register first.",
       });
     }
 
@@ -211,7 +222,8 @@ router.post("/login", async (req, res, next) => {
     if (!passwordMatches) {
       return res.status(401).json({
         success: false,
-        message: "Incorrect email or password.",
+        message:
+          "The password is incorrect. Please try again.",
       });
     }
 

@@ -15,6 +15,11 @@ import {
 } from "../api/auth.js";
 import styles from "../Styles/welcome.module.css";
 
+const API_ROOT = (
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:5000/api"
+).replace(/\/api\/?$/, "");
+
 export default function TopNavbar() {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState(
@@ -102,10 +107,10 @@ export default function TopNavbar() {
               Trips
             </Link>
             <Link 
-    to="/my-trips" 
+    to={isOrganizer ? "/manage-trips" : "/my-trips"} 
     className={styles.link}
 >
-    My Trips
+    {isOrganizer ? "Manage Trips" : "My Trips"}
 </Link>
 
     {isOrganizer ? (
@@ -181,23 +186,45 @@ export default function TopNavbar() {
 }
 
 function getProfileImage(user) {
-  return (
+  const image =
     localStorage.getItem("profileImage") ||
     localStorage.getItem("userImage") ||
     localStorage.getItem("avatar") ||
     user?.profileImage ||
     user?.image ||
     user?.avatar ||
-    ""
-  );
+    "";
+
+  if (!image) {
+    return "";
+  }
+
+  if (/^https?:\/\//i.test(image)) {
+    return image;
+  }
+
+  return `${API_ROOT}${image.startsWith("/") ? image : `/${image}`}`;
 }
 
 function getProfileLetter(user) {
+  const storedName =
+    typeof window === "undefined"
+      ? ""
+      : window.sessionStorage.getItem(
+          "tripUserName"
+        ) ||
+        window.localStorage.getItem(
+          "tripUserName"
+        ) ||
+        window.localStorage.getItem(
+          "userName"
+        ) ||
+        "";
+
   const name =
     user?.name ||
     user?.username ||
-    localStorage.getItem("tripUserName") ||
-    localStorage.getItem("userName") ||
+    storedName ||
     "User";
 
   return name.charAt(0).toUpperCase();

@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
 import "./MyTrip.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { getCurrentUser } from "../api/auth.js";
 
 export default function MyTrips() {
+  const navigate = useNavigate();
 
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,8 +19,14 @@ const [typeFilter, setTypeFilter] = useState("All");
     const fetchTrips = async () => {
 
       try {
+        const user = getCurrentUser();
 
-        const user = JSON.parse(localStorage.getItem("currentUser"));
+        if (!user?._id) {
+          navigate("/login", {
+            replace: true,
+          });
+          return;
+        }
 
         const response = await api.get(
           `/bookings/my-trips/${user._id}`
@@ -37,7 +45,7 @@ const [typeFilter, setTypeFilter] = useState("All");
 
     fetchTrips();
 
-  }, []);
+  }, [navigate]);
 
 
 

@@ -1,3 +1,5 @@
+import { getAuthStorageValue } from "./authStorage.js";
+
 const API_URL = (
   import.meta.env.VITE_API_URL ||
   "http://localhost:5000/api"
@@ -8,8 +10,8 @@ export async function apiRequest(
   options = {}
 ) {
   const token =
-    localStorage.getItem("token") ||
-    localStorage.getItem("authToken") ||
+    getAuthStorageValue("token") ||
+    getAuthStorageValue("authToken") ||
     "";
 
   const originalBody = options.body;

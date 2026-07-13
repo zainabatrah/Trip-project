@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   isOrganizerRole,
   loginUser,
-} from "../api/auth";
+} from "../api/auth.js";
 import "./Login.css";
 export default function Login() {
   const navigate = useNavigate();
@@ -18,28 +18,27 @@ export default function Login() {
     setError("");
 
     try {
-      const res = await fetch("http://localhost:5000/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
+      const data = await loginUser({
+        email,
+        password,
       });
 
-      const data = await res.json();
-
-      if (res.ok) {
-        // Save token
-        localStorage.setItem("token", data.token);
-
-        // Go to List of Trips
-        navigate("/trips");
-      } else {
-        setError(data.error || "Login failed");
-      }
+      navigate(
+        isOrganizerRole(
+          data?.user?.role
+        )
+          ? "/approve"
+          : "/trips",
+        {
+          replace: true,
+        }
+      );
     } catch (err) {
       console.error("Error:", err);
-      setError("Server not reachable");
+      setError(
+        err?.message ||
+          "Login failed"
+      );
     }
   };
 
@@ -68,7 +67,11 @@ export default function Login() {
           </div>
         )}
 
-        <form className="login-form" onSubmit={handleLogin}>
+        <form
+          className="login-form"
+          onSubmit={handleLogin}
+          noValidate
+        >
           {/* Email */}
           <div className="form-group">
             <label>Email</label>

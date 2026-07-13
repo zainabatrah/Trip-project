@@ -8,6 +8,9 @@ const PrivateTripRequest = require(
 const Trip = require(
   "../models/Trip"
 );
+const Booking = require(
+  "../models/Booking"
+);
 
 const {
   optionalAuth,
@@ -965,6 +968,73 @@ async function syncApprovedTrip(
   return trip._id;
 }
 
+async function syncApprovedTripBooking(
+  request,
+  tripId
+) {
+  if (
+    !request?.client ||
+    !tripId
+  ) {
+    return null;
+  }
+
+  const travelers = Number(
+    request.travelers ||
+      1
+  );
+  const totalPrice = Number(
+    request.budget ||
+      0
+  );
+
+  const existingBooking =
+    await Booking.findOne({
+      userId: request.client,
+      tripId,
+    });
+
+  if (existingBooking) {
+    existingBooking.travelers =
+      travelers;
+    existingBooking.totalPrice =
+      totalPrice;
+
+    await existingBooking.save();
+
+    return existingBooking._id;
+  }
+
+  const booking =
+    await Booking.create({
+      userId: request.client,
+      tripId,
+      travelers,
+      totalPrice,
+      paymentStatus: "paid",
+      bookingStatus: "paid",
+    });
+
+  return booking._id;
+}
+
+async function removeApprovedTripData(
+  tripId
+) {
+  if (!tripId) {
+    return;
+  }
+
+  await Promise.all([
+    Booking.deleteMany({
+      tripId,
+    }),
+    Trip.findByIdAndDelete(
+      tripId
+    ),
+  ]);
+}
+
 router.get(
   "/",
   optionalAuth,
@@ -1767,6 +1837,10 @@ router.patch(
           await syncApprovedTrip(
             request
           );
+        await syncApprovedTripBooking(
+          request,
+          request.approvedTripId
+        );
       }
 
       await request.save();
@@ -1915,10 +1989,14 @@ router.patch(
           await syncApprovedTrip(
             request
           );
+        await syncApprovedTripBooking(
+          request,
+          request.approvedTripId
+        );
       } else if (
         request.approvedTripId
       ) {
-        await Trip.findByIdAndDelete(
+        await removeApprovedTripData(
           request.approvedTripId
         );
 
@@ -2113,7 +2191,7 @@ router.delete(
       if (
         request.approvedTripId
       ) {
-        await Trip.findByIdAndDelete(
+        await removeApprovedTripData(
           request.approvedTripId
         );
       }

@@ -71,6 +71,7 @@ const privateTripRequestRoutes = require(
 const paymentRoutes = require("./routes/paymentRoutes");
 const bookingRoute = require("./routes/bookingRoutes");
 const userRoutes=require("./routes/userRoutes");
+const socialRoutes = require("./routes/socialRoutes");
 const app = express();
 
 const PORT =
@@ -295,6 +296,10 @@ app.use("/api/bookings", bookingRoute);
 app.use(
     "/api/users",
     userRoutes
+);
+app.use(
+  "/api/social",
+  socialRoutes
 );
 /*
 |--------------------------------------------------------------------------

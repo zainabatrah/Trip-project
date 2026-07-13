@@ -1,563 +1,1350 @@
-import { useEffect, useState } from "react";
-import api from "../services/api";
-import "./Profile.css";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { Link } from "react-router-dom";
+import {
+  FaCamera,
+  FaImages,
+  FaLock,
+  FaMapMarkerAlt,
+  FaTrashAlt,
+  FaUserFriends,
+  FaUserShield,
+} from "react-icons/fa";
 
+import api from "../services/api.js";
+import {
+  logoutUser,
+  syncStoredCurrentUser,
+} from "../api/auth.js";
+import {
+  getSocialProfile,
+} from "../api/social.js";
+import ProfileAreaLayout from "../components/ProfileAreaLayout.jsx";
+import {
+  pageTheme,
+} from "../components/publicPageTheme.js";
+import SocialPostCard from "../components/social/SocialPostCard.jsx";
+import SocialStoryCard from "../components/social/SocialStoryCard.jsx";
+import {
+  getUserAvatarUrl,
+} from "../components/social/socialHelpers.js";
+
+function createProfileForm(
+  profile
+) {
+  return {
+    fullName:
+      profile?.fullName || "",
+    country:
+      profile?.country || "",
+    bio: profile?.bio || "",
+  };
+}
 
 export default function Profile() {
-
-    const [user, setUser] = useState(null);
-
-    const [editOpen, setEditOpen] = useState(false);
-    const [passwordOpen, setPasswordOpen] = useState(false);
-    const [manageOpen, setManageOpen] = useState(false);
-const [preview,setPreview]=useState(null);
-const [imageFile,setImageFile] = useState(null);
-    const [formData,setFormData] = useState({
-        fullName:"",
-        country:"",
-        bio:"",
-        profileImage:""
+  const [dashboard, setDashboard] =
+    useState(null);
+  const [loading, setLoading] =
+    useState(true);
+  const [error, setError] =
+    useState("");
+  const [successMessage, setSuccessMessage] =
+    useState("");
+  const [editOpen, setEditOpen] =
+    useState(false);
+  const [passwordOpen, setPasswordOpen] =
+    useState(false);
+  const [manageOpen, setManageOpen] =
+    useState(false);
+  const [profileSaving, setProfileSaving] =
+    useState(false);
+  const [passwordSaving, setPasswordSaving] =
+    useState(false);
+  const [preview, setPreview] =
+    useState("");
+  const [imageFile, setImageFile] =
+    useState(null);
+  const [formData, setFormData] =
+    useState(
+      createProfileForm(null)
+    );
+  const [passwordData, setPasswordData] =
+    useState({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
     });
+  const [message, setMessage] =
+    useState("");
 
-const [passwordData,setPasswordData] = useState({
-    currentPassword:"",
-    newPassword:"",
-    confirmPassword:""
-});
-const [showPassword,setShowPassword] = useState({
-    current:false,
-    new:false,
-    confirm:false
-});
+  async function loadDashboard() {
+    try {
+      setLoading(true);
+      setError("");
 
-const [message,setMessage] = useState("");
-const [successMessage,setSuccessMessage] = useState("");
-    useEffect(()=>{
+      const data =
+        await getSocialProfile();
 
-        const savedUser = JSON.parse(
-            localStorage.getItem("tripUser")
-        );
+      setDashboard(data);
+      setFormData(
+        createProfileForm(
+          data.profile
+        )
+      );
+    } catch (requestError) {
+      setError(
+        requestError?.message ||
+          "Could not load your profile."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
 
+  useEffect(() => {
+    loadDashboard();
+  }, []);
 
-        if(savedUser){
+  useEffect(() => {
+    if (!successMessage) {
+      return undefined;
+    }
 
-            api.get(`/users/profile/${savedUser._id}`)
-            .then(res=>{
+    const timeoutId =
+      window.setTimeout(() => {
+        setSuccessMessage("");
+      }, 3500);
 
-                setUser(res.data);
-
-                setFormData({
-                    fullName:res.data.fullName || "",
-                    country:res.data.country || "",
-                    bio:res.data.bio || "",
-                    profileImage:res.data.profileImage || ""
-                });
-
-            })
-            .catch(err=>console.log(err));
-
-        }
-
-
-    },[]);
-
-
-
-    const handleChange=(e)=>{
-
-        setFormData({
-            ...formData,
-            [e.target.name]:e.target.value
-        });
-
+    return () => {
+      window.clearTimeout(
+        timeoutId
+      );
     };
-const togglePassword=(field)=>{
+  }, [successMessage]);
 
-    setShowPassword({
-        ...showPassword,
-        [field]:!showPassword[field]
-    });
+  const profile =
+    dashboard?.profile || null;
+  const statistics =
+    dashboard?.statistics || {};
+  const recentPosts =
+    dashboard?.recentPosts || [];
+  const activeStories =
+    dashboard?.activeStories || [];
+  const friendsPreview =
+    dashboard?.friendsPreview || [];
 
-};
-const handlePasswordChange=(e)=>{
+  const heroStats = useMemo(
+    () => [
+      {
+        label: "Posts",
+        value:
+          statistics.posts || 0,
+      },
+      {
+        label: "Stories",
+        value:
+          statistics.activeStories || 0,
+      },
+      {
+        label: "Friends",
+        value:
+          statistics.friends || 0,
+      },
+      {
+        label: "Requests",
+        value:
+          statistics.pendingRequests ||
+          0,
+      },
+    ],
+    [statistics]
+  );
 
-    setPasswordData({
-        ...passwordData,
-        [e.target.name]: e.target.value
-    });
+  function handleChange(event) {
+    const {
+      name,
+      value,
+    } = event.target;
 
-};
+    setFormData((current) => ({
+      ...current,
+      [name]: value,
+    }));
+  }
 
+  function handlePasswordChange(
+    event
+  ) {
+    const {
+      name,
+      value,
+    } = event.target;
 
-const changePassword = async()=>{
+    setPasswordData((current) => ({
+      ...current,
+      [name]: value,
+    }));
+  }
 
-    if(passwordData.newPassword !== passwordData.confirmPassword){
+  function handleImageChange(
+    event
+  ) {
+    const file =
+      event.target.files?.[0] ||
+      null;
 
-        setMessage("New passwords do not match");
-        return;
-
+    if (!file) {
+      setImageFile(null);
+      setPreview("");
+      return;
     }
 
+    setImageFile(file);
+    setPreview(
+      URL.createObjectURL(file)
+    );
+  }
 
-    try{
-
-        const res = await api.put(
-            `/users/change-password/${user._id}`,
-            {
-                currentPassword: passwordData.currentPassword,
-                newPassword: passwordData.newPassword
-            }
-        );
-
-setSuccessMessage(res.data.message);
-
-
-// clear inputs
-setPasswordData({
-    currentPassword:"",
-    newPassword:"",
-    confirmPassword:""
-});
-
-
-// close form
-setPasswordOpen(false);
-
-
-// remove success message after 3 seconds
-setTimeout(()=>{
-
-    setSuccessMessage("");
-
-},3000);
-
-
-
-    }catch(error){
-
-        setMessage(
-            error.response?.data?.message ||
-            "Password change failed"
-        );
-
+  async function updateProfile() {
+    if (
+      !profile?._id ||
+      profileSaving
+    ) {
+      return;
     }
 
-};
+    try {
+      setProfileSaving(true);
+      setMessage("");
 
+      const data =
+        new FormData();
 
+      data.append(
+        "fullName",
+        formData.fullName
+      );
+      data.append(
+        "country",
+        formData.country
+      );
+      data.append(
+        "bio",
+        formData.bio
+      );
 
+      if (imageFile) {
+        data.append(
+          "profileImage",
+          imageFile
+        );
+      }
 
-const deleteAccount = async()=>{
+      const response =
+        await api.put(
+          `/users/profile/${profile._id}`,
+          data,
+          {
+            headers: {
+              "Content-Type":
+                "multipart/form-data",
+            },
+          }
+        );
 
-    const confirmDelete = window.confirm(
+      const nextProfile =
+        response.data;
+
+      setDashboard((current) => ({
+        ...current,
+        profile: nextProfile,
+      }));
+      setFormData(
+        createProfileForm(
+          nextProfile
+        )
+      );
+      syncStoredCurrentUser({
+        ...profile,
+        ...nextProfile,
+      });
+      setPreview("");
+      setImageFile(null);
+      setEditOpen(false);
+      setSuccessMessage(
+        "Profile updated successfully."
+      );
+    } catch (requestError) {
+      setMessage(
+        requestError?.response?.data
+          ?.message ||
+          requestError?.message ||
+          "Could not update your profile."
+      );
+    } finally {
+      setProfileSaving(false);
+    }
+  }
+
+  async function changePassword() {
+    if (
+      !profile?._id ||
+      passwordSaving
+    ) {
+      return;
+    }
+
+    if (
+      passwordData.newPassword !==
+      passwordData.confirmPassword
+    ) {
+      setMessage(
+        "New passwords do not match."
+      );
+      return;
+    }
+
+    try {
+      setPasswordSaving(true);
+      setMessage("");
+
+      const response =
+        await api.put(
+          `/users/change-password/${profile._id}`,
+          {
+            currentPassword:
+              passwordData.currentPassword,
+            newPassword:
+              passwordData.newPassword,
+          }
+        );
+
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      setPasswordOpen(false);
+      setSuccessMessage(
+        response.data.message ||
+          "Password changed successfully."
+      );
+    } catch (requestError) {
+      setMessage(
+        requestError?.response?.data
+          ?.message ||
+          requestError?.message ||
+          "Password change failed."
+      );
+    } finally {
+      setPasswordSaving(false);
+    }
+  }
+
+  async function deleteAccount() {
+    if (!profile?._id) {
+      return;
+    }
+
+    const confirmed =
+      window.confirm(
         "Are you sure you want to delete your account?"
+      );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await api.delete(
+        `/users/${profile._id}`
+      );
+
+      logoutUser();
+      window.location.href =
+        "/login";
+    } catch (requestError) {
+      setMessage(
+        requestError?.response?.data
+          ?.message ||
+          requestError?.message ||
+          "Could not delete the account."
+      );
+    }
+  }
+
+  if (loading) {
+    return (
+      <ProfileAreaLayout
+        eyebrow="Social Dashboard"
+        title="Your Profile"
+        subtitle="Loading your profile, stories, and travel community."
+      >
+        <div style={pageTheme.emptyBox}>
+          Loading profile...
+        </div>
+      </ProfileAreaLayout>
     );
+  }
 
+  if (error) {
+    return (
+      <ProfileAreaLayout
+        eyebrow="Social Dashboard"
+        title="Your Profile"
+        subtitle="We could not load your social profile right now."
+      >
+        <div style={pageTheme.errorBox}>
+          {error}
+        </div>
 
-    if(!confirmDelete)
-        return;
-
-
-    try{
-
-        await api.delete(
-            `/users/${user._id}`
-        );
-
-
-        localStorage.removeItem("tripUser");
-        localStorage.removeItem("token");
-
-
-        window.location.href="/login";
-
-
-    }catch(error){
-
-        console.log(error);
-
-    }
-
-};
-
-
-const handleImageChange = (e)=>{
-
-    const file=e.target.files[0];
-
-    if(file){
-
-        setImageFile(file);
-
-        setPreview(
-            URL.createObjectURL(file)
-        );
-
-    }
-
-};
-
-    const updateProfile=async()=>{
-
-        try{
-
-           const data = new FormData();
-
-
-data.append(
-    "fullName",
-    formData.fullName
-);
-
-
-data.append(
-    "country",
-    formData.country
-);
-
-
-data.append(
-    "bio",
-    formData.bio
-);
-
-
-
-if(imageFile){
-
-    data.append(
-        "profileImage",
-        imageFile
+        <button
+          type="button"
+          onClick={loadDashboard}
+          style={pageTheme.buttonPrimary}
+        >
+          Try Again
+        </button>
+      </ProfileAreaLayout>
     );
+  }
 
-}
+  return (
+    <ProfileAreaLayout
+      eyebrow="Social Dashboard"
+      title="Your Profile"
+      subtitle="A travel identity with stories, friend activity, and a personal feed that stays inside the project style."
+      headerAction={
+        <div style={styles.headerCard}>
+          <strong style={styles.headerValue}>
+            {statistics.friends || 0}
+          </strong>
+          <span style={styles.headerLabel}>
+            friend connections
+          </span>
+        </div>
+      }
+    >
+      {successMessage ? (
+        <div style={pageTheme.successBox}>
+          {successMessage}
+        </div>
+      ) : null}
 
+      {message ? (
+        <div style={pageTheme.errorBox}>
+          {message}
+        </div>
+      ) : null}
 
+      <section style={styles.heroCard}>
+        <div style={styles.heroMain}>
+          <div style={styles.avatarShell}>
+            <img
+              src={
+                preview ||
+                getUserAvatarUrl(
+                  profile
+                )
+              }
+              alt={
+                profile?.fullName ||
+                "Profile"
+              }
+              style={styles.avatar}
+            />
 
-const res = await api.put(
-    `/users/profile/${user._id}`,
-    data,
-    {
-        headers:{
-            "Content-Type":"multipart/form-data"
-        }
-    }
-);
+            <button
+              type="button"
+              onClick={() =>
+                setEditOpen(true)
+              }
+              style={styles.cameraButton}
+            >
+              <FaCamera />
+            </button>
+          </div>
 
-            setUser(res.data);
+          <div style={styles.heroText}>
+            <span style={styles.heroBadge}>
+              Explorer Profile
+            </span>
+
+            <h2 style={styles.heroTitle}>
+              {profile?.fullName}
+            </h2>
+
+            <p style={styles.heroEmail}>
+              {profile?.email}
+            </p>
+
+            <div style={styles.metaRow}>
+              <span style={styles.metaPill}>
+                <FaMapMarkerAlt />
+                {profile?.country ||
+                  "Country not added"}
+              </span>
+
+              <span style={styles.metaPill}>
+                Member since{" "}
+                {new Date(
+                  profile?.createdAt
+                ).toLocaleDateString()}
+              </span>
+            </div>
+
+            <p style={styles.heroBio}>
+              {profile?.bio ||
+                "Add a short bio so friends understand your travel style."}
+            </p>
+          </div>
+        </div>
+
+        <div style={styles.heroActions}>
+          <button
+            type="button"
+            onClick={() =>
+              setEditOpen(true)
+            }
+            style={pageTheme.buttonPrimary}
+          >
+            Edit Profile
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              setPasswordOpen(true)
+            }
+            style={pageTheme.buttonSecondary}
+          >
+            <FaLock />
+            {" "}
+            Change Password
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              setManageOpen(
+                (current) =>
+                  !current
+              )
+            }
+            style={pageTheme.buttonSecondary}
+          >
+            <FaUserShield />
+            {" "}
+            Manage Account
+          </button>
+        </div>
+
+        <div style={styles.statsGrid}>
+          {heroStats.map((item) => (
+            <div
+              key={item.label}
+              style={styles.statCard}
+            >
+              <strong
+                style={styles.statValue}
+              >
+                {item.value}
+              </strong>
+              <span
+                style={styles.statLabel}
+              >
+                {item.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section style={styles.quickGrid}>
+        <Link
+          to="/profile/posts-stories"
+          style={styles.quickCard}
+        >
+          <div style={styles.quickIcon}>
+            <FaImages />
+          </div>
+          <div>
+            <h3 style={styles.quickTitle}>
+              Posts & Stories
+            </h3>
+            <p style={styles.quickText}>
+              Share moments, publish quick updates, and see stories from accepted friends.
+            </p>
+          </div>
+        </Link>
+
+        <Link
+          to="/profile/friends"
+          style={styles.quickCard}
+        >
+          <div style={styles.quickIcon}>
+            <FaUserFriends />
+          </div>
+          <div>
+            <h3 style={styles.quickTitle}>
+              Friends
+            </h3>
+            <p style={styles.quickText}>
+              Send requests, respond to invitations, and grow your travel network.
+            </p>
+          </div>
+        </Link>
+      </section>
+
+      <div style={styles.contentGrid}>
+        <section style={pageTheme.surface}>
+          <div style={styles.sectionHeader}>
+            <div>
+              <h3 style={styles.sectionTitle}>
+                Recent Posts
+              </h3>
+              <p style={styles.sectionText}>
+                Your latest shared updates appear here inside the profile.
+              </p>
+            </div>
+
+            <Link
+              to="/profile/posts-stories"
+              style={styles.inlineLink}
+            >
+              Open full feed
+            </Link>
+          </div>
+
+          {recentPosts.length === 0 ? (
+            <div style={pageTheme.emptyBox}>
+              You have not published a post yet.
+            </div>
+          ) : (
+            <div style={styles.postList}>
+              {recentPosts.map((post) => (
+                <SocialPostCard
+                  key={post._id}
+                  post={post}
+                  currentUserId={
+                    profile?._id
+                  }
+                  compact
+                />
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section
+          style={{
+            ...pageTheme.surface,
+            display: "grid",
+            gap: 18,
+          }}
+        >
+          <div style={styles.sectionHeader}>
+            <div>
+              <h3 style={styles.sectionTitle}>
+                Active Stories
+              </h3>
+              <p style={styles.sectionText}>
+                The fast lane for visual moments that stay live for 24 hours.
+              </p>
+            </div>
+
+            <Link
+              to="/profile/posts-stories"
+              style={styles.inlineLink}
+            >
+              Add story
+            </Link>
+          </div>
+
+          {activeStories.length === 0 ? (
+            <div style={pageTheme.emptyBox}>
+              No active stories yet.
+            </div>
+          ) : (
+            <div style={styles.storyGrid}>
+              {activeStories.map((story) => (
+                <SocialStoryCard
+                  key={story._id}
+                  story={story}
+                  currentUserId={
+                    profile?._id
+                  }
+                  compact
+                />
+              ))}
+            </div>
+          )}
+
+          <div style={styles.sectionHeader}>
+            <div>
+              <h3 style={styles.sectionTitle}>
+                Friend Preview
+              </h3>
+              <p style={styles.sectionText}>
+                Your accepted connections are shown here with the same travel-first style.
+              </p>
+            </div>
+
+            <Link
+              to="/profile/friends"
+              style={styles.inlineLink}
+            >
+              Manage friends
+            </Link>
+          </div>
+
+          {friendsPreview.length === 0 ? (
+            <div style={pageTheme.emptyBox}>
+              No friends connected yet.
+            </div>
+          ) : (
+            <div style={styles.friendGrid}>
+              {friendsPreview.map(
+                (friend) => (
+                  <article
+                    key={friend._id}
+                    style={styles.friendCard}
+                  >
+                    <img
+                      src={getUserAvatarUrl(
+                        friend
+                      )}
+                      alt={
+                        friend.fullName
+                      }
+                      style={
+                        styles.friendAvatar
+                      }
+                    />
+                    <strong>
+                      {friend.fullName}
+                    </strong>
+                    <span
+                      style={
+                        styles.friendCountry
+                      }
+                    >
+                      {friend.country ||
+                        "Traveler"}
+                    </span>
+                  </article>
+                )
+              )}
+            </div>
+          )}
+        </section>
+      </div>
+
+      {manageOpen ? (
+        <section
+          style={{
+            ...pageTheme.surface,
+            marginTop: 20,
+          }}
+        >
+          <h3 style={styles.sectionTitle}>
+            Manage Account
+          </h3>
+          <p style={styles.sectionText}>
+            Delete the account only if you are sure you no longer want this profile, posts, stories, or friend history.
+          </p>
+          <button
+            type="button"
+            onClick={deleteAccount}
+            style={pageTheme.buttonDanger}
+          >
+            <FaTrashAlt />
+            {" "}
+            Delete Account
+          </button>
+        </section>
+      ) : null}
+
+      {editOpen ? (
+        <ModalCard
+          title="Edit Profile"
+          onClose={() => {
             setEditOpen(false);
+            setPreview("");
+            setImageFile(null);
+          }}
+        >
+          <label style={pageTheme.field}>
+            <span>Full name</span>
+            <input
+              name="fullName"
+              value={formData.fullName}
+              onChange={handleChange}
+              style={pageTheme.control}
+            />
+          </label>
 
+          <label style={pageTheme.field}>
+            <span>Country</span>
+            <input
+              name="country"
+              value={formData.country}
+              onChange={handleChange}
+              style={pageTheme.control}
+            />
+          </label>
 
-        }catch(error){
+          <label style={pageTheme.field}>
+            <span>Bio</span>
+            <textarea
+              name="bio"
+              value={formData.bio}
+              onChange={handleChange}
+              style={{
+                ...pageTheme.control,
+                ...pageTheme.textarea,
+              }}
+            />
+          </label>
 
-            console.log(error);
+          <label style={pageTheme.field}>
+            <span>Profile image</span>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={
+                handleImageChange
+              }
+              style={pageTheme.control}
+            />
+          </label>
 
-        }
+          {preview ? (
+            <img
+              src={preview}
+              alt="Preview"
+              style={styles.preview}
+            />
+          ) : null}
 
-    };
+          <div style={styles.modalActions}>
+            <button
+              type="button"
+              onClick={updateProfile}
+              disabled={profileSaving}
+              style={{
+                ...pageTheme.buttonPrimary,
+                opacity:
+                  profileSaving
+                    ? 0.7
+                    : 1,
+              }}
+            >
+              {profileSaving
+                ? "Saving..."
+                : "Save Profile"}
+            </button>
 
+            <button
+              type="button"
+              onClick={() =>
+                setEditOpen(false)
+              }
+              style={pageTheme.buttonSecondary}
+            >
+              Cancel
+            </button>
+          </div>
+        </ModalCard>
+      ) : null}
 
+      {passwordOpen ? (
+        <ModalCard
+          title="Change Password"
+          onClose={() =>
+            setPasswordOpen(false)
+          }
+        >
+          <label style={pageTheme.field}>
+            <span>Current password</span>
+            <input
+              type="password"
+              name="currentPassword"
+              value={
+                passwordData.currentPassword
+              }
+              onChange={
+                handlePasswordChange
+              }
+              style={pageTheme.control}
+            />
+          </label>
 
+          <label style={pageTheme.field}>
+            <span>New password</span>
+            <input
+              type="password"
+              name="newPassword"
+              value={
+                passwordData.newPassword
+              }
+              onChange={
+                handlePasswordChange
+              }
+              style={pageTheme.control}
+            />
+          </label>
 
-    if(!user)
-        return <h2>Loading...</h2>
+          <label style={pageTheme.field}>
+            <span>Confirm password</span>
+            <input
+              type="password"
+              name="confirmPassword"
+              value={
+                passwordData.confirmPassword
+              }
+              onChange={
+                handlePasswordChange
+              }
+              style={pageTheme.control}
+            />
+          </label>
 
+          <div style={styles.modalActions}>
+            <button
+              type="button"
+              onClick={changePassword}
+              disabled={passwordSaving}
+              style={{
+                ...pageTheme.buttonPrimary,
+                opacity:
+                  passwordSaving
+                    ? 0.7
+                    : 1,
+              }}
+            >
+              {passwordSaving
+                ? "Updating..."
+                : "Update Password"}
+            </button>
 
-
-return (
-
-<div className="profilePage">
-
-
-{/* Edit popup */}
-
-{editOpen && (
-
-<div className="overlay">
-
-<div className="editBox">
-
-<h2>Edit Profile</h2>
-
-
-<input
-name="fullName"
-value={formData.fullName}
-onChange={handleChange}
-placeholder="Full Name"
-/>
-
-
-<input
-name="country"
-value={formData.country}
-onChange={handleChange}
-placeholder="Country"
-/>
-
-
-<textarea
-name="bio"
-value={formData.bio}
-onChange={handleChange}
-placeholder="Bio"
-/>
-
-
-<input
-type="file"
-accept="image/*"
-onChange={handleImageChange}
-/>
-{preview &&
-
-<img
-src={preview}
-className="preview"
-/>
-
+            <button
+              type="button"
+              onClick={() =>
+                setPasswordOpen(false)
+              }
+              style={pageTheme.buttonSecondary}
+            >
+              Cancel
+            </button>
+          </div>
+        </ModalCard>
+      ) : null}
+    </ProfileAreaLayout>
+  );
 }
 
-<div className="actions">
-
-<button
-className="save"
-onClick={updateProfile}
->
-Save
-</button>
-
-
-<button
-className="cancel"
-onClick={()=>setEditOpen(false)}
->
-Cancel
-</button>
-
-
-</div>
-
-
-</div>
-
-</div>
-
-)}
-
-
-
-
-<div className="profileCard">
-
-
-<img
-className="avatar"
-src={
-user.profileImage
-?
-`http://localhost:5000${user.profileImage}`
-:
-"https://cdn-icons-png.flaticon.com/512/149/149071.png"
-}
-/>
-
-
-<h1>{user.fullName}</h1>
-
-<p className="email">
-{user.email}
-</p>
-
-
-<div className="info">
-
-<div>
-<h4>Country</h4>
-<p>
-{user.country || "Not added"}
-</p>
-</div>
-
-
-<div>
-<h4>Bio</h4>
-<p>
-{user.bio || "No bio yet"}
-</p>
-</div>
-
-
-</div>
-
-
-
-<button
-className="mainBtn"
-onClick={()=>setEditOpen(true)}
->
-Edit Profile
-</button>
-
-
-
-<div className="buttons">
-
-
-<button
-onClick={()=>setPasswordOpen(!passwordOpen)}
->
-Change Password
-</button>
-
-
-<button
-onClick={()=>setManageOpen(!manageOpen)}
->
-Manage Account
-</button>
-
-
-<button>
-📝 Posts & Stories
-</button>
-
-
-<button>
-👥 Friends
-</button>
-
-
-</div>
-
-
-
-</div>
-
-
-{
-successMessage &&
-
-<p className="successMessage">
-{successMessage}
-</p>
-
+function ModalCard({
+  title,
+  children,
+  onClose,
+}) {
+  return (
+    <div style={styles.overlay}>
+      <div style={styles.modal}>
+        <div style={styles.modalHeader}>
+          <h3 style={styles.sectionTitle}>
+            {title}
+          </h3>
+          <button
+            type="button"
+            onClick={onClose}
+            style={styles.closeButton}
+          >
+            Close
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
 }
 
+const styles = {
+  headerCard: {
+    minWidth: 180,
+    padding: "18px 20px",
+    borderRadius: 18,
+    background:
+      "rgba(255, 255, 255, 0.78)",
+    border:
+      "1px solid rgba(147, 197, 253, 0.45)",
+    boxShadow:
+      "0 16px 34px rgba(96, 165, 250, 0.16)",
+    display: "grid",
+    gap: 4,
+    textAlign: "center",
+  },
 
-{passwordOpen && (
+  headerValue: {
+    fontSize: 30,
+    color: "#1e3a8a",
+  },
 
-<div className="section">
+  headerLabel: {
+    color: "#64748b",
+    fontSize: 12,
+    fontWeight: 900,
+    textTransform: "uppercase",
+    letterSpacing: "0.08em",
+  },
 
-<h2>Change Password</h2>
+  heroCard: {
+    padding: 28,
+    borderRadius: 28,
+    background:
+      "linear-gradient(145deg, rgba(255, 255, 255, 0.86), rgba(219, 234, 254, 0.76), rgba(191, 219, 254, 0.62))",
+    border:
+      "1px solid rgba(147, 197, 253, 0.45)",
+    boxShadow:
+      "0 28px 80px rgba(59, 130, 246, 0.18)",
+  },
 
-<div className="passwordInput">
+  heroMain: {
+    display: "grid",
+    gridTemplateColumns:
+      "160px minmax(0, 1fr)",
+    gap: 24,
+    alignItems: "center",
+  },
 
-<input
-type={showPassword.current ? "text" : "password"}
-name="currentPassword"
-placeholder="Current Password"
-value={passwordData.currentPassword}
-onChange={handlePasswordChange}
-/>
+  avatarShell: {
+    position: "relative",
+    width: 160,
+    height: 160,
+    margin: "0 auto",
+  },
 
-<span
-className="eyeIcon"
-onClick={()=>togglePassword("current")}
->
-{showPassword.current ? "🔓" : "🔒"}
-</span>
+  avatar: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 34,
+    objectFit: "cover",
+    border:
+      "5px solid rgba(255, 255, 255, 0.82)",
+    boxShadow:
+      "0 16px 34px rgba(96, 165, 250, 0.26)",
+  },
 
-</div>
+  cameraButton: {
+    position: "absolute",
+    right: 10,
+    bottom: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    border: "none",
+    background:
+      "linear-gradient(135deg, #93c5fd, #a78bfa)",
+    color: "#0f172a",
+    display: "grid",
+    placeItems: "center",
+    cursor: "pointer",
+    boxShadow:
+      "0 10px 24px rgba(96, 165, 250, 0.25)",
+  },
 
+  heroText: {
+    minWidth: 0,
+  },
 
-<div className="passwordInput">
+  heroBadge: {
+    display: "inline-flex",
+    padding: "7px 12px",
+    borderRadius: 999,
+    background:
+      "rgba(191, 219, 254, 0.6)",
+    color: "#1d4ed8",
+    fontSize: 12,
+    fontWeight: 900,
+    textTransform: "uppercase",
+    letterSpacing: "0.08em",
+  },
 
-<input
-type={showPassword.new ? "text" : "password"}
-name="newPassword"
-placeholder="New Password"
-value={passwordData.newPassword}
-onChange={handlePasswordChange}
-/>
+  heroTitle: {
+    margin: "16px 0 8px",
+    fontSize: 34,
+    color: "#1e3a8a",
+    lineHeight: 1.05,
+  },
 
-<span
-className="eyeIcon"
-onClick={()=>togglePassword("new")}
->
-{showPassword.new ? "🔓" : "🔒"}
-</span>
+  heroEmail: {
+    margin: 0,
+    color: "#475569",
+    fontWeight: 700,
+  },
 
-</div>
+  metaRow: {
+    display: "flex",
+    gap: 10,
+    flexWrap: "wrap",
+    marginTop: 14,
+  },
 
+  metaPill: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "8px 12px",
+    borderRadius: 999,
+    background:
+      "rgba(255, 255, 255, 0.8)",
+    color: "#334155",
+    border:
+      "1px solid rgba(191, 219, 254, 0.72)",
+    fontSize: 13,
+    fontWeight: 700,
+  },
 
-<div className="passwordInput">
+  heroBio: {
+    margin: "16px 0 0",
+    maxWidth: 720,
+    color: "#334155",
+    lineHeight: 1.8,
+  },
 
-<input
-type={showPassword.confirm ? "text" : "password"}
-name="confirmPassword"
-placeholder="Confirm Password"
-value={passwordData.confirmPassword}
-onChange={handlePasswordChange}
-/>
+  heroActions: {
+    display: "flex",
+    gap: 12,
+    flexWrap: "wrap",
+    marginTop: 24,
+  },
 
-<span
-className="eyeIcon"
-onClick={()=>togglePassword("confirm")}
->
-{showPassword.confirm ? "🔓" : "🔒"}
-</span>
+  statsGrid: {
+    display: "grid",
+    gridTemplateColumns:
+      "repeat(auto-fit, minmax(150px, 1fr))",
+    gap: 14,
+    marginTop: 24,
+  },
 
-</div>
+  statCard: {
+    padding: 16,
+    borderRadius: 18,
+    background:
+      "rgba(255, 255, 255, 0.72)",
+    border:
+      "1px solid rgba(191, 219, 254, 0.78)",
+    boxShadow:
+      "0 14px 30px rgba(96, 165, 250, 0.12)",
+    display: "grid",
+    gap: 4,
+  },
 
-<button
-className="save"
-onClick={changePassword}
->
-Update Password
-</button>
+  statValue: {
+    fontSize: 28,
+    color: "#0f172a",
+  },
 
+  statLabel: {
+    color: "#64748b",
+    fontWeight: 800,
+  },
 
-{
-message &&
-<p className="message">
-{message}
-</p>
-}
+  quickGrid: {
+    display: "grid",
+    gridTemplateColumns:
+      "repeat(auto-fit, minmax(280px, 1fr))",
+    gap: 16,
+    marginTop: 22,
+  },
 
+  quickCard: {
+    display: "grid",
+    gridTemplateColumns:
+      "58px minmax(0, 1fr)",
+    gap: 14,
+    alignItems: "start",
+    padding: 20,
+    borderRadius: 22,
+    background:
+      "rgba(255, 255, 255, 0.76)",
+    border:
+      "1px solid rgba(147, 197, 253, 0.45)",
+    boxShadow:
+      "0 18px 40px rgba(96, 165, 250, 0.14)",
+    textDecoration: "none",
+  },
 
-</div>
+  quickIcon: {
+    width: 58,
+    height: 58,
+    borderRadius: 18,
+    background:
+      "linear-gradient(135deg, rgba(96, 165, 250, 0.9), rgba(167, 139, 250, 0.85))",
+    color: "#ffffff",
+    display: "grid",
+    placeItems: "center",
+    fontSize: 22,
+    boxShadow:
+      "0 12px 26px rgba(96, 165, 250, 0.24)",
+  },
 
-)}
+  quickTitle: {
+    margin: "2px 0 6px",
+    color: "#1e3a8a",
+  },
 
+  quickText: {
+    margin: 0,
+    color: "#475569",
+    lineHeight: 1.7,
+  },
 
+  contentGrid: {
+    display: "grid",
+    gridTemplateColumns:
+      "minmax(0, 1.1fr) minmax(320px, 0.9fr)",
+    gap: 18,
+    alignItems: "start",
+    marginTop: 22,
+  },
 
+  sectionHeader: {
+    display: "flex",
+    justifyContent:
+      "space-between",
+    gap: 14,
+    alignItems: "flex-start",
+    flexWrap: "wrap",
+    marginBottom: 14,
+  },
 
-{manageOpen && (
+  sectionTitle: {
+    margin: 0,
+    color: "#1e3a8a",
+    fontSize: 22,
+    fontWeight: 900,
+  },
 
-<div className="section">
+  sectionText: {
+    margin: "6px 0 0",
+    color: "#475569",
+    lineHeight: 1.7,
+  },
 
-<h2>Manage Account</h2>
+  inlineLink: {
+    color: "#1d4ed8",
+    fontWeight: 800,
+    textDecoration: "none",
+  },
 
-<button
-className="danger"
-onClick={deleteAccount}
->
-Delete Account
-</button>
+  postList: {
+    display: "grid",
+    gap: 14,
+  },
 
+  storyGrid: {
+    display: "grid",
+    gridTemplateColumns:
+      "repeat(auto-fit, minmax(180px, 1fr))",
+    gap: 14,
+  },
 
-</div>
+  friendGrid: {
+    display: "grid",
+    gridTemplateColumns:
+      "repeat(auto-fit, minmax(140px, 1fr))",
+    gap: 12,
+  },
 
-)}
+  friendCard: {
+    padding: 16,
+    borderRadius: 18,
+    background:
+      "rgba(255, 255, 255, 0.82)",
+    border:
+      "1px solid rgba(191, 219, 254, 0.78)",
+    display: "grid",
+    gap: 8,
+    justifyItems: "center",
+    textAlign: "center",
+  },
 
+  friendAvatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    objectFit: "cover",
+  },
 
+  friendCountry: {
+    color: "#64748b",
+    fontSize: 13,
+  },
 
+  overlay: {
+    position: "fixed",
+    inset: 0,
+    background:
+      "rgba(15, 23, 42, 0.5)",
+    display: "grid",
+    placeItems: "center",
+    padding: 20,
+    zIndex: 2000,
+  },
 
-</div>
+  modal: {
+    width: "min(540px, 100%)",
+    maxHeight: "90vh",
+    overflowY: "auto",
+    padding: 24,
+    borderRadius: 24,
+    background:
+      "rgba(255, 255, 255, 0.94)",
+    border:
+      "1px solid rgba(191, 219, 254, 0.78)",
+    boxShadow:
+      "0 30px 80px rgba(15, 23, 42, 0.24)",
+  },
 
+  modalHeader: {
+    display: "flex",
+    justifyContent:
+      "space-between",
+    gap: 14,
+    alignItems: "center",
+    marginBottom: 16,
+  },
 
-)
+  closeButton: {
+    border: "none",
+    background:
+      "rgba(191, 219, 254, 0.55)",
+    color: "#1d4ed8",
+    borderRadius: 12,
+    padding: "10px 12px",
+    cursor: "pointer",
+    fontWeight: 800,
+  },
 
+  preview: {
+    width: 120,
+    height: 120,
+    borderRadius: 24,
+    objectFit: "cover",
+    display: "block",
+    margin: "6px auto 0",
+  },
 
-}
+  modalActions: {
+    display: "flex",
+    gap: 12,
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
+    marginTop: 8,
+  },
+};

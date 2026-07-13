@@ -1,9 +1,39 @@
 import { apiRequest } from "./http.js";
+import {
+  clearAuthStorage,
+  getAuthStorageValue,
+  setAuthStorageValue,
+} from "./authStorage.js";
 
 let authenticatedUserPromise =
   null;
 const AUTH_CHANGE_EVENT =
   "trip-auth-changed";
+const ORGANIZER_EMAIL =
+  "mazayaorganiz@gmail.com";
+const ORGANIZER_EMAIL_ALIASES =
+  new Set([
+    ORGANIZER_EMAIL,
+    "mazayaorganiz.gmail.com",
+  ]);
+
+export function normalizeAuthEmail(email) {
+  const normalized = String(
+    email || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  if (
+    ORGANIZER_EMAIL_ALIASES.has(
+      normalized
+    )
+  ) {
+    return ORGANIZER_EMAIL;
+  }
+
+  return normalized;
+}
 
 function normalizeRole(role) {
   const normalized = String(
@@ -38,11 +68,9 @@ function normalizeUser(userData) {
       userData?.name ||
       userData?.fullName ||
       "",
-    email: String(
-      userData?.email || ""
-    )
-      .trim()
-      .toLowerCase(),
+    email: normalizeAuthEmail(
+      userData?.email
+    ),
     role: normalizeRole(
       userData?.role
     ),
@@ -52,27 +80,27 @@ function normalizeUser(userData) {
 function storeCurrentUser(userData) {
   const user = normalizeUser(userData);
 
-  localStorage.setItem(
+  setAuthStorageValue(
     "currentUser",
     JSON.stringify(user)
   );
 
-  localStorage.setItem(
+  setAuthStorageValue(
     "tripUser",
     JSON.stringify(user)
   );
 
-  localStorage.setItem(
+  setAuthStorageValue(
     "tripUserName",
     user.fullName
   );
 
-  localStorage.setItem(
+  setAuthStorageValue(
     "tripUserEmail",
     user.email
   );
 
-  localStorage.setItem(
+  setAuthStorageValue(
     "userRole",
     user.role
   );
@@ -80,6 +108,14 @@ function storeCurrentUser(userData) {
   notifyAuthChange(user);
 
   return user;
+}
+
+export function syncStoredCurrentUser(
+  userData
+) {
+  return storeCurrentUser(
+    userData
+  );
 }
 
 function notifyAuthChange(user) {
@@ -98,6 +134,18 @@ function notifyAuthChange(user) {
 }
 
 export async function registerUser(formData) {
+  if (
+    typeof FormData !== "undefined" &&
+    formData instanceof FormData
+  ) {
+    formData.set(
+      "email",
+      normalizeAuthEmail(
+        formData.get("email")
+      )
+    );
+  }
+
   const data = await apiRequest(
     "/auth/register",
     {
@@ -112,10 +160,18 @@ export async function registerUser(formData) {
 }
 
 export async function loginUser(credentials) {
-  const data = await apiRequest("/auth/login", {
-    method: "POST",
-    body: credentials,
-  });
+  const data = await apiRequest(
+    "/auth/login",
+    {
+      method: "POST",
+      body: {
+        ...credentials,
+        email: normalizeAuthEmail(
+          credentials?.email
+        ),
+      },
+    }
+  );
 
   saveAuth(data);
 
@@ -129,8 +185,11 @@ export function saveAuth(data) {
     );
   }
 
-  localStorage.setItem("token", data.token);
-  localStorage.setItem(
+  setAuthStorageValue(
+    "token",
+    data.token
+  );
+  setAuthStorageValue(
     "authToken",
     data.token
   );
@@ -233,7 +292,8 @@ export function getCurrentUser() {
   ];
 
   for (const key of keys) {
-    const value = localStorage.getItem(key);
+    const value =
+      getAuthStorageValue(key);
 
     if (
       !value ||
@@ -259,8 +319,8 @@ export function getCurrentUser() {
 
 export function getAuthToken() {
   return (
-    localStorage.getItem("token") ||
-    localStorage.getItem("authToken") ||
+    getAuthStorageValue("token") ||
+    getAuthStorageValue("authToken") ||
     ""
   );
 }
@@ -273,18 +333,7 @@ export function logoutUser() {
   authenticatedUserPromise =
     null;
 
-  [
-    "token",
-    "authToken",
-    "currentUser",
-    "user",
-    "tripUser",
-    "tripUserName",
-    "tripUserEmail",
-    "userRole",
-  ].forEach((key) =>
-    localStorage.removeItem(key)
-  );
+  clearAuthStorage();
 
   notifyAuthChange(null);
 }

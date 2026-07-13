@@ -24,6 +24,9 @@ import Payment from "./pages/Payment.jsx"
 import DashboardLayout from "./components/DashboardLayout.jsx";
 import MyTrips from "./pages/MyTrips";
 import Profile from "./pages/Profile.jsx";
+import ManageTrips from "./pages/ManageTrips.jsx";
+import PostsStories from "./pages/PostsStories.jsx";
+import Friends from "./pages/Friends.jsx";
 
 import {
   getAuthenticatedUser,
@@ -672,13 +675,47 @@ export default function App() {
 
   <Route path="/about" element={<About />} />
 
-  <Route path="/trips" element={<Trips />} />
+  <Route
+  path="/trips"
+  element={
+    <ProtectedRoute>
+      <Trips />
+    </ProtectedRoute>
+  }
+  />
 
-  <Route path="/trips/:id" element={<TripDetails />} />
+  <Route
+  path="/trips/:id"
+  element={
+    <ProtectedRoute>
+      <TripDetails />
+    </ProtectedRoute>
+  }
+  />
 
  <Route
 path="/profile"
-element={<Profile/>}
+element={
+  <ProtectedRoute>
+    <Profile/>
+  </ProtectedRoute>
+}
+/>
+ <Route
+path="/profile/posts-stories"
+element={
+  <ProtectedRoute>
+    <PostsStories />
+  </ProtectedRoute>
+}
+/>
+ <Route
+path="/profile/friends"
+element={
+  <ProtectedRoute>
+    <Friends />
+  </ProtectedRoute>
+}
 />
 
   <Route
@@ -692,16 +729,42 @@ element={<Profile/>}
 
   <Route path="/my-requests" element={<MyRequests />} />
 
-  <Route path="/approve" element={<Approve />} />
+  <Route
+  path="/approve"
+  element={
+    <OrganizerRoute>
+      <Approve />
+    </OrganizerRoute>
+  }
+  />
 
   <Route path="/map" element={<MapPage />} />
   <Route
+path="/manage-trips"
+element={
+  <OrganizerRoute>
+    <ManageTrips />
+  </OrganizerRoute>
+}
+/>
+  <Route
 path="/my-trips"
-element={<MyTrips/>}
+element={
+  <ProtectedRoute>
+    <MyTrips/>
+  </ProtectedRoute>
+}
 />
 
 </Route>
-  <Route path="/payment/:id" element={<Payment />} />
+  <Route
+  path="/payment/:id"
+  element={
+    <ProtectedRoute>
+      <Payment />
+    </ProtectedRoute>
+  }
+  />
 
 <Route path="/login" element={<Login />} />
 

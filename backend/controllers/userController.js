@@ -1,10 +1,25 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
+const SocialPost = require("../models/SocialPost");
+const SocialStory = require("../models/SocialStory");
+const Friendship = require("../models/Friendship");
+
+function canAccessOwnProfile(
+    req
+) {
+    return String(req.user?._id || "") ===
+        String(req.params.id || "");
+}
 
 // Get profile
 exports.getProfile = async(req,res)=>{
 
     try{
+        if(!canAccessOwnProfile(req)){
+            return res.status(403).json({
+                message:"You can only access your own profile"
+            });
+        }
 
         const user = await User.findById(req.params.id);
 
@@ -34,6 +49,11 @@ exports.getProfile = async(req,res)=>{
 exports.updateProfile = async(req,res)=>{
 
     try{
+        if(!canAccessOwnProfile(req)){
+            return res.status(403).json({
+                message:"You can only update your own profile"
+            });
+        }
 
 
         const updateData = {
@@ -87,7 +107,31 @@ exports.updateProfile = async(req,res)=>{
 
 exports.deleteAccount = async(req,res)=>{
 
-    await User.findByIdAndDelete(req.params.id);
+    if(!canAccessOwnProfile(req)){
+        return res.status(403).json({
+            message:"You can only delete your own account"
+        });
+    }
+
+    await Promise.all([
+        User.findByIdAndDelete(req.params.id),
+        SocialPost.deleteMany({
+            author:req.params.id
+        }),
+        SocialStory.deleteMany({
+            author:req.params.id
+        }),
+        Friendship.deleteMany({
+            $or:[
+                {
+                    requester:req.params.id
+                },
+                {
+                    recipient:req.params.id
+                }
+            ]
+        })
+    ]);
 
     res.json({
         message:"Account deleted"
@@ -99,6 +143,11 @@ exports.deleteAccount = async(req,res)=>{
 exports.changePassword = async(req,res)=>{
 
     try{
+        if(!canAccessOwnProfile(req)){
+            return res.status(403).json({
+                message:"You can only change your own password"
+            });
+        }
 
         const user = await User
             .findById(req.params.id)

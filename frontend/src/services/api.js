@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getAuthStorageValue } from "../api/authStorage.js";
 import { logoutUser } from "../api/auth.js";
 
 const API_URL = (
@@ -16,8 +17,8 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const token =
-    localStorage.getItem("token") ||
-    localStorage.getItem("authToken");
+    getAuthStorageValue("token") ||
+    getAuthStorageValue("authToken");
 
   if (token) {
     config.headers.Authorization =

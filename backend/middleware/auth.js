@@ -3,6 +3,87 @@ const jwt = require("jsonwebtoken");
 const User = require(
   "../models/User"
 );
+const ORGANIZER_EMAIL =
+  "mazayaorganiz@gmail.com";
+const ORGANIZER_EMAIL_ALIASES =
+  new Set([
+    ORGANIZER_EMAIL,
+    "mazayaorganiz.gmail.com",
+  ]);
+
+function normalizeAuthEmail(email) {
+  const normalized = String(
+    email || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  if (
+    ORGANIZER_EMAIL_ALIASES.has(
+      normalized
+    )
+  ) {
+    return ORGANIZER_EMAIL;
+  }
+
+  return normalized;
+}
+
+function normalizeRole(role) {
+  const normalized = String(
+    role || "client"
+  )
+    .trim()
+    .toLowerCase();
+
+  if (normalized === "user") {
+    return "client";
+  }
+
+  return normalized || "client";
+}
+
+function getEffectiveUserRole(user) {
+  const role = normalizeRole(
+    user?.role
+  );
+
+  if (
+    [
+      "organizer",
+      "admin",
+    ].includes(role)
+  ) {
+    return role;
+  }
+
+  if (
+    normalizeAuthEmail(
+      user?.email
+    ) === ORGANIZER_EMAIL
+  ) {
+    return "organizer";
+  }
+
+  return role;
+}
+
+function applyEffectiveAccess(user) {
+  if (!user) {
+    return null;
+  }
+
+  user.email =
+    normalizeAuthEmail(
+      user.email
+    );
+  user.role =
+    getEffectiveUserRole(
+      user
+    );
+
+  return user;
+}
 
 async function requireAuth(
   req,
@@ -51,7 +132,10 @@ async function requireAuth(
       });
     }
 
-    req.user = user;
+    req.user =
+      applyEffectiveAccess(
+        user
+      );
 
     next();
   } catch (error) {
@@ -98,7 +182,11 @@ async function optionalAuth(
       decoded.userId
     );
 
-    req.user = user || null;
+    req.user = user
+      ? applyEffectiveAccess(
+          user
+        )
+      : null;
     next();
   } catch (_error) {
     req.user = null;
@@ -111,9 +199,10 @@ function requireOrganizer(
   res,
   next
 ) {
-  const role = String(
-    req.user?.role || ""
-  ).toLowerCase();
+  const role =
+    getEffectiveUserRole(
+      req.user
+    );
 
   if (
     ![
@@ -141,7 +230,9 @@ function signUserToken(user) {
   return jwt.sign(
     {
       userId: user._id.toString(),
-      role: user.role,
+      role: getEffectiveUserRole(
+        user
+      ),
     },
     process.env.JWT_SECRET,
     {
@@ -154,5 +245,7 @@ module.exports = {
   requireAuth,
   optionalAuth,
   requireOrganizer,
+  normalizeAuthEmail,
+  getEffectiveUserRole,
   signUserToken,
 };

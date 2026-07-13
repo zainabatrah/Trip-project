@@ -1,6 +1,7 @@
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import { getCurrentUser } from "../api/auth.js";
 import "./Payment.css";
 
 export default function Payment() {
@@ -93,9 +94,14 @@ export default function Payment() {
 
 
     // Get logged user
-   const user = JSON.parse(
-    localStorage.getItem("currentUser")
-);
+   const user = getCurrentUser();
+
+   if (!user?._id) {
+    navigate("/login", {
+        replace: true
+    });
+    return;
+   }
 
 
     // Create booking after payment success

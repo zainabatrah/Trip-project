@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import {
   isOrganizerRole,
+  normalizeAuthEmail,
   registerUser,
 } from "../api/auth.js";
 
@@ -80,7 +81,10 @@ export default function Register() {
     }
 
     const fullName = form.fullName.trim();
-    const email = form.email.trim().toLowerCase();
+    const email =
+      normalizeAuthEmail(
+        form.email
+      );
 
     if (fullName.length < 2) {
       setError(
