@@ -8,9 +8,11 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError("");
 
     try {
       const res = await fetch("http://localhost:5000/api/auth/login", {
@@ -22,33 +24,48 @@ export default function Login() {
       });
 
       const data = await res.json();
-      console.log("LOGIN RESPONSE:", data);
-      if (res.ok) {
-        alert("Login successful");
 
+      if (res.ok) {
+        // Save token
         localStorage.setItem("token", data.token);
 
-         navigate("/ListofTrips");
-      } 
-      else {
-        alert(data.message);
+        // Go to List of Trips
+        navigate("/trips");
+      } else {
+        setError(data.error || "Login failed");
       }
     } catch (err) {
       console.error("Error:", err);
-      alert("Server not reachable");
+      setError("Server not reachable");
     }
   };
 
   return (
     <div className="login-container">
       <div className="login-card">
-
         <div className="login-header">
           <h1>Welcome</h1>
         </div>
 
-        <form className="login-form" onSubmit={handleLogin}>
+        {/* Error Message */}
+        {error && (
+          <div
+            style={{
+              color: "red",
+              background: "#ffe6e6",
+              border: "1px solid red",
+              padding: "10px",
+              borderRadius: "5px",
+              marginBottom: "15px",
+              textAlign: "center",
+              fontWeight: "bold",
+            }}
+          >
+            {error}
+          </div>
+        )}
 
+        <form className="login-form" onSubmit={handleLogin}>
           {/* Email */}
           <div className="form-group">
             <label>Email</label>
@@ -57,6 +74,7 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="example@email.com"
+              required
             />
           </div>
 
@@ -70,32 +88,33 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="********"
+                required
               />
 
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
                 className="toggle-btn"
+                onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? "Hide" : "Show"}
               </button>
             </div>
           </div>
 
-          <div className="remember">
-            <input type="checkbox" />
-            <span>Remember me</span>
-          </div>
-
           <button className="login-btn" type="submit">
-            Sign In
-          </button>
+  Sign In
+</button>
+
+<p className="back-home">
+  <Link to="/" className="back-link">
+    ← Back to Home
+  </Link>
+</p>
         </form>
 
         <p className="footer-text">
           Don’t have an account? <Link to="/register">Sign up</Link>
         </p>
-
       </div>
     </div>
   );
