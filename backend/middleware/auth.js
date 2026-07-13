@@ -66,6 +66,46 @@ async function requireAuth(
   }
 }
 
+async function optionalAuth(
+  req,
+  _res,
+  next
+) {
+  try {
+    const authorizationHeader =
+      req.headers.authorization || "";
+
+    const token =
+      authorizationHeader.startsWith(
+        "Bearer "
+      )
+        ? authorizationHeader.slice(7)
+        : null;
+
+    if (!token || !process.env.JWT_SECRET) {
+      req.user = null;
+      next();
+
+      return;
+    }
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET
+    );
+
+    const user = await User.findById(
+      decoded.userId
+    );
+
+    req.user = user || null;
+    next();
+  } catch (_error) {
+    req.user = null;
+    next();
+  }
+}
+
 function requireOrganizer(
   req,
   res,
@@ -112,6 +152,7 @@ function signUserToken(user) {
 
 module.exports = {
   requireAuth,
+  optionalAuth,
   requireOrganizer,
   signUserToken,
 };

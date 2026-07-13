@@ -27,24 +27,24 @@
   max-width: 1180px;
   display: flex;
   align-items: center;
-  justify-content: center;
+ justify-content: flex-start;
   position: relative;
 }
 
 /* MENU */
 .menu {
   display: flex;
-  align-items: center;
-  justify-content: center;
+ justify-content: flex-start;
+  margin-right: auto;
 }
 
 /* LEFT LINKS */
 .leftLinks {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 44px;
-  padding-left: 0;
+ justify-content: flex-start;
+  padding: 0;
+  margin: 0;
   flex-wrap: nowrap;
 }
 

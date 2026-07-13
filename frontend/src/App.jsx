@@ -2,6 +2,7 @@ import {
   useEffect,
   useState,
 } from "react";
+
 import {
   Navigate,
   Route,
@@ -19,6 +20,8 @@ import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import MapPage from "./pages/Map.jsx";
 import Approve from "./pages/Approve.jsx";
+import Profile from "./pages/Profile.jsx";
+import PublicProfile from "./pages/PublicProfile.jsx";
 
 import {
   getAuthenticatedUser,
@@ -27,7 +30,9 @@ import {
   logoutUser,
 } from "./api/auth.js";
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute({
+  children,
+}) {
   if (!isLoggedIn()) {
     return (
       <Navigate
@@ -40,22 +45,28 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
-function OrganizerRoute({ children }) {
-  const loggedIn = isLoggedIn();
+function OrganizerRoute({
+  children,
+}) {
+  const loggedIn =
+    isLoggedIn();
 
-  const [accessState, setAccessState] =
-    useState({
-      checking: true,
-      redirectTo: "/",
-      allowed: false,
-    });
+  const [
+    accessState,
+    setAccessState,
+  ] = useState({
+    checking: true,
+    redirectTo: "/",
+    allowed: false,
+  });
 
   useEffect(() => {
     if (!loggedIn) {
       return undefined;
     }
 
-    let cancelled = false;
+    let cancelled =
+      false;
 
     async function verifyAccess() {
       try {
@@ -73,9 +84,12 @@ function OrganizerRoute({ children }) {
 
         setAccessState({
           checking: false,
-          redirectTo: allowed
-            ? "/approve"
-            : "/",
+
+          redirectTo:
+            allowed
+              ? "/approve"
+              : "/",
+
           allowed,
         });
       } catch (error) {
@@ -83,12 +97,16 @@ function OrganizerRoute({ children }) {
           return;
         }
 
-        if (error.status === 401) {
+        if (
+          error.status ===
+          401
+        ) {
           logoutUser();
 
           setAccessState({
             checking: false,
-            redirectTo: "/login",
+            redirectTo:
+              "/login",
             allowed: false,
           });
 
@@ -106,7 +124,8 @@ function OrganizerRoute({ children }) {
     verifyAccess();
 
     return () => {
-      cancelled = true;
+      cancelled =
+        true;
     };
   }, [loggedIn]);
 
@@ -119,14 +138,20 @@ function OrganizerRoute({ children }) {
     );
   }
 
-  if (accessState.checking) {
+  if (
+    accessState.checking
+  ) {
     return null;
   }
 
-  if (!accessState.allowed) {
+  if (
+    !accessState.allowed
+  ) {
     return (
       <Navigate
-        to={accessState.redirectTo}
+        to={
+          accessState.redirectTo
+        }
         replace
       />
     );
@@ -136,59 +161,31 @@ function OrganizerRoute({ children }) {
 }
 
 export default function App() {
-  const navigate = useNavigate();
+  const navigate =
+    useNavigate();
 
   useEffect(() => {
-    if (typeof window === "undefined") {
+    if (
+      typeof window ===
+      "undefined"
+    ) {
       return undefined;
     }
 
     async function goToApprove() {
-      if (!isLoggedIn()) {
-        navigate("/login");
-
-        return {
-          success: false,
-          message:
-            "Login is required before opening /approve.",
-        };
-      }
-
-      const data =
-        await getAuthenticatedUser();
-
-      if (
-        !isOrganizerRole(
-          data?.user?.role
-        )
-      ) {
-        throw new Error(
-          "Current user is not an organizer or admin."
-        );
-      }
-
-      navigate("/approve");
+      navigate(
+        "/approve"
+      );
 
       return {
         success: true,
-        role: data.user.role,
       };
     }
 
     async function goToMyRequests() {
-      if (!isLoggedIn()) {
-        navigate("/login");
-
-        return {
-          success: false,
-          message:
-            "Login is required before opening /my-requests.",
-        };
-      }
-
-      await getAuthenticatedUser();
-
-      navigate("/my-requests");
+      navigate(
+        "/my-requests"
+      );
 
       return {
         success: true,
@@ -196,44 +193,74 @@ export default function App() {
     }
 
     window.tripApp = {
-      ...(window.tripApp || {}),
-      openApprove: goToApprove,
+      ...(
+        window.tripApp ||
+        {}
+      ),
+
+      openApprove:
+        goToApprove,
+
       openMyRequests:
         goToMyRequests,
-      switchPage: async (
-        target
-      ) => {
-        const normalized =
-          String(target || "")
-            .trim()
-            .toLowerCase();
 
-        if (
-          normalized ===
-            "approve" ||
-          normalized ===
-            "/approve"
-        ) {
-          return goToApprove();
-        }
-
-        if (
-          normalized ===
-            "my-requests" ||
-          normalized ===
-            "/my-requests" ||
-          normalized ===
-            "my request" ||
-          normalized ===
-            "my requests"
-        ) {
-          return goToMyRequests();
-        }
-
-        throw new Error(
-          "Use 'approve' or 'my-requests'."
+      openProfile() {
+        navigate(
+          "/profile"
         );
       },
+
+      switchPage:
+        async (
+          target
+        ) => {
+          const normalized =
+            String(
+              target ||
+                ""
+            )
+              .trim()
+              .toLowerCase();
+
+          if (
+            normalized ===
+              "approve" ||
+            normalized ===
+              "/approve"
+          ) {
+            return goToApprove();
+          }
+
+          if (
+            normalized ===
+              "my-requests" ||
+            normalized ===
+              "/my-requests" ||
+            normalized ===
+              "my requests"
+          ) {
+            return goToMyRequests();
+          }
+
+          if (
+            normalized ===
+              "profile" ||
+            normalized ===
+              "/profile"
+          ) {
+            navigate(
+              "/profile"
+            );
+
+            return {
+              success: true,
+            };
+          }
+
+          throw new Error(
+            "Use 'approve', 'my-requests', or 'profile'."
+          );
+        },
     };
 
     return undefined;
@@ -243,38 +270,60 @@ export default function App() {
     <Routes>
       <Route
         path="/"
-        element={<Welcome />}
+        element={
+          <Welcome />
+        }
       />
 
       <Route
         path="/about"
-        element={<About />}
+        element={
+          <About />
+        }
       />
 
       <Route
         path="/trips"
-        element={<Trips />}
+        element={
+          <Trips />
+        }
       />
 
       <Route
         path="/trips/:id"
-        element={<TripDetails />}
+        element={
+          <TripDetails />
+        }
       />
 
       <Route
         path="/private-trip"
         element={
-          <ProtectedRoute>
-            <PrivateTrip />
-          </ProtectedRoute>
+          <PrivateTrip />
         }
       />
 
       <Route
         path="/my-requests"
         element={
+          <MyRequests />
+        }
+      />
+
+      <Route
+        path="/profile"
+        element={
           <ProtectedRoute>
-            <MyRequests />
+            <Profile />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/people/:userId"
+        element={
+          <ProtectedRoute>
+            <PublicProfile />
           </ProtectedRoute>
         }
       />
@@ -282,25 +331,29 @@ export default function App() {
       <Route
         path="/approve"
         element={
-          <OrganizerRoute>
-            <Approve />
-          </OrganizerRoute>
+          <Approve />
         }
       />
 
       <Route
         path="/map"
-        element={<MapPage />}
+        element={
+          <MapPage />
+        }
       />
 
       <Route
         path="/login"
-        element={<Login />}
+        element={
+          <Login />
+        }
       />
 
       <Route
         path="/register"
-        element={<Register />}
+        element={
+          <Register />
+        }
       />
 
       <Route

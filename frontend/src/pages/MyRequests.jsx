@@ -11,6 +11,7 @@ import {
   pageTheme,
 } from "../components/publicPageTheme.js";
 import {
+  getPrivateTripRequests,
   getMyPrivateTripRequests,
   getPrivateTripMessages,
   sendPrivateTripMessage,
@@ -85,6 +86,13 @@ export default function MyRequests() {
           ).toUpperCase() ===
           "REJECTED"
       ).length,
+      postponed: requests.filter(
+        (request) =>
+          String(
+            request.status || ""
+          ).toUpperCase() ===
+          "POSTPONED"
+      ).length,
       openChats: requests.filter(
         (request) =>
           Array.isArray(
@@ -105,7 +113,10 @@ export default function MyRequests() {
         setError("");
 
         const data =
-          await getMyPrivateTripRequests();
+          await getMyPrivateTripRequests().catch(
+            () =>
+              getPrivateTripRequests()
+          );
 
         if (!cancelled) {
           setRequests(
@@ -157,6 +168,7 @@ export default function MyRequests() {
         <Stat label="Pending" value={statistics.pending} />
         <Stat label="Approved" value={statistics.approved} />
         <Stat label="Rejected" value={statistics.rejected} />
+        <Stat label="Postponed" value={statistics.postponed} />
         <Stat label="Chats" value={statistics.openChats} />
       </div>
 
@@ -586,6 +598,10 @@ function defaultOrganizerMessage(status) {
     return "Your request has been rejected.";
   }
 
+  if (normalized === "POSTPONED") {
+    return "Your request has been postponed.";
+  }
+
   return "Your request is still being reviewed.";
 }
 
@@ -759,7 +775,6 @@ const styles = {
     gap: 10,
     marginTop: 14,
   },
-
 };
 
 function Stat({ label, value }) {

@@ -56,6 +56,9 @@ for (const variableName of requiredEnvironmentVariables) {
 | └── db.js
 |
 */
+const socialRoutes = require(
+  "./routes/social.routes"
+);
 
 const authRoutes = require(
   "./routes/auth.routes"
@@ -287,6 +290,10 @@ app.use(
   "/api/private-trip-requests",
   privateTripRequestRoutes
 );
+app.use(
+  "/api/social",
+  socialRoutes
+);
 
 /*
 |--------------------------------------------------------------------------
@@ -451,17 +458,36 @@ app.use(
         ? requestedStatus
         : 500;
 
-    return res
-      .status(statusCode)
-      .json({
-        success: false,
+    const isDevelopment =
+  process.env.NODE_ENV !==
+  "production";
 
-        message:
-          statusCode === 500
-            ? "An unexpected server error occurred."
-            : error.message ||
-              "Request failed.",
-      });
+return res
+  .status(statusCode)
+  .json({
+    success: false,
+
+    message:
+      statusCode === 500 &&
+      !isDevelopment
+        ? "An unexpected server error occurred."
+        : error.message ||
+          "Request failed.",
+
+    ...(statusCode === 500 &&
+    isDevelopment
+      ? {
+          errorName:
+            error.name,
+
+          errorCode:
+            error.code,
+
+          stack:
+            error.stack,
+        }
+      : {}),
+  });
   }
 );
 

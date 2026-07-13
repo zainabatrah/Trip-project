@@ -26,6 +26,14 @@ export default function TopNavbar() {
     isOrganizerRole(
       user?.role
     );
+  const dashboardLink =
+    isOrganizer
+      ? "/approve"
+      : "/my-requests";
+  const dashboardLabel =
+    isOrganizer
+      ? "Approve"
+      : "My Requests";
 
   useEffect(
     () =>
@@ -95,20 +103,15 @@ export default function TopNavbar() {
             <Link to="/trips" className={styles.link}>
               Trips
             </Link>
+            
 
             <Link to="/private-trip" className={styles.link}>
               Private Trip
             </Link>
 
-            {isOrganizer ? (
-              <Link to="/approve" className={styles.link}>
-                Approve
-              </Link>
-            ) : (
-              <Link to="/my-requests" className={styles.link}>
-                My Requests
-              </Link>
-            )}
+            <Link to={dashboardLink} className={styles.link}>
+              {dashboardLabel}
+            </Link>
           </div>
         </div>
 

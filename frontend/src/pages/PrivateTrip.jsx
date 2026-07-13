@@ -5,6 +5,7 @@ import {
 
 import PublicPageLayout from "../components/PublicPageLayout.jsx";
 import { pageTheme } from "../components/publicPageTheme.js";
+
 import {
   createPrivateTripRequest,
 } from "../api/privateTripRequests.js";
@@ -14,6 +15,8 @@ const initialForm = {
   destination: "",
   startDate: "",
   endDate: "",
+  durationValue: "",
+  durationUnit: "days",
   transportation: "Car",
   travelers: "",
   budget: "",
@@ -42,12 +45,17 @@ export default function PrivateTrip() {
   const [saving, setSaving] =
     useState(false);
 
-  const [error, setError] = useState("");
+  const [error, setError] =
+    useState("");
+
   const [success, setSuccess] =
     useState("");
 
   function handleChange(event) {
-    const { name, value } = event.target;
+    const {
+      name,
+      value,
+    } = event.target;
 
     setForm((current) => ({
       ...current,
@@ -58,53 +66,103 @@ export default function PrivateTrip() {
     setSuccess("");
   }
 
-  const validationError = useMemo(() => {
-    if (form.title.trim().length < 3) {
-      return "Trip title must contain at least 3 characters.";
-    }
+  const validationError =
+    useMemo(() => {
+      if (
+        form.title.trim().length <
+        3
+      ) {
+        return "Trip title must contain at least 3 characters.";
+      }
 
-    if (
-      form.destination.trim().length < 2
-    ) {
-      return "Destination is required.";
-    }
+      if (
+        form.destination
+          .trim()
+          .length < 2
+      ) {
+        return "Destination is required.";
+      }
 
-    if (!form.startDate || !form.endDate) {
-      return "Start date and end date are required.";
-    }
+      if (
+        !form.startDate ||
+        !form.endDate
+      ) {
+        return "Start date and end date are required.";
+      }
 
-    if (form.endDate < form.startDate) {
-      return "End date cannot be before the start date.";
-    }
+      if (
+        form.endDate <
+        form.startDate
+      ) {
+        return "End date cannot be before the start date.";
+      }
 
-    const travelers = Number(
-      form.travelers
-    );
+      const durationValue =
+        Number(
+          form.durationValue
+        );
 
-    if (
-      !Number.isInteger(travelers) ||
-      travelers < 1
-    ) {
-      return "Travelers must be a positive whole number.";
-    }
+      if (
+        !Number.isInteger(
+          durationValue
+        ) ||
+        durationValue < 1
+      ) {
+        return "Duration must be a positive whole number.";
+      }
 
-    const budget = Number(form.budget);
+      if (
+        ![
+          "days",
+          "hours",
+        ].includes(
+          form.durationUnit
+        )
+      ) {
+        return "Duration unit must be days or hours.";
+      }
 
-    if (
-      !Number.isFinite(budget) ||
-      budget < 0
-    ) {
-      return "Budget must be a non-negative number.";
-    }
+      const travelers =
+        Number(
+          form.travelers
+        );
 
-    if (form.notes.length > 800) {
-      return "Notes cannot exceed 800 characters.";
-    }
+      if (
+        !Number.isInteger(
+          travelers
+        ) ||
+        travelers < 1
+      ) {
+        return "Travelers must be a positive whole number.";
+      }
 
-    return "";
-  }, [form]);
+      const budget =
+        Number(
+          form.budget
+        );
 
-  async function handleSubmit(event) {
+      if (
+        !Number.isFinite(
+          budget
+        ) ||
+        budget < 0
+      ) {
+        return "Budget must be a non-negative number.";
+      }
+
+      if (
+        form.notes.length >
+        800
+      ) {
+        return "Notes cannot exceed 800 characters.";
+      }
+
+      return "";
+    }, [form]);
+
+  async function handleSubmit(
+    event
+  ) {
     event.preventDefault();
 
     if (saving) {
@@ -115,7 +173,10 @@ export default function PrivateTrip() {
     setSuccess("");
 
     if (validationError) {
-      setError(validationError);
+      setError(
+        validationError
+      );
+
       return;
     }
 
@@ -123,28 +184,59 @@ export default function PrivateTrip() {
       setSaving(true);
 
       const data =
-        await createPrivateTripRequest({
-          title: form.title.trim(),
-          destination:
-            form.destination.trim(),
-          startDate: form.startDate,
-          endDate: form.endDate,
-          transportation:
-            form.transportation,
-          travelers: Number(
-            form.travelers
-          ),
-          budget: Number(form.budget),
-          notes: form.notes.trim(),
-        });
+        await createPrivateTripRequest(
+          {
+            title:
+              form.title.trim(),
+
+            destination:
+              form.destination.trim(),
+
+            startDate:
+              form.startDate,
+
+            endDate:
+              form.endDate,
+
+            duration: {
+              value:
+                Number(
+                  form.durationValue
+                ),
+
+              unit:
+                form.durationUnit,
+            },
+
+            transportation:
+              form.transportation,
+
+            travelers:
+              Number(
+                form.travelers
+              ),
+
+            budget:
+              Number(
+                form.budget
+              ),
+
+            notes:
+              form.notes.trim(),
+          }
+        );
 
       setSuccess(
         data.message ||
           "Private trip request sent successfully."
       );
 
-      setForm(initialForm);
-    } catch (requestError) {
+      setForm(
+        initialForm
+      );
+    } catch (
+      requestError
+    ) {
       setError(
         requestError.message ||
           "Could not send the private trip request."
@@ -161,111 +253,291 @@ export default function PrivateTrip() {
       subtitle="Submit your requirements for the organizer to review."
       maxWidth={920}
       headerAction={
-        <div style={styles.headerCard}>
-          <strong style={styles.headerValue}>
+        <div
+          style={
+            styles.headerCard
+          }
+        >
+          <strong
+            style={
+              styles.headerValue
+            }
+          >
             1 Request
           </strong>
-          <span style={styles.headerText}>
+
+          <span
+            style={
+              styles.headerText
+            }
+          >
             includes route, dates, travelers, and budget
           </span>
         </div>
       }
     >
-      <div style={styles.highlightsGrid}>
-        {privateTripHighlights.map((item) => (
-          <div key={item.title} style={pageTheme.tile}>
-            <div style={pageTheme.iconCircle}>✦</div>
-            <h2 style={styles.highlightTitle}>
-              {item.title}
-            </h2>
-            <p style={styles.highlightText}>
-              {item.desc}
-            </p>
-          </div>
-        ))}
+      <div
+        style={
+          styles.highlightsGrid
+        }
+      >
+        {privateTripHighlights.map(
+          (item) => (
+            <div
+              key={
+                item.title
+              }
+              style={
+                pageTheme.tile
+              }
+            >
+              <div
+                style={
+                  pageTheme.iconCircle
+                }
+              >
+                ✦
+              </div>
+
+              <h2
+                style={
+                  styles.highlightTitle
+                }
+              >
+                {item.title}
+              </h2>
+
+              <p
+                style={
+                  styles.highlightText
+                }
+              >
+                {item.desc}
+              </p>
+            </div>
+          )
+        )}
       </div>
 
-      <section style={pageTheme.surface}>
-        <div style={styles.sectionIntro}>
-          <h2 style={pageTheme.sectionTitle}>
+      <section
+        style={
+          pageTheme.surface
+        }
+      >
+        <div
+          style={
+            styles.sectionIntro
+          }
+        >
+          <h2
+            style={
+              pageTheme.sectionTitle
+            }
+          >
             Request details
           </h2>
-          <p style={styles.sectionText}>
+
+          <p
+            style={
+              styles.sectionText
+            }
+          >
             Add the destination, preferred dates, transport choice, and anything the organizer should know before responding.
           </p>
         </div>
 
         {error && (
-          <div style={pageTheme.errorBox}>
+          <div
+            style={
+              pageTheme.errorBox
+            }
+          >
             {error}
           </div>
         )}
 
         {success && (
-          <div style={pageTheme.successBox}>
+          <div
+            style={
+              pageTheme.successBox
+            }
+          >
             {success}
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div style={styles.grid}>
+        <form
+          onSubmit={
+            handleSubmit
+          }
+        >
+          <div
+            style={
+              styles.grid
+            }
+          >
             <Field
               label="Trip title"
               name="title"
-              value={form.title}
-              onChange={handleChange}
-              disabled={saving}
+              value={
+                form.title
+              }
+              onChange={
+                handleChange
+              }
+              disabled={
+                saving
+              }
             />
 
             <Field
               label="Destination"
               name="destination"
-              value={form.destination}
-              onChange={handleChange}
-              disabled={saving}
+              value={
+                form.destination
+              }
+              onChange={
+                handleChange
+              }
+              disabled={
+                saving
+              }
             />
 
             <Field
               label="Start date"
               name="startDate"
               type="date"
-              value={form.startDate}
-              onChange={handleChange}
-              disabled={saving}
+              value={
+                form.startDate
+              }
+              onChange={
+                handleChange
+              }
+              disabled={
+                saving
+              }
             />
 
             <Field
               label="End date"
               name="endDate"
               type="date"
-              min={form.startDate}
-              value={form.endDate}
-              onChange={handleChange}
-              disabled={saving}
+              min={
+                form.startDate
+              }
+              value={
+                form.endDate
+              }
+              onChange={
+                handleChange
+              }
+              disabled={
+                saving
+              }
             />
 
-            <label style={pageTheme.field}>
-              <span>Transportation</span>
+            <Field
+              label="Duration"
+              name="durationValue"
+              type="number"
+              min="1"
+              step="1"
+              placeholder="Enter duration"
+              value={
+                form.durationValue
+              }
+              onChange={
+                handleChange
+              }
+              disabled={
+                saving
+              }
+            />
+
+            <label
+              style={
+                pageTheme.field
+              }
+            >
+              <span>
+                Duration unit
+              </span>
+
+              <select
+                name="durationUnit"
+                value={
+                  form.durationUnit
+                }
+                onChange={
+                  handleChange
+                }
+                disabled={
+                  saving
+                }
+                style={
+                  pageTheme.control
+                }
+              >
+                <option
+                  value="days"
+                >
+                  Days
+                </option>
+
+                <option
+                  value="hours"
+                >
+                  Hours
+                </option>
+              </select>
+            </label>
+
+            <label
+              style={
+                pageTheme.field
+              }
+            >
+              <span>
+                Transportation
+              </span>
 
               <select
                 name="transportation"
                 value={
                   form.transportation
                 }
-                onChange={handleChange}
-                disabled={saving}
-                style={pageTheme.control}
+                onChange={
+                  handleChange
+                }
+                disabled={
+                  saving
+                }
+                style={
+                  pageTheme.control
+                }
               >
-                <option value="Car">
+                <option
+                  value="Car"
+                >
                   Car
                 </option>
-                <option value="Van">
+
+                <option
+                  value="Van"
+                >
                   Van
                 </option>
-                <option value="Minibus">
+
+                <option
+                  value="Minibus"
+                >
                   Minibus
                 </option>
-                <option value="Bus">
+
+                <option
+                  value="Bus"
+                >
                   Bus
                 </option>
               </select>
@@ -277,9 +549,15 @@ export default function PrivateTrip() {
               type="number"
               min="1"
               step="1"
-              value={form.travelers}
-              onChange={handleChange}
-              disabled={saving}
+              value={
+                form.travelers
+              }
+              onChange={
+                handleChange
+              }
+              disabled={
+                saving
+              }
             />
 
             <Field
@@ -288,24 +566,52 @@ export default function PrivateTrip() {
               type="number"
               min="0"
               step="0.01"
-              value={form.budget}
-              onChange={handleChange}
-              disabled={saving}
+              value={
+                form.budget
+              }
+              onChange={
+                handleChange
+              }
+              disabled={
+                saving
+              }
             />
           </div>
 
-          <div style={pageTheme.divider} />
+          <div
+            style={
+              pageTheme.divider
+            }
+          />
 
-          <div style={styles.notesGrid}>
-            <label style={pageTheme.field}>
-              <span>Notes</span>
+          <div
+            style={
+              styles.notesGrid
+            }
+          >
+            <label
+              style={
+                pageTheme.field
+              }
+            >
+              <span>
+                Notes
+              </span>
 
               <textarea
                 name="notes"
-                value={form.notes}
-                onChange={handleChange}
-                maxLength={800}
-                disabled={saving}
+                value={
+                  form.notes
+                }
+                onChange={
+                  handleChange
+                }
+                maxLength={
+                  800
+                }
+                disabled={
+                  saving
+                }
                 placeholder="Optional details such as preferred stops, food requests, hotel ideas, or schedule notes."
                 style={{
                   ...pageTheme.control,
@@ -313,29 +619,73 @@ export default function PrivateTrip() {
                 }}
               />
 
-              <span style={styles.noteCounter}>
-                {form.notes.length}/800
+              <span
+                style={
+                  styles.noteCounter
+                }
+              >
+                {
+                  form.notes.length
+                }
+                /800
               </span>
             </label>
 
-            <aside style={pageTheme.softSurface}>
-              <h3 style={pageTheme.smallTitle}>
+            <aside
+              style={
+                pageTheme.softSurface
+              }
+            >
+              <h3
+                style={
+                  pageTheme.smallTitle
+                }
+              >
                 Helpful details
               </h3>
-              <p style={styles.helperText}>
+
+              <p
+                style={
+                  styles.helperText
+                }
+              >
                 Requests are easier to review when you include travel style, pickup city, timing preferences, and any must-have stops.
               </p>
-              <div style={styles.helperList}>
-                <span style={pageTheme.pill}>
+
+              <div
+                style={
+                  styles.helperList
+                }
+              >
+                <span
+                  style={
+                    pageTheme.pill
+                  }
+                >
                   Pickup city
                 </span>
-                <span style={pageTheme.pill}>
+
+                <span
+                  style={
+                    pageTheme.pill
+                  }
+                >
                   Budget range
                 </span>
-                <span style={pageTheme.pill}>
+
+                <span
+                  style={
+                    pageTheme.pill
+                  }
+                >
                   Group needs
                 </span>
-                <span style={pageTheme.pill}>
+
+                <span
+                  style={
+                    pageTheme.pill
+                  }
+                >
                   Special stops
                 </span>
               </div>
@@ -344,14 +694,24 @@ export default function PrivateTrip() {
 
           <button
             type="submit"
-            disabled={saving}
+            disabled={
+              saving
+            }
             style={{
               ...pageTheme.buttonPrimary,
-              width: "100%",
-              opacity: saving ? 0.7 : 1,
-              cursor: saving
-                ? "not-allowed"
-                : "pointer",
+
+              width:
+                "100%",
+
+              opacity:
+                saving
+                  ? 0.7
+                  : 1,
+
+              cursor:
+                saving
+                  ? "not-allowed"
+                  : "pointer",
             }}
           >
             {saving
@@ -374,17 +734,35 @@ function Field({
   ...props
 }) {
   return (
-    <label style={pageTheme.field}>
-      <span>{label}</span>
+    <label
+      style={
+        pageTheme.field
+      }
+    >
+      <span>
+        {label}
+      </span>
 
       <input
         {...props}
-        name={name}
-        type={type}
-        value={value}
-        onChange={onChange}
-        disabled={disabled}
-        style={pageTheme.control}
+        name={
+          name
+        }
+        type={
+          type
+        }
+        value={
+          value
+        }
+        onChange={
+          onChange
+        }
+        disabled={
+          disabled
+        }
+        style={
+          pageTheme.control
+        }
       />
     </label>
   );
@@ -395,8 +773,10 @@ const styles = {
     minWidth: 200,
     padding: "18px 20px",
     borderRadius: 18,
-    background: "rgba(255, 255, 255, 0.72)",
-    border: "1px solid rgba(147, 197, 253, 0.45)",
+    background:
+      "rgba(255, 255, 255, 0.72)",
+    border:
+      "1px solid rgba(147, 197, 253, 0.45)",
     boxShadow:
       "0 12px 30px rgba(96, 165, 250, 0.18)",
     display: "grid",

@@ -320,7 +320,8 @@ export function getStatusBadgeStyle(status) {
 
   if (
     normalized === "PENDING" ||
-    normalized === "PLANNED"
+    normalized === "PLANNED" ||
+    normalized === "POSTPONED"
   ) {
     return {
       ...pageTheme.pill,

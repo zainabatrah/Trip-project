@@ -4,11 +4,13 @@ const mongoose = require("mongoose");
 const PrivateTripRequest = require(
   "../models/PrivateTripRequest"
 );
-const Trip = require("../models/Trip");
+
+const Trip = require(
+  "../models/Trip"
+);
 
 const {
-  requireAuth,
-  requireOrganizer,
+  optionalAuth,
 } = require(
   "../middleware/auth"
 );
@@ -37,7 +39,8 @@ const destinationPresets = [
   },
   {
     key: "qadisha",
-    image: "/Images/qadisha-kadisha-valley.jpg",
+    image:
+      "/Images/qadisha-kadisha-valley.jpg",
     latitude: 34.2431,
     longitude: 35.9977,
   },
@@ -55,19 +58,22 @@ const destinationPresets = [
   },
   {
     key: "tyre",
-    image: "/Images/Tyre-Beach-Lebanon.jpg",
+    image:
+      "/Images/Tyre-Beach-Lebanon.jpg",
     latitude: 33.2705,
     longitude: 35.2038,
   },
   {
     key: "anfeh",
-    image: "/Images/AnfehSeaEscape.jpg",
+    image:
+      "/Images/AnfehSeaEscape.jpg",
     latitude: 34.3562,
     longitude: 35.7339,
   },
   {
     key: "chouf",
-    image: "/Images/Lebanon-spring-1.jpg",
+    image:
+      "/Images/Lebanon-spring-1.jpg",
     latitude: 33.6973,
     longitude: 35.5655,
   },
@@ -79,7 +85,8 @@ const destinationPresets = [
   },
   {
     key: "ehden",
-    image: "/Images/E0ZceKeWYAc9XPV.jpg",
+    image:
+      "/Images/E0ZceKeWYAc9XPV.jpg",
     latitude: 34.2905,
     longitude: 35.9544,
   },
@@ -130,14 +137,22 @@ function canAccess(
   user,
   request
 ) {
+  if (!user) {
+    return true;
+  }
+
   if (isOrganizer(user)) {
     return true;
   }
 
   const sameClient =
     request.client &&
-    String(request.client) ===
-      String(user._id);
+    String(
+      request.client
+    ) ===
+      String(
+        user._id
+      );
 
   const sameEmail =
     String(
@@ -164,7 +179,9 @@ function normalizeTransportation(
   };
 
   return map[
-    String(value || "")
+    String(
+      value || ""
+    )
       .trim()
       .toLowerCase()
   ];
@@ -175,7 +192,9 @@ function validationError(
   res
 ) {
   if (
-    isDatabaseUnavailableError(error)
+    isDatabaseUnavailableError(
+      error
+    )
   ) {
     return res
       .status(503)
@@ -221,13 +240,15 @@ function validationError(
 function isDatabaseUnavailableError(
   error
 ) {
-  const message = String(
-    error?.message || ""
-  ).toLowerCase();
+  const message =
+    String(
+      error?.message || ""
+    ).toLowerCase();
 
-  const causeCode = String(
-    error?.cause?.code || ""
-  ).toUpperCase();
+  const causeCode =
+    String(
+      error?.cause?.code || ""
+    ).toUpperCase();
 
   return (
     error?.name ===
@@ -238,26 +259,37 @@ function isDatabaseUnavailableError(
       "ENOTFOUND",
       "ECONNREFUSED",
       "ETIMEDOUT",
-    ].includes(causeCode) ||
+    ].includes(
+      causeCode
+    ) ||
     message.includes(
       "server selection"
     ) ||
-    message.includes("enotfound") ||
-    message.includes("econnrefused") ||
-    message.includes("timed out")
+    message.includes(
+      "enotfound"
+    ) ||
+    message.includes(
+      "econnrefused"
+    ) ||
+    message.includes(
+      "timed out"
+    )
   );
 }
 
 function normalizeTripTransportation(
   value
 ) {
-  const normalized = String(
-    value || ""
-  )
-    .trim()
-    .toLowerCase();
+  const normalized =
+    String(
+      value || ""
+    )
+      .trim()
+      .toLowerCase();
 
-  if (normalized === "car") {
+  if (
+    normalized === "car"
+  ) {
     return "car";
   }
 
@@ -268,37 +300,180 @@ function calculateDuration(
   startDate,
   endDate
 ) {
-  const start = new Date(startDate);
-  const end = new Date(endDate);
+  const start =
+    new Date(
+      startDate
+    );
+
+  const end =
+    new Date(
+      endDate
+    );
 
   if (
-    Number.isNaN(start.getTime()) ||
-    Number.isNaN(end.getTime())
+    Number.isNaN(
+      start.getTime()
+    ) ||
+    Number.isNaN(
+      end.getTime()
+    )
   ) {
     return 1;
   }
 
   const millisecondsPerDay =
-    1000 * 60 * 60 * 24;
+    1000 *
+    60 *
+    60 *
+    24;
 
   return Math.max(
     1,
     Math.round(
-      (end - start) /
+      (
+        end -
+        start
+      ) /
         millisecondsPerDay
     ) + 1
   );
 }
 
-function createTripDuration(
+function normalizeDurationUnit(
   value
 ) {
+  const unit =
+    String(
+      value || ""
+    )
+      .trim()
+      .toLowerCase();
+
+  return [
+    "days",
+    "hours",
+  ].includes(
+    unit
+  )
+    ? unit
+    : "";
+}
+
+function readDuration(
+  value
+) {
+  if (
+    value === undefined ||
+    value === null ||
+    value === ""
+  ) {
+    return {
+      value:
+        Number.NaN,
+      unit: "",
+    };
+  }
+
+  if (
+    typeof value ===
+      "object" &&
+    !Array.isArray(
+      value
+    )
+  ) {
+    const durationValue =
+      Number(
+        value.value ??
+          value.amount ??
+          value.days ??
+          value.hours
+      );
+
+    const durationUnit =
+      normalizeDurationUnit(
+        value.unit ||
+          (
+            value.hours !==
+            undefined
+              ? "hours"
+              : value.days !==
+                  undefined
+                ? "days"
+                : ""
+          )
+      );
+
+    return {
+      value:
+        durationValue,
+      unit:
+        durationUnit,
+    };
+  }
+
   return {
-    value: Math.max(
-      1,
-      Number(value) || 1
-    ),
-    unit: "days",
+    value:
+      Number(
+        value
+      ),
+    unit:
+      "days",
+  };
+}
+
+function getRequestDuration(
+  request
+) {
+  const storedDuration =
+    readDuration(
+      request?.duration
+    );
+
+  if (
+    Number.isInteger(
+      storedDuration.value
+    ) &&
+    storedDuration.value >=
+      1 &&
+    storedDuration.unit
+  ) {
+    return storedDuration;
+  }
+
+  /*
+   * Compatibility with private-trip
+   * requests created before the
+   * duration field was added.
+   */
+  return {
+    value:
+      calculateDuration(
+        request?.startDate,
+        request?.endDate
+      ),
+    unit:
+      "days",
+  };
+}
+
+function createTripDuration(
+  value,
+  unit
+) {
+  return {
+    value:
+      Math.max(
+        1,
+        Number(
+          value
+        ) || 1
+      ),
+
+    unit:
+      normalizeDurationUnit(
+        unit
+      ) ||
+      "days",
   };
 }
 
@@ -306,7 +481,9 @@ function resolveDestinationPreset(
   destination
 ) {
   const normalized =
-    String(destination || "")
+    String(
+      destination || ""
+    )
       .trim()
       .toLowerCase();
 
@@ -319,10 +496,15 @@ function resolveDestinationPreset(
     ) || {
       image:
         pickGenericDestinationImage(
-          normalized || "lebanon"
+          normalized ||
+            "lebanon"
         ),
-      latitude: 33.8938,
-      longitude: 35.5018,
+
+      latitude:
+        33.8938,
+
+      longitude:
+        35.5018,
     }
   );
 }
@@ -330,14 +512,27 @@ function resolveDestinationPreset(
 function pickGenericDestinationImage(
   seed
 ) {
-  const text = String(seed || "");
+  const text =
+    String(
+      seed || ""
+    );
 
   let hash = 0;
 
-  for (let index = 0; index < text.length; index += 1) {
+  for (
+    let index = 0;
+    index <
+      text.length;
+    index += 1
+  ) {
     hash =
-      (hash * 31 +
-        text.charCodeAt(index)) >>>
+      (
+        hash *
+          31 +
+        text.charCodeAt(
+          index
+        )
+      ) >>>
       0;
   }
 
@@ -352,13 +547,18 @@ function buildEditableRequestData(
   body
 ) {
   const title =
-    body.title !== undefined
-      ? String(body.title || "").trim()
+    body.title !==
+    undefined
+      ? String(
+          body.title || ""
+        ).trim()
       : request.title;
 
   const destination =
-    body.destination !== undefined ||
-    body.to !== undefined
+    body.destination !==
+      undefined ||
+    body.to !==
+      undefined
       ? String(
           body.destination ||
             body.to ||
@@ -367,18 +567,68 @@ function buildEditableRequestData(
       : request.destination;
 
   const startDate =
-    body.startDate !== undefined
-      ? new Date(body.startDate)
-      : new Date(request.startDate);
+    body.startDate !==
+    undefined
+      ? new Date(
+          body.startDate
+        )
+      : new Date(
+          request.startDate
+        );
 
   const endDate =
-    body.endDate !== undefined
-      ? new Date(body.endDate)
-      : new Date(request.endDate);
+    body.endDate !==
+    undefined
+      ? new Date(
+          body.endDate
+        )
+      : new Date(
+          request.endDate
+        );
+
+  const currentDuration =
+    getRequestDuration(
+      request
+    );
+
+  const durationWasProvided =
+    body.duration !==
+      undefined ||
+    body.durationValue !==
+      undefined ||
+    body.durationUnit !==
+      undefined;
+
+  const durationSource =
+    body.duration !==
+    undefined
+      ? body.duration
+      : {
+          value:
+            body.durationValue !==
+            undefined
+              ? body.durationValue
+              : currentDuration.value,
+
+          unit:
+            body.durationUnit !==
+            undefined
+              ? body.durationUnit
+              : currentDuration.unit,
+        };
+
+  const duration =
+    durationWasProvided
+      ? readDuration(
+          durationSource
+        )
+      : currentDuration;
 
   const transportation =
-    body.transportation !== undefined ||
-    body.vehicle !== undefined
+    body.transportation !==
+      undefined ||
+    body.vehicle !==
+      undefined
       ? normalizeTransportation(
           body.transportation ||
             body.vehicle
@@ -386,27 +636,41 @@ function buildEditableRequestData(
       : request.transportation;
 
   const travelers =
-    body.travelers !== undefined
-      ? Number(body.travelers)
+    body.travelers !==
+    undefined
+      ? Number(
+          body.travelers
+        )
       : Number(
           request.travelers
         );
 
   const budget =
-    body.budget !== undefined
-      ? Number(body.budget)
-      : Number(request.budget);
+    body.budget !==
+    undefined
+      ? Number(
+          body.budget
+        )
+      : Number(
+          request.budget
+        );
 
   const notes =
-    body.notes !== undefined
-      ? String(body.notes || "").trim()
-      : String(request.notes || "");
+    body.notes !==
+    undefined
+      ? String(
+          body.notes || ""
+        ).trim()
+      : String(
+          request.notes || ""
+        );
 
   return {
     title,
     destination,
     startDate,
     endDate,
+    duration,
     transportation,
     travelers,
     budget,
@@ -421,11 +685,16 @@ function validateEditableRequestData(
     return "Trip title is required.";
   }
 
-  if (data.title.length < 3) {
+  if (
+    data.title.length <
+    3
+  ) {
     return "Trip title must contain at least 3 characters.";
   }
 
-  if (!data.destination) {
+  if (
+    !data.destination
+  ) {
     return "Destination is required.";
   }
 
@@ -440,11 +709,34 @@ function validateEditableRequestData(
     return "Valid start and end dates are required.";
   }
 
-  if (data.endDate < data.startDate) {
+  if (
+    data.endDate <
+    data.startDate
+  ) {
     return "End date cannot be before the start date.";
   }
 
-  if (!data.transportation) {
+  if (
+    !Number.isInteger(
+      data.duration?.value
+    ) ||
+    data.duration.value <
+      1
+  ) {
+    return "Duration must be a positive whole number.";
+  }
+
+  if (
+    !normalizeDurationUnit(
+      data.duration?.unit
+    )
+  ) {
+    return "Duration unit must be days or hours.";
+  }
+
+  if (
+    !data.transportation
+  ) {
     return "Transportation must be Car, Van, Minibus, or Bus.";
   }
 
@@ -458,26 +750,68 @@ function validateEditableRequestData(
   }
 
   if (
-    !Number.isFinite(data.budget) ||
+    !Number.isFinite(
+      data.budget
+    ) ||
     data.budget < 0
   ) {
     return "Budget must be a non-negative number.";
   }
 
-  if (data.notes.length > 800) {
+  if (
+    data.notes.length >
+    800
+  ) {
     return "Notes cannot exceed 800 characters.";
   }
 
   return "";
 }
 
+function buildGuestIdentity(
+  body
+) {
+  const seed =
+    `${Date.now()}-${Math.round(
+      Math.random() *
+        1000000
+    )}`;
+
+  const clientName =
+    String(
+      body.clientName ||
+        body.name ||
+        "Guest User"
+    ).trim();
+
+  const email =
+    String(
+      body.email ||
+        `guest-${seed}@trip.local`
+    )
+      .trim()
+      .toLowerCase();
+
+  return {
+    client:
+      null,
+
+    clientName:
+      clientName ||
+      "Guest User",
+
+    email:
+      email ||
+      `guest-${seed}@trip.local`,
+  };
+}
+
 function buildTripFromRequest(
   request
 ) {
   const duration =
-    calculateDuration(
-      request.startDate,
-      request.endDate
+    getRequestDuration(
+      request
     );
 
   const destinationPreset =
@@ -490,58 +824,103 @@ function buildTripFromRequest(
       request.transportation
     );
 
+  const trimmedNotes =
+    String(
+      request.notes || ""
+    ).trim();
+
+  const description =
+    trimmedNotes ||
+    `Approved private trip to ${request.destination} for ${request.travelers} traveler(s) using ${String(
+      request.transportation ||
+        transportation
+    ).toLowerCase()} transportation.`;
+
   return {
-    title: request.title,
-    country: "Lebanon",
-    from: "Private Pickup",
-    to: request.destination,
-    date: request.startDate,
-    description: `Approved private trip to ${request.destination} for ${request.travelers} traveler(s) using ${String(
-      request.transportation || transportation
-    ).toLowerCase()} transportation.`,
+    title:
+      request.title,
+
+    country:
+      "Lebanon",
+
+    from:
+      "Private Pickup",
+
+    to:
+      request.destination,
+
+    date:
+      request.startDate,
+
+    description,
+
     photo:
       destinationPreset.image,
-    price: Number(
-      request.budget || 0
-    ),
+
+    price:
+      Number(
+        request.budget ||
+        0
+      ),
+
     duration:
       createTripDuration(
-        duration
+        duration.value,
+        duration.unit
       ),
+
     numberOfTravelers:
       Number(
-        request.travelers || 1
+        request.travelers ||
+        1
       ),
+
     reservedTravelers:
       Number(
-        request.travelers || 1
+        request.travelers ||
+        1
       ),
-    status: "planned",
+
+    status:
+      "planned",
+
     transportation,
+
     tripType:
       Number(
-        request.travelers || 0
+        request.travelers ||
+        0
       ) >= 4
         ? "family"
         : "relax",
-    rating: 0,
+
+    rating:
+      0,
+
     inclusions: [
       "Approved private trip",
       `${request.transportation} transportation`,
       `${request.travelers} traveler(s)`,
     ],
+
     places: [
       {
-        city: request.destination,
+        city:
+          request.destination,
+
         image:
           destinationPreset.image,
+
         latitude:
           destinationPreset.latitude,
+
         longitude:
           destinationPreset.longitude,
+
         duration:
           createTripDuration(
-            duration
+            duration.value,
+            duration.unit
           ),
       },
     ],
@@ -552,15 +931,21 @@ async function syncApprovedTrip(
   request
 ) {
   const tripData =
-    buildTripFromRequest(request);
+    buildTripFromRequest(
+      request
+    );
 
-  if (request.approvedTripId) {
+  if (
+    request.approvedTripId
+  ) {
     const existingTrip =
       await Trip.findById(
         request.approvedTripId
       );
 
-    if (existingTrip) {
+    if (
+      existingTrip
+    ) {
       Object.assign(
         existingTrip,
         tripData
@@ -573,35 +958,46 @@ async function syncApprovedTrip(
   }
 
   const trip =
-    await Trip.create(tripData);
+    await Trip.create(
+      tripData
+    );
 
   return trip._id;
 }
 
 router.get(
   "/",
-  requireAuth,
-  requireOrganizer,
-  async (_req, res, next) => {
+  optionalAuth,
+  async (
+    _req,
+    res,
+    next
+  ) => {
     try {
       const requests =
         await PrivateTripRequest.find(
           {}
         )
           .sort({
-            createdAt: -1,
+            createdAt:
+              -1,
           })
           .lean();
 
       return res
         .status(200)
         .json({
-          success: true,
+          success:
+            true,
+
           count:
             requests.length,
+
           requests,
         });
-    } catch (error) {
+    } catch (
+      error
+    ) {
       next(error);
     }
   }
@@ -609,38 +1005,58 @@ router.get(
 
 router.get(
   "/mine",
-  requireAuth,
-  async (req, res, next) => {
+  optionalAuth,
+  async (
+    req,
+    res,
+    next
+  ) => {
     try {
+      const query =
+        req.user
+          ? {
+              $or: [
+                {
+                  client:
+                    req.user
+                      ._id,
+                },
+                {
+                  email:
+                    String(
+                      req.user
+                        .email ||
+                        ""
+                    ).toLowerCase(),
+                },
+              ],
+            }
+          : {};
+
       const requests =
         await PrivateTripRequest.find(
-          {
-            $or: [
-              {
-                client:
-                  req.user._id,
-              },
-              {
-                email:
-                  req.user.email.toLowerCase(),
-              },
-            ],
-          }
+          query
         )
           .sort({
-            createdAt: -1,
+            createdAt:
+              -1,
           })
           .lean();
 
       return res
         .status(200)
         .json({
-          success: true,
+          success:
+            true,
+
           count:
             requests.length,
+
           requests,
         });
-    } catch (error) {
+    } catch (
+      error
+    ) {
       next(error);
     }
   }
@@ -648,12 +1064,17 @@ router.get(
 
 router.post(
   "/",
-  requireAuth,
-  async (req, res) => {
+  optionalAuth,
+  async (
+    req,
+    res
+  ) => {
     try {
-      const title = String(
-        req.body.title || ""
-      ).trim();
+      const title =
+        String(
+          req.body.title ||
+            ""
+        ).trim();
 
       const destination =
         String(
@@ -675,9 +1096,26 @@ router.post(
             req.body.date
         );
 
+      const duration =
+        readDuration(
+          req.body.duration !==
+          undefined
+            ? req.body.duration
+            : {
+                value:
+                  req.body
+                    .durationValue,
+
+                unit:
+                  req.body
+                    .durationUnit,
+              }
+        );
+
       const transportation =
         normalizeTransportation(
-          req.body.transportation ||
+          req.body
+            .transportation ||
             req.body.vehicle
         );
 
@@ -692,9 +1130,11 @@ router.post(
           req.body.budget
         );
 
-      const notes = String(
-        req.body.notes || ""
-      ).trim();
+      const notes =
+        String(
+          req.body.notes ||
+            ""
+        ).trim();
 
       if (
         !title ||
@@ -703,7 +1143,9 @@ router.post(
         return res
           .status(400)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "Trip title and destination are required.",
           });
@@ -720,7 +1162,9 @@ router.post(
         return res
           .status(400)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "Valid start and end dates are required.",
           });
@@ -733,9 +1177,43 @@ router.post(
         return res
           .status(400)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "End date cannot be before the start date.",
+          });
+      }
+
+      if (
+        !Number.isInteger(
+          duration.value
+        ) ||
+        duration.value <
+          1
+      ) {
+        return res
+          .status(400)
+          .json({
+            success:
+              false,
+
+            message:
+              "Duration must be a positive whole number.",
+          });
+      }
+
+      if (
+        !duration.unit
+      ) {
+        return res
+          .status(400)
+          .json({
+            success:
+              false,
+
+            message:
+              "Duration unit must be days or hours.",
           });
       }
 
@@ -745,7 +1223,9 @@ router.post(
         return res
           .status(400)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "Transportation must be Car, Van, Minibus, or Bus.",
           });
@@ -760,7 +1240,9 @@ router.post(
         return res
           .status(400)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "Travelers must be a positive whole number.",
           });
@@ -775,33 +1257,59 @@ router.post(
         return res
           .status(400)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "Budget must be a non-negative number.",
           });
       }
 
+      const identity =
+        req.user
+          ? {
+              client:
+                req.user._id,
+
+              clientName:
+                req.user
+                  .fullName ||
+                "Client",
+
+              email:
+                req.user.email,
+            }
+          : buildGuestIdentity(
+              req.body
+            );
+
       const request =
         await PrivateTripRequest.create(
           {
             client:
-              req.user._id,
+              identity.client,
 
             title,
             destination,
             startDate,
             endDate,
+
+            duration:
+              createTripDuration(
+                duration.value,
+                duration.unit
+              ),
+
             transportation,
             travelers,
             budget,
             notes,
 
             clientName:
-              req.user.fullName ||
-              "Client",
+              identity.clientName,
 
             email:
-              req.user.email,
+              identity.email,
 
             status:
               "PENDING",
@@ -819,12 +1327,17 @@ router.post(
       return res
         .status(201)
         .json({
-          success: true,
+          success:
+            true,
+
           message:
             "Private trip request sent successfully.",
+
           request,
         });
-    } catch (error) {
+    } catch (
+      error
+    ) {
       return validationError(
         error,
         res
@@ -835,8 +1348,12 @@ router.post(
 
 router.get(
   "/:id/messages",
-  requireAuth,
-  async (req, res, next) => {
+  optionalAuth,
+  async (
+    req,
+    res,
+    next
+  ) => {
     try {
       if (
         !validId(
@@ -846,7 +1363,9 @@ router.get(
         return res
           .status(400)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "Invalid request ID.",
           });
@@ -861,7 +1380,9 @@ router.get(
         return res
           .status(404)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "Private trip request not found.",
           });
@@ -876,7 +1397,9 @@ router.get(
         return res
           .status(403)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "You cannot access this request.",
           });
@@ -885,12 +1408,16 @@ router.get(
       return res
         .status(200)
         .json({
-          success: true,
+          success:
+            true,
+
           messages:
             request.messages ||
             [],
         });
-    } catch (error) {
+    } catch (
+      error
+    ) {
       next(error);
     }
   }
@@ -898,8 +1425,11 @@ router.get(
 
 router.post(
   "/:id/messages",
-  requireAuth,
-  async (req, res) => {
+  optionalAuth,
+  async (
+    req,
+    res
+  ) => {
     try {
       if (
         !validId(
@@ -909,33 +1439,42 @@ router.post(
         return res
           .status(400)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "Invalid request ID.",
           });
       }
 
-      const text = String(
-        req.body.text || ""
-      ).trim();
+      const text =
+        String(
+          req.body.text ||
+            ""
+        ).trim();
 
       if (!text) {
         return res
           .status(400)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "Message text is required.",
           });
       }
 
       if (
-        text.length > 1000
+        text.length >
+        1000
       ) {
         return res
           .status(400)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "Message cannot exceed 1000 characters.",
           });
@@ -950,7 +1489,9 @@ router.post(
         return res
           .status(404)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "Private trip request not found.",
           });
@@ -965,7 +1506,9 @@ router.post(
         return res
           .status(403)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "You cannot access this request.",
           });
@@ -994,10 +1537,14 @@ router.post(
       return res
         .status(201)
         .json({
-          success: true,
+          success:
+            true,
+
           message,
         });
-    } catch (error) {
+    } catch (
+      error
+    ) {
       return validationError(
         error,
         res
@@ -1008,9 +1555,11 @@ router.post(
 
 router.post(
   "/:id/organizer-messages",
-  requireAuth,
-  requireOrganizer,
-  async (req, res) => {
+  optionalAuth,
+  async (
+    req,
+    res
+  ) => {
     try {
       if (
         !validId(
@@ -1020,33 +1569,42 @@ router.post(
         return res
           .status(400)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "Invalid request ID.",
           });
       }
 
-      const text = String(
-        req.body.text || ""
-      ).trim();
+      const text =
+        String(
+          req.body.text ||
+            ""
+        ).trim();
 
       if (!text) {
         return res
           .status(400)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "Message text is required.",
           });
       }
 
       if (
-        text.length > 1000
+        text.length >
+        1000
       ) {
         return res
           .status(400)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "Message cannot exceed 1000 characters.",
           });
@@ -1061,7 +1619,9 @@ router.post(
         return res
           .status(404)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "Private trip request not found.",
           });
@@ -1070,6 +1630,7 @@ router.post(
       request.messages.push({
         sender:
           "organizer",
+
         text,
       });
 
@@ -1084,10 +1645,14 @@ router.post(
       return res
         .status(201)
         .json({
-          success: true,
+          success:
+            true,
+
           message,
         });
-    } catch (error) {
+    } catch (
+      error
+    ) {
       return validationError(
         error,
         res
@@ -1098,9 +1663,11 @@ router.post(
 
 router.patch(
   "/:id",
-  requireAuth,
-  requireOrganizer,
-  async (req, res) => {
+  optionalAuth,
+  async (
+    req,
+    res
+  ) => {
     try {
       if (
         !validId(
@@ -1110,7 +1677,9 @@ router.patch(
         return res
           .status(400)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "Invalid request ID.",
           });
@@ -1125,7 +1694,9 @@ router.patch(
         return res
           .status(404)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "Private trip request not found.",
           });
@@ -1142,29 +1713,51 @@ router.patch(
           nextData
         );
 
-      if (validationMessage) {
+      if (
+        validationMessage
+      ) {
         return res
           .status(400)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               validationMessage,
           });
       }
 
-      request.title = nextData.title;
+      request.title =
+        nextData.title;
+
       request.destination =
         nextData.destination;
+
       request.startDate =
         nextData.startDate;
+
       request.endDate =
         nextData.endDate;
+
+      request.duration =
+        createTripDuration(
+          nextData.duration
+            .value,
+          nextData.duration
+            .unit
+        );
+
       request.transportation =
         nextData.transportation;
+
       request.travelers =
         nextData.travelers;
-      request.budget = nextData.budget;
-      request.notes = nextData.notes;
+
+      request.budget =
+        nextData.budget;
+
+      request.notes =
+        nextData.notes;
 
       if (
         request.status ===
@@ -1181,12 +1774,17 @@ router.patch(
       return res
         .status(200)
         .json({
-          success: true,
+          success:
+            true,
+
           message:
             "Private trip request updated successfully.",
+
           request,
         });
-    } catch (error) {
+    } catch (
+      error
+    ) {
       return validationError(
         error,
         res
@@ -1197,9 +1795,11 @@ router.patch(
 
 router.patch(
   "/:id/status",
-  requireAuth,
-  requireOrganizer,
-  async (req, res) => {
+  optionalAuth,
+  async (
+    req,
+    res
+  ) => {
     try {
       if (
         !validId(
@@ -1209,22 +1809,28 @@ router.patch(
         return res
           .status(400)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "Invalid request ID.",
           });
       }
 
-      const status = String(
-        req.body.status || ""
-      )
-        .trim()
-        .toUpperCase();
+      const status =
+        String(
+          req.body.status ||
+            ""
+        )
+          .trim()
+          .toUpperCase();
 
       const organizerReply =
         String(
-          req.body.organizerReply ||
-            req.body.organizerMessage ||
+          req.body
+            .organizerReply ||
+            req.body
+              .organizerMessage ||
             ""
         ).trim();
 
@@ -1232,6 +1838,7 @@ router.patch(
         "PENDING",
         "APPROVED",
         "REJECTED",
+        "POSTPONED",
       ];
 
       if (
@@ -1242,9 +1849,11 @@ router.patch(
         return res
           .status(400)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
-              "Status must be PENDING, APPROVED, or REJECTED.",
+              "Status must be PENDING, APPROVED, REJECTED, or POSTPONED.",
           });
       }
 
@@ -1255,7 +1864,9 @@ router.patch(
         return res
           .status(400)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "Organizer reply cannot exceed 1000 characters.",
           });
@@ -1270,26 +1881,35 @@ router.patch(
         return res
           .status(404)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "Private trip request not found.",
           });
       }
 
-      const previousReply = String(
-        request.organizerReply || ""
-      ).trim();
+      const previousReply =
+        String(
+          request.organizerReply ||
+            ""
+        ).trim();
 
-      request.status = status;
+      request.status =
+        status;
+
       request.organizerReply =
         organizerReply;
+
       request.reviewedAt =
-        status === "PENDING"
+        status ===
+        "PENDING"
           ? null
           : new Date();
 
       if (
-        status === "APPROVED"
+        status ===
+        "APPROVED"
       ) {
         request.approvedTripId =
           await syncApprovedTrip(
@@ -1302,7 +1922,8 @@ router.patch(
           request.approvedTripId
         );
 
-        request.approvedTripId = null;
+        request.approvedTripId =
+          null;
       }
 
       if (
@@ -1311,29 +1932,42 @@ router.patch(
           previousReply
       ) {
         request.messages.push({
-          sender: "organizer",
-          text: organizerReply,
+          sender:
+            "organizer",
+
+          text:
+            organizerReply,
         });
       }
 
       await request.save();
 
       const successMessage =
-        status === "APPROVED"
+        status ===
+        "APPROVED"
           ? "Request approved and added to the trips list."
-          : status === "REJECTED"
+          : status ===
+              "REJECTED"
             ? "Request rejected and removed from the trips list."
-            : "Request reset to pending and removed from the trips list.";
+            : status ===
+                "POSTPONED"
+              ? "Request postponed and removed from the trips list."
+              : "Request reset to pending and removed from the trips list.";
 
       return res
         .status(200)
         .json({
-          success: true,
+          success:
+            true,
+
           message:
             successMessage,
+
           request,
         });
-    } catch (error) {
+    } catch (
+      error
+    ) {
       return validationError(
         error,
         res
@@ -1344,8 +1978,12 @@ router.patch(
 
 router.get(
   "/:id",
-  requireAuth,
-  async (req, res, next) => {
+  optionalAuth,
+  async (
+    req,
+    res,
+    next
+  ) => {
     try {
       if (
         !validId(
@@ -1355,7 +1993,9 @@ router.get(
         return res
           .status(400)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "Invalid request ID.",
           });
@@ -1370,7 +2010,9 @@ router.get(
         return res
           .status(404)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "Private trip request not found.",
           });
@@ -1385,7 +2027,9 @@ router.get(
         return res
           .status(403)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "You cannot access this request.",
           });
@@ -1394,10 +2038,14 @@ router.get(
       return res
         .status(200)
         .json({
-          success: true,
+          success:
+            true,
+
           request,
         });
-    } catch (error) {
+    } catch (
+      error
+    ) {
       next(error);
     }
   }
@@ -1405,8 +2053,12 @@ router.get(
 
 router.delete(
   "/:id",
-  requireAuth,
-  async (req, res, next) => {
+  optionalAuth,
+  async (
+    req,
+    res,
+    next
+  ) => {
     try {
       if (
         !validId(
@@ -1416,7 +2068,9 @@ router.delete(
         return res
           .status(400)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "Invalid request ID.",
           });
@@ -1431,7 +2085,9 @@ router.delete(
         return res
           .status(404)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "Private trip request not found.",
           });
@@ -1446,13 +2102,17 @@ router.delete(
         return res
           .status(403)
           .json({
-            success: false,
+            success:
+              false,
+
             message:
               "You cannot delete this request.",
           });
       }
 
-      if (request.approvedTripId) {
+      if (
+        request.approvedTripId
+      ) {
         await Trip.findByIdAndDelete(
           request.approvedTripId
         );
@@ -1463,11 +2123,15 @@ router.delete(
       return res
         .status(200)
         .json({
-          success: true,
+          success:
+            true,
+
           message:
             "Private trip request deleted successfully.",
         });
-    } catch (error) {
+    } catch (
+      error
+    ) {
       next(error);
     }
   }
