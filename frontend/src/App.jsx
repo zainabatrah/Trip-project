@@ -17,9 +17,9 @@ import PrivateTrip from "./pages/PrivateTrip.jsx";
 import MyRequests from "./pages/MyRequests.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
-import MapPage from "./pages/Map.jsx";
+import Map from "./pages/Map.jsx";
 import Approve from "./pages/Approve.jsx";
-
+import Feedback from "./pages/Feedback";
 import {
   getAuthenticatedUser,
   isOrganizerRole,
@@ -269,7 +269,10 @@ export default function App() {
           </ProtectedRoute>
         }
       />
-
+<Route
+  path="/feedback/:tripId"
+  element={<Feedback />}
+/>
       <Route
         path="/my-requests"
         element={
@@ -290,9 +293,12 @@ export default function App() {
 
       <Route
         path="/map"
-        element={<MapPage />}
+        element={<Map />}
       />
-
+      <Route 
+ path="/map/:tripId" 
+ element={<Map />} 
+/>
       <Route
         path="/login"
         element={<Login />}

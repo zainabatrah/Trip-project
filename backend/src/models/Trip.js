@@ -21,7 +21,22 @@ const tripSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    fromLocation: {
+  lat: Number,
+  lng: Number,
+},
 
+toLocation: {
+  lat: Number,
+  lng: Number,
+},
+stops: [
+  {
+    name: String,
+    lat: Number,
+    lng: Number,
+  }
+],
     date: {
       type: Date,
       required: true,
@@ -45,13 +60,7 @@ const tripSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-
-    status: {
-      type: String,
-      enum: ["planned", "ongoing", "completed"],
-      default: "planned",
-    },
-
+    
     transportation: {
       type: String,
       enum: ["flight", "train", "bus", "car"],
@@ -109,5 +118,36 @@ const tripSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+tripSchema.virtual("status").get(function () {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const start = new Date(this.date);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(start);
+  end.setDate(
+    end.getDate() + Math.max(1, this.duration || 1) - 1
+  );
+
+  if (today < start) {
+    return "planned";
+  }
+
+  if (today <= end) {
+    return "ongoing";
+  }
+
+  return "completed";
+});
+
+
+// Include virtual fields in API responses
+tripSchema.set("toJSON", { virtuals: true });
+tripSchema.set("toObject", { virtuals: true });
+
+
 const Trip = mongoose.model("Trip", tripSchema);
+
+
 module.exports = Trip;

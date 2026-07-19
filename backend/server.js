@@ -14,7 +14,9 @@ const authRoutes = require(
 const tripRoutes = require(
   "./src/routes/trips"
 );
-
+const feedbackRoutes = require(
+  "./src/routes/feedback"
+);
 const privateTripRequestRoutes = require(
   "./src/routes/privateTripRequests"
 );
@@ -131,6 +133,7 @@ app.use(
   "/api/private-trip-requests",
   privateTripRequestRoutes
 );
+app.use("/api/feedback", feedbackRoutes);
 
 app.use((req, res) => {
   res.status(404).json({

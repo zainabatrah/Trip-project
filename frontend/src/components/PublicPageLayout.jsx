@@ -12,6 +12,7 @@ export default function PublicPageLayout({
   contentStyle,
   showHeader = true,
 }) {
+  
   return (
     <div style={pageTheme.page}>
       <TopNavbar />

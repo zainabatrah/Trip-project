@@ -5,6 +5,10 @@ const Trip = require(
   "../models/Trip"
 );
 
+const getCoordinates = require(
+  "../utils/geocode"
+);
+
 const {
   requireAuth,
   requireOrganizer,
@@ -20,6 +24,8 @@ const allowedFields = [
   "from",
   "to",
   "date",
+  "fromLocation",
+  "toLocation",
   "description",
   "photo",
   "price",
@@ -32,6 +38,7 @@ const allowedFields = [
   "rating",
   "inclusions",
   "places",
+  "stops"
 ];
 
 const allowedStatuses = [
@@ -58,8 +65,10 @@ const defaultTripImage =
   "/Images/Libanon233.jpg";
 
 const availableTripImages = [
+  "/Images/Jeita.jpg",
   "/Images/Faraya.jpg",
   "/Images/Batroun.jpg",
+  "/Images/Jeita.jpg",
   "/Images/52de2359f6d93ff4a4b06402d9c80bfbfdbb5463_1200x630.jpg",
   "/Images/qadisha-kadisha-valley.jpg",
   "/Images/Saida.jpg",
@@ -70,6 +79,7 @@ const availableTripImages = [
   "/Images/download.jpg",
   "/Images/E0ZceKeWYAc9XPV.jpg",
   "/Images/68.jpg",
+  "/Images/South.jpg",
   "/Images/Outdoor-Adventures-Lebanon_FT1_.webp",
   "/Images/mosque-and-shops-in-the-medina-old-town-of-tripoli-libya-north-africa-BPMJ5G.jpg",
   defaultTripImage,
@@ -90,9 +100,9 @@ const imageAliasMap = new Map(
       "/Images/Batroun.jpg",
     ],
     [
-      "/images/jeita.jpg",
-      "/Images/download.jpg",
-    ],
+  "/images/jeita.jpg",
+  "/Images/Jeita.jpg",
+],
     [
       "/images/byblos.jpg",
       "/Images/Batroun.jpg",
@@ -282,35 +292,31 @@ function resolveDestinationImage(
   ];
 }
 
-function normalizeImagePath(
-  value,
-  fallback
-) {
-  const normalized = String(
-    value || ""
-  ).trim();
+function normalizeImagePath(value, fallback) {
+  const normalized = String(value || "").trim();
 
   if (!normalized) {
     return fallback;
   }
 
-  const lower =
-    normalized.toLowerCase();
+  const lower = normalized.toLowerCase();
 
-  if (
-    imageAliasMap.has(lower)
-  ) {
+  // Fix old names
+  if (imageAliasMap.has(lower)) {
     return imageAliasMap.get(lower);
   }
 
-  if (
-    availableTripImageMap.has(
-      lower
-    )
-  ) {
-    return availableTripImageMap.get(
-      lower
-    );
+  // Keep known images
+  if (availableTripImageMap.has(lower)) {
+    return availableTripImageMap.get(lower);
+  }
+
+  // IMPORTANT:
+  // Keep any image stored in MongoDB
+  // Example:
+  // /Images/trips_imgs/south.jpg
+  if (normalized.startsWith("/Images/")) {
+    return normalized;
   }
 
   return fallback;
@@ -548,11 +554,14 @@ function addDefaults(data) {
         ? data.inclusions
         : [],
 
-    places:
-      Array.isArray(
-        data.places
-      )
+     places:
+      Array.isArray(data.places)
         ? data.places
+        : [],
+
+    stops:
+      Array.isArray(data.stops)
+        ? data.stops
         : [],
   };
 }
@@ -686,13 +695,11 @@ router.get(
         await Trip.find({})
           .sort({
             date: 1,
-          })
-          .lean();
+          });
 
-      const normalizedTrips =
-        trips.map(
-          normalizeTripResponse
-        );
+      const normalizedTrips = trips.map((trip) =>
+  normalizeTripResponse(trip.toJSON())
+);
 
       return res
         .status(200)
@@ -758,64 +765,73 @@ router.get(
     }
   }
 );
-
 router.post(
   "/",
-  requireAuth,
-  requireOrganizer,
   async (req, res, next) => {
+
+    console.log("CREATE TRIP REQUEST RECEIVED");
+
     try {
-      let tripData =
-        getAllowedFields(
-          req.body
-        );
 
-      tripData =
-        normalizeTripData(
-          tripData
-        );
+      let tripData = getAllowedFields(req.body);
 
-      tripData =
-        addDefaults(
-          tripData
-        );
+      tripData = normalizeTripData(tripData);
 
-      const validationError =
-        validateTrip(
-          tripData
-        );
+      tripData = addDefaults(tripData);
 
-      if (
-        validationError
-      ) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message:
-              validationError,
-          });
+      const validationError = validateTrip(tripData);
+
+      if (validationError) {
+        return res.status(400).json({
+          success: false,
+          message: validationError,
+        });
       }
 
-      const trip =
-        await Trip.create(
-          tripData
-        );
+      // From
+      const fromLocation = await getCoordinates(tripData.from);
 
-      return res
-        .status(201)
-        .json({
-          success: true,
-          message:
-            "Trip created successfully.",
-          trip,
-        });
+      // To
+      const toLocation = await getCoordinates(tripData.to);
+
+      tripData.fromLocation = fromLocation;
+      tripData.toLocation = toLocation;
+
+          // Stops
+if (Array.isArray(tripData.stops)) {
+
+  for (const stop of tripData.stops) {
+
+    const location = await getCoordinates(stop.name);
+
+    if (location) {
+      stop.lat = location.lat;
+      stop.lng = location.lng;
+    }
+  }
+}
+        
+
+      
+
+      console.log("FROM:", tripData.fromLocation);
+      console.log("STOPS:", tripData.stops);
+      console.log("TO:", tripData.toLocation);
+
+      const trip = await Trip.create(tripData);
+
+      return res.status(201).json({
+        success: true,
+        message: "Trip created successfully.",
+        trip,
+      });
+
     } catch (error) {
       next(error);
     }
+
   }
 );
-
 router.put(
   "/:id",
   requireAuth,
@@ -852,7 +868,6 @@ router.put(
               "Trip not found.",
           });
       }
-
       let updateData =
         getAllowedFields(
           req.body

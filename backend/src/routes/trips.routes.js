@@ -7,7 +7,6 @@ const fs = require("fs");
 const User = require(
   "../models/User"
 );
-
 const {
   requireAuth,
   signUserToken,
