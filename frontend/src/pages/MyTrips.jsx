@@ -1,88 +1,331 @@
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useEffect, useState } from "react";
 import {
   Link,
   useNavigate,
 } from "react-router-dom";
-import {
-  FaBan,
-  FaCalendarAlt,
-  FaCheckCircle,
-  FaMapMarkerAlt,
-  FaMoneyBillWave,
-  FaSuitcaseRolling,
-  FaUserFriends,
-} from "react-icons/fa";
 
-import PublicPageLayout from "../components/PublicPageLayout.jsx";
+import api from "../services/api";
 import {
-  getStatusBadgeStyle,
-  pageTheme,
-} from "../components/publicPageTheme.js";
-import { getCurrentUser } from "../api/auth.js";
-import {
-  cancelBookingById,
-  getMyBookings,
-} from "../api/bookings.js";
+  getCurrentUser,
+} from "../api/auth.js";
+
+import "./MyTrip.css";
+
+const defaultTripImage =
+  "/Images/Libanon233.jpg";
+
+/*
+|--------------------------------------------------------------------------
+| Destination helpers
+|--------------------------------------------------------------------------
+*/
+
+function getDestinationName(trip) {
+  const firstPlace =
+    Array.isArray(trip?.places) &&
+    trip.places.length > 0
+      ? trip.places[0]
+      : null;
+
+  return String(
+    trip?.to ||
+      trip?.destination ||
+      firstPlace?.city ||
+      trip?.country ||
+      ""
+  ).trim();
+}
+
+function createDestinationSlug(
+  destination
+) {
+  return String(destination || "")
+    .normalize("NFD")
+    .replace(
+      /[\u0300-\u036f]/g,
+      ""
+    )
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(
+      /[^a-z0-9]+/g,
+      "-"
+    )
+    .replace(
+      /^-+|-+$/g,
+      ""
+    );
+}
+
+function getDestinationImage(trip) {
+  const destination =
+    getDestinationName(trip);
+
+  const slug =
+    createDestinationSlug(
+      destination
+    );
+
+  if (!slug) {
+    return defaultTripImage;
+  }
+
+  return `/Images/${slug}.jpg`;
+}
+
+function getInitialTripImage(trip) {
+  const savedPhoto = String(
+    trip?.photo || ""
+  ).trim();
+
+  if (savedPhoto) {
+    return savedPhoto;
+  }
+
+  return getDestinationImage(
+    trip
+  );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Reusable trip image
+|--------------------------------------------------------------------------
+*/
+
+function TripImage({ trip }) {
+  const [image, setImage] =
+    useState(() =>
+      getInitialTripImage(trip)
+    );
+
+  useEffect(() => {
+    setImage(
+      getInitialTripImage(trip)
+    );
+  }, [trip]);
+
+  function handleImageError() {
+    const destinationImage =
+      getDestinationImage(trip);
+
+    setImage((currentImage) => {
+      if (
+        currentImage !==
+          destinationImage &&
+        destinationImage !==
+          defaultTripImage
+      ) {
+        return destinationImage;
+      }
+
+      if (
+        currentImage !==
+        defaultTripImage
+      ) {
+        return defaultTripImage;
+      }
+
+      return currentImage;
+    });
+  }
+
+  return (
+    <img
+      src={image}
+      alt={
+        trip?.title ||
+        getDestinationName(trip) ||
+        "Trip"
+      }
+      loading="lazy"
+      onError={
+        handleImageError
+      }
+    />
+  );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Duration formatter
+|--------------------------------------------------------------------------
+*/
+
+function formatDuration(duration) {
+  if (
+    duration &&
+    typeof duration === "object"
+  ) {
+    const value =
+      duration.value ??
+      duration.amount ??
+      duration.days ??
+      duration.hours ??
+      0;
+
+    const unit =
+      duration.unit ||
+      (duration.hours !==
+      undefined
+        ? "hours"
+        : "days");
+
+    return `${value} ${unit}`;
+  }
+
+  if (duration) {
+    return `${duration} days`;
+  }
+
+  return "Duration unavailable";
+}
+
+/*
+|--------------------------------------------------------------------------
+| Text helpers
+|--------------------------------------------------------------------------
+*/
+
+function normalizeText(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase();
+}
+
+function capitalize(value) {
+  const text = String(
+    value || ""
+  ).trim();
+
+  if (!text) {
+    return "Not specified";
+  }
+
+  return (
+    text.charAt(0).toUpperCase() +
+    text.slice(1)
+  );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Main component
+|--------------------------------------------------------------------------
+*/
+function isTripFinished(date) {
+  if (!date) return false;
+
+  const tripDate = new Date(date);
+  const today = new Date();
+
+  today.setHours(0, 0, 0, 0);
+  tripDate.setHours(0, 0, 0, 0);
+
+  return tripDate < today;
+}
 
 export default function MyTrips() {
-  const navigate = useNavigate();
+  const navigate =
+    useNavigate();
 
-  const [bookings, setBookings] =
-    useState([]);
-  const [loading, setLoading] =
-    useState(true);
+  const [
+    bookings,
+    setBookings,
+  ] = useState([]);
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
+
   const [error, setError] =
     useState("");
-  const [success, setSuccess] =
-    useState("");
+
+  const [
+    cancellingId,
+    setCancellingId,
+  ] = useState("");
+
   const [search, setSearch] =
     useState("");
-  const [statusFilter, setStatusFilter] =
-    useState("all");
-  const [tripTypeFilter, setTripTypeFilter] =
-    useState("all");
-  const [busyId, setBusyId] =
-    useState("");
+
+  const [filter, setFilter] =
+    useState("All");
+
+  const [
+    typeFilter,
+    setTypeFilter,
+  ] = useState("All");
+
+  /*
+  |--------------------------------------------------------------------------
+  | Load user bookings
+  |--------------------------------------------------------------------------
+  */
 
   useEffect(() => {
     let cancelled = false;
 
-    async function loadTrips() {
+    async function fetchTrips() {
       try {
-        const user = getCurrentUser();
+        setLoading(true);
+        setError("");
 
-        if (!user?._id) {
+        const user =
+          getCurrentUser();
+
+        const userId =
+          user?._id ||
+          user?.id;
+
+        if (!userId) {
           navigate("/login", {
             replace: true,
           });
+
           return;
         }
 
-        const data =
-          await getMyBookings(
-            user._id
+        const response =
+          await api.get(
+            `/bookings/my-trips/${userId}`
           );
 
-        if (!cancelled) {
-          setBookings(
-            Array.isArray(
-              data?.bookings
-            )
-              ? data.bookings
-              : []
-          );
+        if (cancelled) {
+          return;
         }
-      } catch (loadError) {
-        if (!cancelled) {
-          setError(
-            loadError?.message ||
-              "Could not load your trips."
-          );
+
+        const receivedBookings =
+          Array.isArray(
+            response.data?.bookings
+          )
+            ? response.data.bookings
+            : [];
+
+        setBookings(
+          receivedBookings
+        );
+      } catch (requestError) {
+        if (cancelled) {
+          return;
         }
+
+        console.error(
+          "Cannot load bookings:",
+          requestError.response
+            ?.data ||
+            requestError
+        );
+
+        setBookings([]);
+
+        setError(
+          requestError.response
+            ?.data?.message ||
+            "Cannot load your trips."
+        );
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -90,590 +333,457 @@ export default function MyTrips() {
       }
     }
 
-    loadTrips();
+    fetchTrips();
 
     return () => {
       cancelled = true;
     };
   }, [navigate]);
 
-  const filteredBookings =
-    useMemo(() => {
-      const normalizedSearch =
-        search.trim().toLowerCase();
+  /*
+  |--------------------------------------------------------------------------
+  | Cancel booking
+  |--------------------------------------------------------------------------
+  */
 
-      return bookings.filter(
-        (booking) => {
-          const searchText = [
-            booking?.tripId?.title,
-            booking?.tripId?.country,
-            booking?.tripId?.tripType,
-            booking?.tripId
-              ?.transportation,
-            booking?.bookingStatus,
-          ]
-            .filter(Boolean)
-            .join(" ")
-            .toLowerCase();
-
-          const searchMatch =
-            !normalizedSearch ||
-            searchText.includes(
-              normalizedSearch
-            );
-
-          const statusMatch =
-            statusFilter ===
-              "all" ||
-            String(
-              booking?.bookingStatus ||
-                ""
-            ).toLowerCase() ===
-              statusFilter;
-
-          const typeMatch =
-            tripTypeFilter ===
-              "all" ||
-            String(
-              booking?.tripId
-                ?.tripType || ""
-            ).toLowerCase() ===
-              tripTypeFilter;
-
-          return (
-            searchMatch &&
-            statusMatch &&
-            typeMatch
-          );
-        }
-      );
-    }, [
-      bookings,
-      search,
-      statusFilter,
-      tripTypeFilter,
-    ]);
-
-  const statistics = useMemo(
-    () => ({
-      totalBookings:
-        bookings.length,
-      activeBookings:
-        bookings.filter(
-          (booking) =>
-            booking.bookingStatus !==
-            "cancelled"
-        ).length,
-      cancelledBookings:
-        bookings.filter(
-          (booking) =>
-            booking.bookingStatus ===
-            "cancelled"
-        ).length,
-      totalTravelers: bookings.reduce(
-        (sum, booking) =>
-          sum +
-          Number(
-            booking.travelers || 0
-          ),
-        0
-      ),
-      totalSpent: bookings.reduce(
-        (sum, booking) =>
-          sum +
-          Number(
-            booking.totalPrice || 0
-          ),
-        0
-      ),
-    }),
-    [bookings]
-  );
-
-  async function handleCancelBooking(
+  async function cancelTrip(
     bookingId
   ) {
-    if (!bookingId || busyId) {
+    if (!bookingId) {
+      return;
+    }
+
+    const confirmed =
+      window.confirm(
+        "Are you sure you want to cancel this trip?"
+      );
+
+    if (!confirmed) {
       return;
     }
 
     try {
-      setBusyId(bookingId);
+      setCancellingId(
+        bookingId
+      );
+
       setError("");
-      setSuccess("");
 
-      const data =
-        await cancelBookingById(
-          bookingId
-        );
-
-      setBookings((current) =>
-        current.map((booking) =>
-          booking._id === bookingId
-            ? {
-                ...booking,
-                bookingStatus:
-                  data?.booking
-                    ?.bookingStatus ||
-                  "cancelled",
-              }
-            : booking
-        )
+      await api.put(
+        `/bookings/cancel/${bookingId}`
       );
 
-      setSuccess(
-        data?.message ||
-          "Booking cancelled successfully."
+      setBookings(
+        (previousBookings) =>
+          previousBookings.map(
+            (booking) =>
+              booking._id ===
+              bookingId
+                ? {
+                    ...booking,
+                    bookingStatus:
+                      "cancelled",
+                  }
+                : booking
+          )
       );
-    } catch (cancelError) {
+    } catch (requestError) {
+      console.error(
+        "Cannot cancel booking:",
+        requestError.response
+          ?.data ||
+          requestError
+      );
+
       setError(
-        cancelError?.message ||
-          "Could not cancel your booking."
+        requestError.response
+          ?.data?.message ||
+          "Cannot cancel this trip."
       );
     } finally {
-      setBusyId("");
+      setCancellingId("");
     }
   }
 
+  /*
+  |--------------------------------------------------------------------------
+  | Filter bookings
+  |--------------------------------------------------------------------------
+  */
+
+  const normalizedSearch =
+    normalizeText(search);
+
+  const filteredBookings =
+    bookings.filter(
+      (booking) => {
+        const trip =
+          booking?.tripId;
+
+        if (
+          !trip ||
+          typeof trip !== "object"
+        ) {
+          return false;
+        }
+
+        const title =
+          normalizeText(
+            trip.title
+          );
+
+        const country =
+          normalizeText(
+            trip.country
+          );
+
+        const destination =
+          normalizeText(
+            getDestinationName(
+              trip
+            )
+          );
+
+        const type =
+          normalizeText(
+            trip.tripType
+          );
+
+        const bookingStatus =
+          normalizeText(
+            booking.bookingStatus
+          );
+
+        const searchMatch =
+          !normalizedSearch ||
+          title.includes(
+            normalizedSearch
+          ) ||
+          country.includes(
+            normalizedSearch
+          ) ||
+          destination.includes(
+            normalizedSearch
+          ) ||
+          type.includes(
+            normalizedSearch
+          );
+
+        const statusMatch =
+          filter === "All" ||
+          bookingStatus ===
+            normalizeText(filter);
+
+        const typeMatch =
+          typeFilter === "All" ||
+          type ===
+            normalizeText(
+              typeFilter
+            );
+
+        return (
+          searchMatch &&
+          statusMatch &&
+          typeMatch
+        );
+      }
+    );
+
+  /*
+  |--------------------------------------------------------------------------
+  | Loading
+  |--------------------------------------------------------------------------
+  */
+
+  if (loading) {
+    return (
+      <h2 className="loading">
+        Loading trips...
+      </h2>
+    );
+  }
+
   return (
-    <PublicPageLayout
-      eyebrow="User"
-      title="My Trips"
-      subtitle="Manage your bookings with the same organized layout used in the traveler management area."
-    >
-      {error ? (
-        <div style={pageTheme.errorBox}>
-          {error}
+    <div className="mybody">
+      <div className="myTrips">
+        <div className="toolbar">
+          <input
+            type="text"
+            placeholder="Search by title, destination, or type..."
+            className="searchInput"
+            value={search}
+            onChange={(event) =>
+              setSearch(
+                event.target.value
+              )
+            }
+          />
+
+          <select
+            className="filter"
+            value={filter}
+            onChange={(event) =>
+              setFilter(
+                event.target.value
+              )
+            }
+          >
+            <option value="All">
+              All Statuses
+            </option>
+
+            <option value="paid">
+              Paid
+            </option>
+
+            <option value="cancelled">
+              Cancelled
+            </option>
+          </select>
+
+          <select
+            className="filter"
+            value={typeFilter}
+            onChange={(event) =>
+              setTypeFilter(
+                event.target.value
+              )
+            }
+          >
+            <option value="All">
+              All Types
+            </option>
+
+            <option value="adventure">
+              Adventure
+            </option>
+
+            <option value="relax">
+              Relax
+            </option>
+
+            <option value="business">
+              Business
+            </option>
+
+            <option value="family">
+              Family
+            </option>
+
+            <option value="public">
+              Public
+            </option>
+
+            <option value="cultural">
+              Cultural
+            </option>
+
+            <option value="nature">
+              Nature
+            </option>
+
+            <option value="heritage">
+              Heritage
+            </option>
+
+            <option value="city tour">
+              City Tour
+            </option>
+          </select>
         </div>
-      ) : null}
 
-      {success ? (
-        <div style={pageTheme.successBox}>
-          {success}
-        </div>
-      ) : null}
+        {error && (
+          <div className="error-box">
+            <span className="error-icon">
+              ⚠
+            </span>
 
-      <div style={pageTheme.cardGrid}>
-        <StatisticCard
-          icon={
-            <FaSuitcaseRolling />
-          }
-          label="Bookings"
-          value={
-            statistics.totalBookings
-          }
-        />
-        <StatisticCard
-          icon={<FaCheckCircle />}
-          label="Active"
-          value={
-            statistics.activeBookings
-          }
-        />
-        <StatisticCard
-          icon={<FaUserFriends />}
-          label="Travelers"
-          value={
-            statistics.totalTravelers
-          }
-        />
-        <StatisticCard
-          icon={
-            <FaMoneyBillWave />
-          }
-          label="Spent"
-          value={formatMoney(
-            statistics.totalSpent
-          )}
-        />
-      </div>
-
-      <div
-        style={{
-          ...pageTheme.surface,
-          marginTop: 18,
-        }}
-      >
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: 14,
-          }}
-        >
-          <label style={pageTheme.field}>
-            <span>Search</span>
-            <input
-              type="text"
-              value={search}
-              onChange={(event) =>
-                setSearch(
-                  event.target.value
-                )
-              }
-              placeholder="Trip, country, type, transport"
-              style={pageTheme.control}
-            />
-          </label>
-
-          <label style={pageTheme.field}>
-            <span>Status</span>
-            <select
-              value={statusFilter}
-              onChange={(event) =>
-                setStatusFilter(
-                  event.target.value
-                )
-              }
-              style={pageTheme.control}
-            >
-              <option value="all">
-                All statuses
-              </option>
-              <option value="paid">
-                Paid
-              </option>
-              <option value="cancelled">
-                Cancelled
-              </option>
-            </select>
-          </label>
-
-          <label style={pageTheme.field}>
-            <span>Trip type</span>
-            <select
-              value={tripTypeFilter}
-              onChange={(event) =>
-                setTripTypeFilter(
-                  event.target.value
-                )
-              }
-              style={pageTheme.control}
-            >
-              <option value="all">
-                All types
-              </option>
-              <option value="adventure">
-                Adventure
-              </option>
-              <option value="relax">
-                Relax
-              </option>
-              <option value="business">
-                Business
-              </option>
-              <option value="family">
-                Family
-              </option>
-            </select>
-          </label>
-        </div>
-      </div>
-
-      <div
-        style={{
-          marginTop: 18,
-          display: "grid",
-          gap: 16,
-        }}
-      >
-        {loading ? (
-          <div style={pageTheme.emptyBox}>
-            Loading your trips...
+            <span>{error}</span>
           </div>
-        ) : filteredBookings.length ===
-          0 ? (
-          <div style={pageTheme.emptyBox}>
-            No trips found.
+        )}
+
+        {filteredBookings.length ===
+        0 ? (
+          <div className="noTrips">
+            <h2>
+              No trips found
+            </h2>
+
+            <p>
+              You do not have any
+              matching booked trips.
+            </p>
+
+            <Link
+              to="/trips"
+              className="detailsBtn"
+            >
+              Browse Trips
+            </Link>
           </div>
         ) : (
           filteredBookings.map(
             (booking) => {
               const trip =
-                booking?.tripId || {};
+                booking.tripId;
 
+              const tripId =
+                trip?._id ||
+                trip?.id;
+
+              const destination =
+                getDestinationName(
+                  trip
+                ) || "Lebanon";
+
+              const bookingStatus =
+                normalizeText(
+                  booking.bookingStatus
+                );
+
+              const isCancelled =
+                bookingStatus ===
+                "cancelled";
+const tripFinished =
+  isTripFinished(trip.date);
               return (
                 <div
-                  key={
-                    booking._id
-                  }
-                  style={{
-                    ...pageTheme.surface,
-                    padding: 20,
-                  }}
+                  className="tripCard"
+                  key={booking._id}
                 >
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns:
-                        "minmax(220px, 280px) 1fr",
-                      gap: 18,
-                    }}
-                  >
-                    <div
-                      style={
-                        styles.imageWrap
-                      }
-                    >
-                      <img
-                        src={
-                          trip.photo ||
-                          "/Images/Libanon233.jpg"
-                        }
-                        alt={
-                          trip.title ||
-                          "Trip"
-                        }
-                        style={
-                          styles.image
-                        }
-                      />
+                  <TripImage
+                    trip={trip}
+                  />
+
+                  <div className="tripInfo">
+                    <div className="topRow">
+                      <div>
+                        <h2>
+                          {trip.title ||
+                            "Untitled Trip"}
+                        </h2>
+
+                        <p className="country">
+                          📍{" "}
+                          {destination}
+                        </p>
+
+                        <p>
+                          🏷{" "}
+                          {capitalize(
+                            trip.tripType
+                          )}
+                        </p>
+                      </div>
+
+                      <span
+                        className={`status ${bookingStatus}`}
+                      >
+                        {isCancelled
+                          ? "Cancelled"
+                          : capitalize(
+                              bookingStatus ||
+                                "paid"
+                            )}
+                      </span>
                     </div>
 
-                    <div>
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent:
-                            "space-between",
-                          gap: 18,
-                          flexWrap:
-                            "wrap",
-                        }}
-                      >
-                        <div>
-                          <h2
-                            style={{
-                              margin:
-                                "0 0 6px",
-                              fontSize: 24,
-                              fontWeight: 900,
-                              color:
-                                "#0f172a",
-                            }}
-                          >
-                            {trip.title ||
-                              "Trip unavailable"}
-                          </h2>
-                          <p
-                            style={{
-                              margin:
-                                "0 0 8px",
-                              color:
-                                "#475569",
-                            }}
-                          >
-                            {trip.country ||
-                              "Destination not set"}
-                          </p>
-                          <div
-                            style={{
-                              display:
-                                "flex",
-                              gap: 10,
-                              flexWrap:
-                                "wrap",
-                            }}
-                          >
-                            <span
-                              style={getStatusBadgeStyle(
-                                booking.bookingStatus
-                              )}
-                            >
-                              {booking.bookingStatus ||
-                                "Unknown"}
-                            </span>
-                            <span
-                              style={pageTheme.pill}
-                            >
-                              Payment:{" "}
-                              {booking.paymentStatus ||
-                                "paid"}
-                            </span>
-                          </div>
-                        </div>
+                    <div className="details">
 
-                        <div
-                          style={{
-                            textAlign:
-                              "right",
-                          }}
-                        >
-                          <div
-                            style={{
-                              fontSize: 12,
-                              fontWeight: 800,
-                              color:
-                                "#64748b",
-                              textTransform:
-                                "uppercase",
-                              letterSpacing:
-                                "0.06em",
-                            }}
+  <span>
+    📅{" "}
+    {trip.date
+      ? new Date(trip.date).toLocaleDateString(
+          "en-US",
+          {
+            year: "numeric",
+            month: "long",
+            day: "numeric"
+          }
+        )
+      : "Date unavailable"}
+  </span>
+
+  <span>
+    🕒{" "}
+    {formatDuration(
+      trip.duration
+    )}
+  </span>
+
+  <span>
+    ✈{" "}
+    {capitalize(
+      trip.transportation
+    )}
+  </span>
+
+  <span>
+    👥{" "}
+    {Number(
+      booking.travelers || 0
+    )}{" "}
+    Traveler
+    {Number(
+      booking.travelers || 0
+    ) === 1
+      ? ""
+      : "s"}
+  </span>
+
+</div>
+{tripFinished && !isCancelled && (
+  <div className="feedbackBox">
+    <p>
+      🎉 Your trip has finished!
+      We would love to hear your experience.
+    </p>
+
+    <Link
+      to={`/feedback/${tripId}`}
+      className="feedbackBtn"
+    >
+      Give Feedback
+    </Link>
+  </div>
+)}
+                    <div className="bottomRow">
+                      <h3>
+                        $
+                        {Number(
+                          booking.totalPrice ||
+                            0
+                        ).toFixed(2)}
+                      </h3>
+
+                      <div className="buttons">
+                        {tripId && (
+                          <Link
+                            to={`/trips/${tripId}`}
+                            className="detailsBtn"
                           >
-                            Booking total
-                          </div>
-                          <div
-                            style={{
-                              marginTop: 6,
-                              fontSize: 26,
-                              fontWeight: 900,
-                              color:
-                                "#0f172a",
-                            }}
-                          >
-                            {formatMoney(
-                              booking.totalPrice
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                            View Details
+                          </Link>
+                        )}
 
-                      <div
-                        style={{
-                          ...pageTheme.divider,
-                          margin:
-                            "18px 0",
-                        }}
-                      />
-
-                      <div
-                        style={
-                          styles.detailsGrid
-                        }
-                      >
-                        <InfoTile
-                          label="Trip type"
-                          value={
-                            trip.tripType ||
-                            "Not set"
-                          }
-                        />
-                        <InfoTile
-                          label="Transportation"
-                          value={
-                            trip.transportation ||
-                            "Not set"
-                          }
-                        />
-                        <InfoTile
-                          label="Travelers"
-                          value={String(
-                            booking.travelers ||
-                              0
-                          )}
-                        />
-                        <InfoTile
-                          label="Duration"
-                          value={formatDuration(
-                            trip.duration
-                          )}
-                        />
-                        <InfoTile
-                          label="Trip date"
-                          value={formatDate(
-                            trip.date
-                          )}
-                        />
-                        <InfoTile
-                          label="Booked at"
-                          value={formatDateTime(
-                            booking.createdAt
-                          )}
-                        />
-                      </div>
-
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent:
-                            "space-between",
-                          gap: 12,
-                          flexWrap:
-                            "wrap",
-                          alignItems:
-                            "center",
-                          marginTop: 18,
-                        }}
-                      >
-                        <div
-                          style={{
-                            display:
-                              "flex",
-                            gap: 8,
-                            flexWrap:
-                              "wrap",
-                          }}
-                        >
-                          <span
-                            style={
-                              pageTheme.pill
-                            }
-                          >
-                            <FaMapMarkerAlt />
-                            {trip.country ||
-                              "Country"}
-                          </span>
-                          <span
-                            style={
-                              pageTheme.pill
-                            }
-                          >
-                            <FaCalendarAlt />
-                            {formatDate(
-                              trip.date
-                            )}
-                          </span>
-                        </div>
-
-                        <div
-                          style={
-                            pageTheme.actions
-                          }
-                        >
-                          {trip._id ? (
-                            <Link
-                              to={`/trips/${trip._id}`}
-                              style={
-                                pageTheme.buttonSecondary
-                              }
-                            >
-                              View details
-                            </Link>
-                          ) : null}
-
-                          {booking.bookingStatus !==
-                          "cancelled" ? (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleCancelBooking(
-                                  booking._id
-                                )
-                              }
-                              disabled={
-                                busyId ===
-                                booking._id
-                              }
-                              style={{
-                                ...pageTheme.buttonDanger,
-                                opacity:
-                                  busyId ===
-                                  booking._id
-                                    ? 0.7
-                                    : 1,
-                              }}
-                            >
-                              <FaBan />
-                              {" "}
-                              {busyId ===
-                              booking._id
-                                ? "Cancelling..."
-                                : "Cancel booking"}
-                            </button>
-                          ) : null}
-                        </div>
+                   {!isCancelled && !tripFinished && (
+  <button
+    type="button"
+    className="cancelBtn"
+    disabled={
+      cancellingId === booking._id
+    }
+    onClick={() =>
+      cancelTrip(
+        booking._id
+      )
+    }
+  >
+    {cancellingId === booking._id
+      ? "Cancelling..."
+      : "Cancel"}
+  </button>
+)}
                       </div>
                     </div>
                   </div>
@@ -683,167 +793,6 @@ export default function MyTrips() {
           )
         )}
       </div>
-    </PublicPageLayout>
-  );
-}
-
-function StatisticCard({
-  icon,
-  label,
-  value,
-}) {
-  return (
-    <div style={pageTheme.tile}>
-      <div style={pageTheme.iconCircle}>
-        {icon}
-      </div>
-      <div
-        style={{
-          fontSize: 13,
-          fontWeight: 800,
-          color: "#64748b",
-          textTransform:
-            "uppercase",
-          letterSpacing:
-            "0.06em",
-        }}
-      >
-        {label}
-      </div>
-      <div
-        style={{
-          marginTop: 6,
-          fontSize: 28,
-          fontWeight: 900,
-          color: "#0f172a",
-        }}
-      >
-        {value}
-      </div>
     </div>
   );
 }
-
-function InfoTile({
-  label,
-  value,
-}) {
-  return (
-    <div style={pageTheme.softSurface}>
-      <div
-        style={{
-          fontSize: 12,
-          fontWeight: 800,
-          color: "#64748b",
-          textTransform:
-            "uppercase",
-          letterSpacing:
-            "0.06em",
-          marginBottom: 7,
-        }}
-      >
-        {label}
-      </div>
-      <div
-        style={{
-          fontSize: 15,
-          fontWeight: 800,
-          color: "#0f172a",
-          wordBreak: "break-word",
-        }}
-      >
-        {value}
-      </div>
-    </div>
-  );
-}
-
-function formatMoney(value) {
-  const amount = Number(value || 0);
-
-  return Number.isFinite(amount)
-    ? `$${amount.toFixed(2)}`
-    : "$0.00";
-}
-
-function formatDate(value) {
-  if (!value) {
-    return "Not available";
-  }
-
-  const date = new Date(value);
-
-  return Number.isNaN(date.getTime())
-    ? "Not available"
-    : date.toLocaleDateString();
-}
-
-function formatDateTime(value) {
-  if (!value) {
-    return "Not available";
-  }
-
-  const date = new Date(value);
-
-  return Number.isNaN(date.getTime())
-    ? "Not available"
-    : date.toLocaleString();
-}
-
-function formatDuration(value) {
-  if (
-    value &&
-    typeof value === "object"
-  ) {
-    const amount = Number(
-      value.value
-    );
-    const unit =
-      String(
-        value.unit || "days"
-      ).trim() || "days";
-
-    if (
-      Number.isFinite(amount) &&
-      amount > 0
-    ) {
-      return `${amount} ${unit}`;
-    }
-  }
-
-  const amount = Number(value);
-
-  return Number.isFinite(amount) &&
-    amount > 0
-    ? `${amount} day${amount === 1 ? "" : "s"}`
-    : "Not set";
-}
-
-const styles = {
-  imageWrap: {
-    width: "100%",
-    minHeight: 240,
-    borderRadius: 22,
-    overflow: "hidden",
-    background:
-      "rgba(191, 219, 254, 0.35)",
-    border: "1px solid rgba(147, 197, 253, 0.4)",
-    boxShadow:
-      "0 16px 40px rgba(96, 165, 250, 0.16)",
-  },
-
-  image: {
-    width: "100%",
-    height: "100%",
-    minHeight: 240,
-    objectFit: "cover",
-    display: "block",
-  },
-
-  detailsGrid: {
-    display: "grid",
-    gridTemplateColumns:
-      "repeat(auto-fit, minmax(160px, 1fr))",
-    gap: 12,
-  },
-};
