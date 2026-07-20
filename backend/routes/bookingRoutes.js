@@ -4,6 +4,11 @@ const router = express.Router();
 const Booking = require("../models/Booking");
 const Trip = require("../models/Trip");
 const {
+    createNotification,
+} = require(
+    "../services/notificationService"
+);
+const {
     cancelBooking
 } = require("../controllers/bookingController");
 
@@ -76,6 +81,18 @@ trip.reservedTravelers += travelers;
 
             bookingStatus: "paid"
 
+        });
+
+        await createNotification({
+            userId,
+            type: "booking-confirmed",
+            title: "Booking confirmed",
+            message: `Your booking for ${trip.title || "your trip"} is confirmed for ${travelers} traveler${Number(travelers) === 1 ? "" : "s"}.`,
+            link: "/my-trips",
+            metadata: {
+                tripId: String(trip._id),
+                bookingId: String(booking._id),
+            },
         });
 
 

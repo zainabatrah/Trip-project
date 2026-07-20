@@ -23,53 +23,42 @@ const defaultTripImage =
 
 /*
 |--------------------------------------------------------------------------
-| Frontend image selection
+| Text helpers
 |--------------------------------------------------------------------------
-|
-| The backend normally returns the
-| resolved image in trip.photo.
-|
-| This frontend helper still checks all
-| places before using the final default.
-|
 */
 
-function getTripCardImage(trip) {
-  const savedPhoto =
-    String(
-      trip?.photo ||
-      ""
-    ).trim();
+function normalizeText(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase();
+}
 
-  if (savedPhoto) {
-    return savedPhoto;
+function capitalize(value) {
+  const text = String(
+    value || ""
+  ).trim();
+
+  if (!text) {
+    return "Not specified";
   }
 
-  const places =
-    Array.isArray(
-      trip?.places
-    )
-      ? trip.places
-      : [];
-
-  const savedPlaceImage =
-    places
-      .map(
-        (place) =>
-          String(
-            place?.image ||
-            ""
-          ).trim()
-      )
-      .find(Boolean);
-
   return (
-    savedPlaceImage ||
-    defaultTripImage
+    text.charAt(0).toUpperCase() +
+    text.slice(1)
   );
 }
 
+/*
+|--------------------------------------------------------------------------
+| Date formatting
+|--------------------------------------------------------------------------
+*/
+
 function formatDate(value) {
+  if (!value) {
+    return "Date unavailable";
+  }
+
   const date =
     new Date(value);
 
@@ -84,183 +73,344 @@ function formatDate(value) {
   return date.toLocaleDateString(
     "en-US",
     {
-      weekday:
-        "short",
-
-      month:
-        "short",
-
-      day:
-        "numeric",
-
-      year:
-        "numeric",
-
-      timeZone:
-        "UTC",
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      timeZone: "UTC",
     }
   );
 }
 
-function capitalize(value) {
-  const text =
-    String(
-      value ||
-      ""
-    );
-
-  return text
-    ? text
-        .charAt(0)
-        .toUpperCase() +
-        text.slice(1)
-    : "Not specified";
-}
-
-function seatsLeft(trip) {
-  const isApprovedPrivateTrip =
-    String(
-      trip?.from ||
-      ""
-    ).trim() ===
-      "Private Pickup" ||
-    (
-      Array.isArray(
-        trip?.inclusions
-      ) &&
-      trip.inclusions.includes(
-        "Approved private trip"
-      )
-    );
-
-  if (
-    isApprovedPrivateTrip
-  ) {
-    return 0;
+function getDateTimestamp(value) {
+  if (!value) {
+    return Number.MAX_SAFE_INTEGER;
   }
 
+  const timestamp =
+    new Date(value).getTime();
+
+  return Number.isNaN(
+    timestamp
+  )
+    ? Number.MAX_SAFE_INTEGER
+    : timestamp;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Destination name
+|--------------------------------------------------------------------------
+*/
+
+function getDestinationName(trip) {
+  const firstPlace =
+    Array.isArray(
+      trip?.places
+    ) &&
+    trip.places.length > 0
+      ? trip.places[0]
+      : null;
+
+  return String(
+    trip?.to ||
+      trip?.destination ||
+      firstPlace?.city ||
+      trip?.country ||
+      ""
+  ).trim();
+}
+
+/*
+|--------------------------------------------------------------------------
+| Destination image filename
+|--------------------------------------------------------------------------
+|
+| Examples:
+|
+| Byblos        -> byblos.jpg
+| Deir El Qamar -> deir-el-qamar.jpg
+| El Mina       -> el-mina.jpg
+|
+*/
+
+function createDestinationSlug(
+  destination
+) {
+  return String(destination || "")
+    .normalize("NFD")
+    .replace(
+      /[\u0300-\u036f]/g,
+      ""
+    )
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(
+      /[^a-z0-9]+/g,
+      "-"
+    )
+    .replace(
+      /^-+|-+$/g,
+      ""
+    );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Destination image path
+|--------------------------------------------------------------------------
+*/
+
+function getDestinationImage(trip) {
+  const destination =
+    getDestinationName(trip);
+
+  const slug =
+    createDestinationSlug(
+      destination
+    );
+
+  if (!slug) {
+    return defaultTripImage;
+  }
+
+  return `/Images/${slug}.jpg`;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Initial trip image
+|--------------------------------------------------------------------------
+|
+| First:
+| Use trip.photo from MongoDB.
+|
+| If trip.photo is missing:
+| Use an image based on the destination name.
+|
+*/
+
+function getInitialTripImage(trip) {
+  const savedPhoto =
+    String(
+      trip?.photo || ""
+    ).trim();
+
+  if (savedPhoto) {
+    return savedPhoto;
+  }
+
+  return getDestinationImage(
+    trip
+  );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Trip image component
+|--------------------------------------------------------------------------
+|
+| Image loading order:
+|
+| 1. trip.photo
+| 2. /Images/destination-name.jpg
+| 3. /Images/Libanon233.jpg
+|
+*/
+
+function TripImage({ trip }) {
+  const [
+    image,
+    setImage,
+  ] = useState(() =>
+    getInitialTripImage(trip)
+  );
+
+  useEffect(() => {
+    setImage(
+      getInitialTripImage(trip)
+    );
+  }, [trip]);
+
+  function handleImageError(
+    event
+  ) {
+    const destinationImage =
+      getDestinationImage(
+        trip
+      );
+
+    /*
+     * Database photo failed.
+     * Try the destination image.
+     */
+
+    if (
+      image !==
+        destinationImage &&
+      destinationImage !==
+        defaultTripImage
+    ) {
+      setImage(
+        destinationImage
+      );
+
+      return;
+    }
+
+    /*
+     * Destination image failed.
+     * Use the final Lebanese image.
+     */
+
+    if (
+      image !==
+      defaultTripImage
+    ) {
+      setImage(
+        defaultTripImage
+      );
+
+      return;
+    }
+
+    /*
+     * Prevent an infinite loop if
+     * Libanon233.jpg is also missing.
+     */
+
+    event.currentTarget.onerror =
+      null;
+  }
+
+  return (
+    <img
+      src={image}
+      alt={
+        trip?.title ||
+        getDestinationName(
+          trip
+        ) ||
+        "Trip"
+      }
+      loading="lazy"
+      style={styles.image}
+      onError={
+        handleImageError
+      }
+    />
+  );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Available seats
+|--------------------------------------------------------------------------
+*/
+
+function seatsLeft(trip) {
+  const totalTravelers =
+    Number(
+      trip?.numberOfTravelers ||
+        0
+    );
+
+  const reservedTravelers =
+    Number(
+      trip?.reservedTravelers ||
+        0
+    );
+
   return Math.max(
-    Number(
-      trip.numberOfTravelers ||
-      0
-    ) -
-    Number(
-      trip.reservedTravelers ||
-      0
-    ),
+    totalTravelers -
+      reservedTravelers,
     0
   );
 }
+
+/*
+|--------------------------------------------------------------------------
+| Database ID validation
+|--------------------------------------------------------------------------
+*/
 
 function hasDatabaseId(trip) {
   return Boolean(
     String(
       trip?._id ||
-      trip?.id ||
-      ""
+        trip?.id ||
+        ""
     ).trim()
   );
 }
 
-function formatDuration(
-  duration
-) {
-  if (
-    duration &&
-    typeof duration ===
-      "object"
-  ) {
-    const value =
-      Number(
-        duration.value ??
-        duration.amount ??
-        duration.days ??
-        duration.hours
-      );
-
-    const unit =
-      String(
-        duration.unit ||
-        (
-          duration.hours !==
-          undefined
-            ? "hours"
-            : "days"
-        )
-      ).trim();
-
-    if (
-      Number.isFinite(
-        value
-      ) &&
-      value > 0
-    ) {
-      return `${value} ${unit}`;
-    }
-  }
-
-  const value =
-    Number(duration);
-
-  if (
-    Number.isFinite(
-      value
-    ) &&
-    value > 0
-  ) {
-    return `${value} day(s)`;
-  }
-
-  return "Duration unavailable";
-}
+/*
+|--------------------------------------------------------------------------
+| Map link
+|--------------------------------------------------------------------------
+*/
 
 function buildMapLink(trip) {
+  const tripId =
+    trip?._id ||
+    trip?.id;
+
+  if (tripId) {
+    return `/map/${tripId}`;
+  }
+
   const firstPlace =
     Array.isArray(
-      trip.places
+      trip?.places
     )
       ? trip.places[0]
       : null;
 
+  const destination =
+    getDestinationName(
+      trip
+    );
+
   const params =
     new URLSearchParams();
 
-  if (
-    trip.title
-  ) {
+  if (trip?.title) {
     params.set(
       "title",
       trip.title
     );
   }
 
-  if (
-    trip.to
-  ) {
+  if (destination) {
     params.set(
       "city",
-      trip.to
+      destination
     );
   }
 
+  const latitude =
+    firstPlace?.latitude ??
+    firstPlace?.lat;
+
+  const longitude =
+    firstPlace?.longitude ??
+    firstPlace?.lng;
+
   if (
-    firstPlace?.latitude !==
-      undefined &&
-    firstPlace?.longitude !==
-      undefined
+    latitude !== undefined &&
+    latitude !== null &&
+    longitude !== undefined &&
+    longitude !== null
   ) {
     params.set(
       "lat",
-      String(
-        firstPlace.latitude
-      )
+      String(latitude)
     );
 
     params.set(
       "lng",
-      String(
-        firstPlace.longitude
-      )
+      String(longitude)
     );
   }
 
@@ -271,6 +421,12 @@ function buildMapLink(trip) {
     ? `/map?${query}`
     : "/map";
 }
+
+/*
+|--------------------------------------------------------------------------
+| Main Trips component
+|--------------------------------------------------------------------------
+*/
 
 export default function Trips() {
   const [
@@ -286,77 +442,79 @@ export default function Trips() {
   const [
     transportation,
     setTransportation,
-  ] = useState(
-    "all"
-  );
+  ] = useState("all");
 
   const [
     sort,
     setSort,
-  ] = useState(
-    "date"
-  );
+  ] = useState("date");
 
   const [
     loading,
     setLoading,
-  ] = useState(
-    true
-  );
+  ] = useState(true);
 
   const [
     error,
     setError,
   ] = useState("");
 
+  /*
+  |--------------------------------------------------------------------------
+  | Load trips
+  |--------------------------------------------------------------------------
+  */
+
   useEffect(() => {
-    let cancelled =
-      false;
+    let cancelled = false;
 
     async function loadTrips() {
       try {
-        setLoading(
-          true
-        );
-
+        setLoading(true);
         setError("");
 
         const data =
           await getTrips();
 
-        if (
-          !cancelled
-        ) {
-          setTrips(
-            Array.isArray(
-              data?.trips
-            )
-              ? data.trips.filter(
-                  hasDatabaseId
-                )
-              : []
-          );
+        if (cancelled) {
+          return;
         }
+
+        const receivedTrips =
+          Array.isArray(
+            data?.trips
+          )
+            ? data.trips
+            : [];
+
+        setTrips(
+          receivedTrips.filter(
+            hasDatabaseId
+          )
+        );
       } catch (
         requestError
       ) {
-        if (
-          !cancelled
-        ) {
-          setError(
-            requestError.message ||
-            "Could not load trips."
-          );
-
-          setTrips([]);
+        if (cancelled) {
+          return;
         }
+
+        console.error(
+          "Could not load trips:",
+          requestError
+        );
+
+        setError(
+          requestError?.response
+            ?.data?.message ||
+            requestError?.message ||
+            "Could not load trips."
+        );
+
+        setTrips([]);
       } finally {
-        if (
-          !cancelled
-        ) {
-          setLoading(
-            false
-          );
+        if (!cancelled) {
+          setLoading(false);
         }
       }
     }
@@ -364,53 +522,81 @@ export default function Trips() {
     loadTrips();
 
     return () => {
-      cancelled =
-        true;
+      cancelled = true;
     };
   }, []);
+
+  /*
+  |--------------------------------------------------------------------------
+  | Search, filter and sort
+  |--------------------------------------------------------------------------
+  */
 
   const filteredTrips =
     useMemo(() => {
       const query =
-        search
-          .trim()
-          .toLowerCase();
+        normalizeText(search);
 
       let result =
         trips.filter(
           (trip) => {
-            const searchableText =
-              [
-                trip.title,
-                trip.country,
-                trip.from,
-                trip.to,
-                trip.tripType,
-              ]
-                .join(" ")
-                .toLowerCase();
+            const placesText =
+              Array.isArray(
+                trip?.places
+              )
+                ? trip.places
+                    .map(
+                      (place) =>
+                        place?.city
+                    )
+                    .join(" ")
+                : "";
 
-            const matchesSearch =
+            const searchableText =
+              normalizeText(
+                [
+                  trip?.title,
+                  trip?.country,
+                  trip?.from,
+                  trip?.to,
+                  trip?.destination,
+                  trip?.tripType,
+                  placesText,
+                ].join(" ")
+              );
+
+            const searchMatch =
+              !query ||
               searchableText.includes(
                 query
               );
 
-            const matchesTransportation =
+            const tripTransportation =
+              normalizeText(
+                trip?.transportation
+              );
+
+            const transportationMatch =
               transportation ===
                 "all" ||
-              trip.transportation ===
-                transportation;
+              tripTransportation ===
+                normalizeText(
+                  transportation
+                );
 
             return (
-              matchesSearch &&
-              matchesTransportation
+              searchMatch &&
+              transportationMatch
             );
           }
         );
 
+      /*
+       * Lowest price first
+       */
+
       if (
-        sort ===
-        "price-low"
+        sort === "price-low"
       ) {
         result =
           [...result].sort(
@@ -419,19 +605,20 @@ export default function Trips() {
               second
             ) =>
               Number(
-                first.price ||
-                0
+                first?.price || 0
               ) -
               Number(
-                second.price ||
-                0
+                second?.price || 0
               )
           );
       }
 
+      /*
+       * Highest price first
+       */
+
       if (
-        sort ===
-        "price-high"
+        sort === "price-high"
       ) {
         result =
           [...result].sort(
@@ -440,51 +627,119 @@ export default function Trips() {
               second
             ) =>
               Number(
-                second.price ||
-                0
+                second?.price || 0
               ) -
               Number(
-                first.price ||
-                0
+                first?.price || 0
               )
           );
       }
 
+      /*
+       * Ongoing first, then planned,
+       * then completed.
+       */
+
+      if (sort === "date") {
+        const statusPriority = {
+          ongoing: 0,
+          planned: 1,
+          completed: 2,
+        };
+
+        result =
+          [...result].sort(
+            (
+              first,
+              second
+            ) => {
+              const firstStatus =
+                normalizeText(
+                  first?.status
+                );
+
+              const secondStatus =
+                normalizeText(
+                  second?.status
+                );
+
+              const firstPriority =
+                statusPriority[
+                  firstStatus
+                ] ?? 99;
+
+              const secondPriority =
+                statusPriority[
+                  secondStatus
+                ] ?? 99;
+
+              if (
+                firstPriority !==
+                secondPriority
+              ) {
+                return (
+                  firstPriority -
+                  secondPriority
+                );
+              }
+
+              return (
+                getDateTimestamp(
+                  first?.date
+                ) -
+                getDateTimestamp(
+                  second?.date
+                )
+              );
+            }
+          );
+      }
+
+      /*
+       * Highest rating first.
+       * Trips without reviews appear last.
+       */
+
       if (
-        sort ===
-        "date"
+        sort === "rating"
       ) {
         result =
           [...result].sort(
             (
               first,
               second
-            ) =>
-              new Date(
-                first.date
-              ) -
-              new Date(
-                second.date
-              )
-          );
-      }
+            ) => {
+              const firstRating =
+                Number(
+                  first?.rating ||
+                    0
+                );
 
-      if (
-        sort ===
-        "latest"
-      ) {
-        result =
-          [...result].sort(
-            (
-              first,
-              second
-            ) =>
-              new Date(
-                second.createdAt
-              ) -
-              new Date(
-                first.createdAt
-              )
+              const secondRating =
+                Number(
+                  second?.rating ||
+                    0
+                );
+
+              if (
+                firstRating === 0 &&
+                secondRating > 0
+              ) {
+                return 1;
+              }
+
+              if (
+                secondRating === 0 &&
+                firstRating > 0
+              ) {
+                return -1;
+              }
+
+              return (
+                secondRating -
+                firstRating
+              );
+            }
           );
       }
 
@@ -498,35 +753,11 @@ export default function Trips() {
 
   return (
     <PublicPageLayout
-      eyebrow="Trip Collection"
-      title="Trips Inside Lebanon"
+      title="Explore Our Trips"
       subtitle="Browse available trips, destinations, dates, and transportation options."
-      headerAction={
-        <div
-          style={
-            styles.headerCard
-          }
-        >
-          <strong
-            style={
-              styles.headerValue
-            }
-          >
-            {
-              filteredTrips.length
-            }
-          </strong>
-
-          <span
-            style={
-              styles.headerLabel
-            }
-          >
-            trips shown
-          </span>
-        </div>
-      }
     >
+      {/* Filters */}
+
       <section
         style={
           pageTheme.surface
@@ -548,9 +779,7 @@ export default function Trips() {
 
             <input
               type="search"
-              value={
-                search
-              }
+              value={search}
               onChange={(
                 event
               ) =>
@@ -591,34 +820,24 @@ export default function Trips() {
                 pageTheme.control
               }
             >
-              <option
-                value="all"
-              >
+              <option value="all">
                 All transportation
               </option>
 
-              <option
-                value="flight"
-              >
-                Flight
-              </option>
-
-              <option
-                value="train"
-              >
-                Train
-              </option>
-
-              <option
-                value="bus"
-              >
+              <option value="bus">
                 Bus
               </option>
 
-              <option
-                value="car"
-              >
+              <option value="car">
                 Car
+              </option>
+
+              <option value="flight">
+                Flight
+              </option>
+
+              <option value="boat">
+                Boat
               </option>
             </select>
           </label>
@@ -633,9 +852,7 @@ export default function Trips() {
             </span>
 
             <select
-              value={
-                sort
-              }
+              value={sort}
               onChange={(
                 event
               ) =>
@@ -648,52 +865,46 @@ export default function Trips() {
                 pageTheme.control
               }
             >
-              <option
-                value="date"
-              >
-                Nearest date
+              <option value="date">
+                Nearest Upcoming
               </option>
 
-              <option
-                value="latest"
-              >
-                Latest added
+              <option value="rating">
+                Highest Rated
               </option>
 
-              <option
-                value="price-low"
-              >
-                Lowest price
+              <option value="price-low">
+                Lowest Price
               </option>
 
-              <option
-                value="price-high"
-              >
-                Highest price
+              <option value="price-high">
+                Highest Price
               </option>
             </select>
           </label>
         </div>
       </section>
 
+      {/* Request error */}
+
       {error && (
         <div
           style={{
             ...pageTheme.errorBox,
-            marginTop:
-              18,
+            marginTop: 18,
           }}
         >
           {error}
         </div>
       )}
 
+      {/* Loading */}
+
       {loading ? (
         <div
           style={{
             ...pageTheme.emptyBox,
-            marginTop:
-              18,
+            marginTop: 18,
           }}
         >
           Loading trips...
@@ -703,8 +914,7 @@ export default function Trips() {
         <div
           style={{
             ...pageTheme.emptyBox,
-            marginTop:
-              18,
+            marginTop: 18,
           }}
         >
           No trips found.
@@ -713,10 +923,11 @@ export default function Trips() {
         <section
           style={{
             ...pageTheme.surface,
-            marginTop:
-              18,
+            marginTop: 18,
           }}
         >
+          {/* Results header */}
+
           <div
             style={
               styles.resultsBar
@@ -752,9 +963,11 @@ export default function Trips() {
             </span>
           </div>
 
+          {/* Trip list */}
+
           <div
             style={
-              styles.grid
+              styles.list
             }
           >
             {filteredTrips.map(
@@ -763,46 +976,75 @@ export default function Trips() {
                   trip._id ||
                   trip.id;
 
-                const image =
-                  getTripCardImage(
+                const status =
+                  normalizeText(
+                    trip.status
+                  );
+
+                const destination =
+                  getDestinationName(
                     trip
+                  ) ||
+                  "Lebanon";
+
+                const startingPoint =
+                  String(
+                    trip?.from ||
+                      ""
+                  ).trim();
+
+                const route =
+                  startingPoint
+                    ? `${startingPoint} → ${destination}`
+                    : destination;
+
+                const rating =
+                  Number(
+                    trip.rating ||
+                      0
                   );
 
                 return (
                   <article
-                    key={
-                      id
-                    }
+                    key={id}
                     style={
                       styles.card
                     }
                   >
-                    <img
-                      src={
-                        image
-                      }
-                      alt={
-                        trip.title ||
-                        "Trip"
-                      }
-                      loading="lazy"
-                      style={
-                        styles.image
-                      }
-                      onError={(
-                        event
-                      ) => {
-                        event
-                          .currentTarget
-                          .onerror =
-                          null;
+                    {/* Image section */}
 
-                        event
-                          .currentTarget
-                          .src =
-                          defaultTripImage;
-                      }}
-                    />
+                    <div
+                      style={
+                        styles.imageSection
+                      }
+                    >
+                      <TripImage
+                        trip={trip}
+                      />
+
+                      {status ===
+                      "completed" ? (
+                        <Link
+                          to={`/feedback/${id}`}
+                          style={
+                            styles.commentsButton
+                          }
+                        >
+                          💬 Reviews
+                        </Link>
+                      ) : (
+                        <div
+                          style={
+                            styles.commentsDisabled
+                          }
+                        >
+                          💬 Reviews available
+                          after trip
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Information section */}
 
                     <div
                       style={
@@ -811,159 +1053,128 @@ export default function Trips() {
                     >
                       <div
                         style={
-                          styles.tags
+                          styles.mainInfo
                         }
                       >
-                        <span
+                        <div
                           style={
-                            pageTheme.pill
+                            styles.titleRow
                           }
                         >
-                          {capitalize(
-                            trip.tripType
-                          )}
-                        </span>
+                          <h2
+                            style={
+                              styles.title
+                            }
+                          >
+                            {trip.title ||
+                              "Untitled Trip"}
+                          </h2>
 
-                        <span
+                          <span
+                            style={{
+                              ...styles.statusBadge,
+
+                              ...(status ===
+                              "completed"
+                                ? styles.completed
+                                : status ===
+                                    "ongoing"
+                                  ? styles.ongoing
+                                  : styles.planned),
+                            }}
+                          >
+                            {status
+                              ? status.toUpperCase()
+                              : "UNKNOWN"}
+                          </span>
+                        </div>
+
+                        <p
                           style={
-                            pageTheme.pill
+                            styles.route
                           }
                         >
-                          {capitalize(
-                            trip.status
-                          )}
-                        </span>
-                      </div>
+                          {route}
+                        </p>
 
-                      <h2
-                        style={
-                          styles.title
-                        }
-                      >
-                        {
-                          trip.title
-                        }
-                      </h2>
-
-                      <p
-                        style={
-                          styles.route
-                        }
-                      >
-                        {
-                          trip.from
-                        }{" "}
-                        →{" "}
-                        {
-                          trip.to
-                        }
-                      </p>
-
-                      <p
-                        style={
-                          styles.description
-                        }
-                      >
-                        {
-                          trip.description ||
-                          "No description available."
-                        }
-                      </p>
-
-                      <div
-                        style={
-                          styles.details
-                        }
-                      >
-                        <span>
-                          {formatDate(
-                            trip.date
-                          )}
-                        </span>
-
-                        <span>
-                          {formatDuration(
-                            trip.duration
-                          )}
-                        </span>
-
-                        <span>
-                          {capitalize(
-                            trip.transportation
-                          )}
-                        </span>
-
-                        <span>
-                          Rating:{" "}
-                          {Number(
-                            trip.rating ||
-                            0
-                          ).toFixed(
-                            1
-                          )}
-                          /5
-                        </span>
-                      </div>
-
-                      <div
-                        style={
-                          styles.bottom
-                        }
-                      >
-                        <strong
+                        <div
                           style={
-                            styles.price
+                            styles.details
                           }
                         >
-                          $
-                          {Number(
-                            trip.price ||
-                            0
-                          ).toFixed(
-                            2
+                          <span>
+                            📅{" "}
+                            {formatDate(
+                              trip.date
+                            )}
+                          </span>
+
+                          {rating > 0 ? (
+                            <span>
+                              ⭐{" "}
+                              {rating.toFixed(
+                                1
+                              )}
+                            </span>
+                          ) : (
+                            <span>
+                              ⭐ No reviews yet
+                            </span>
                           )}
-                        </strong>
 
-                        <span
-                          style={
-                            styles.seats
-                          }
-                        >
-                          {seatsLeft(
-                            trip
-                          )}{" "}
-                          seats left
-                        </span>
-                      </div>
+                          <span>
+                            💰 $
+                            {Number(
+                              trip.price ||
+                                0
+                            ).toFixed(2)}
+                          </span>
 
-                      <div
-                        style={
-                          styles.actions
-                        }
-                      >
-                        <Link
-                          to={`/trips/${id}`}
-                          style={{
-                            ...pageTheme.buttonPrimary,
-                            ...styles.actionButton,
-                          }}
-                        >
-                          Trip Details
-                        </Link>
+                          <span>
+                            🚗{" "}
+                            {capitalize(
+                              trip.transportation
+                            )}
+                          </span>
 
-                        <Link
-                          to={
-                            buildMapLink(
+                          <span>
+                            🧳{" "}
+                            {seatsLeft(
                               trip
-                            )
+                            )}{" "}
+                            seats left
+                          </span>
+                        </div>
+
+                        <div
+                          style={
+                            styles.actions
                           }
-                          style={{
-                            ...pageTheme.buttonSecondary,
-                            ...styles.actionButton,
-                          }}
                         >
-                          Open Map
-                        </Link>
+                          <Link
+                            to={`/trips/${id}`}
+                            style={{
+                              ...pageTheme.buttonSecondary,
+                              ...styles.actionButton,
+                            }}
+                          >
+                            Trip Details
+                          </Link>
+
+                          <Link
+                            to={
+                              buildMapLink(
+                                trip
+                              )
+                            }
+                            style={{
+                              ...pageTheme.buttonSecondary,
+                              ...styles.actionButton,
+                            }}
+                          >
+                            Open Map
+                          </Link>
+                        </div>
                       </div>
                     </div>
                   </article>
@@ -977,211 +1188,199 @@ export default function Trips() {
   );
 }
 
+/*
+|--------------------------------------------------------------------------
+| Styles
+|--------------------------------------------------------------------------
+*/
+
 const styles = {
-  headerCard: {
-    minWidth:
-      140,
+  filters: {
+    display: "grid",
 
-    padding:
-      "18px 20px",
+    gridTemplateColumns:
+      "repeat(auto-fit, minmax(220px, 1fr))",
 
-    borderRadius:
-      18,
+    gap: 16,
+  },
+
+  resultsBar: {
+    display: "flex",
+
+    justifyContent:
+      "space-between",
+
+    gap: 16,
+
+    alignItems:
+      "flex-start",
+
+    flexWrap: "wrap",
+
+    marginBottom: 18,
+  },
+
+  resultsTitle: {
+    margin: "0 0 6px",
+
+    fontSize: 20,
+
+    fontWeight: 900,
+
+    color: "#1e3a8a",
+  },
+
+  resultsText: {
+    margin: 0,
+
+    color: "#475569",
+
+    lineHeight: 1.7,
+  },
+
+  list: {
+    display: "flex",
+
+    flexDirection: "column",
+
+    gap: 18,
+  },
+
+  card: {
+    display: "flex",
+
+    alignItems: "stretch",
+
+    width: "100%",
 
     background:
-      "rgba(255, 255, 255, 0.72)",
+      "rgba(255,255,255,0.8)",
 
     border:
-      "1px solid rgba(147, 197, 253, 0.45)",
+      "1px solid #bfdbfe",
+
+    borderRadius: 18,
+
+    overflow: "hidden",
 
     boxShadow:
-      "0 12px 30px rgba(96, 165, 250, 0.18)",
+      "0 12px 30px rgba(96,165,250,0.15)",
+  },
 
-    display:
-      "grid",
+  imageSection: {
+    width: 230,
 
-    gap:
-      4,
+    minWidth: 230,
+
+    display: "flex",
+
+    flexDirection: "column",
+  },
+
+  image: {
+    width: 230,
+
+    height: 200,
+
+    objectFit: "cover",
+
+    display: "block",
+  },
+
+  commentsButton: {
+    display: "flex",
+
+    alignItems: "center",
+
+    justifyContent:
+      "center",
+
+    gap: 8,
+
+    padding: "12px",
+
+    background:
+      "#f8fbff",
+
+    borderTop:
+      "1px solid #dbeafe",
+
+    color:
+      "#2563eb",
+
+    textDecoration:
+      "none",
+
+    fontWeight: 700,
+  },
+
+  commentsDisabled: {
+    display: "flex",
+
+    justifyContent:
+      "center",
+
+    alignItems:
+      "center",
+
+    padding: "12px",
+
+    background:
+      "#f8fafc",
+
+    color:
+      "#94a3b8",
+
+    borderTop:
+      "1px solid #e2e8f0",
+
+    fontSize: 14,
+
+    fontWeight: 600,
 
     textAlign:
       "center",
   },
 
-  headerValue: {
-    fontSize:
-      28,
+  body: {
+    flex: 1,
 
-    color:
-      "#1e3a8a",
-  },
-
-  headerLabel: {
-    color:
-      "#64748b",
-
-    fontSize:
-      13,
-
-    fontWeight:
-      800,
-
-    textTransform:
-      "uppercase",
-
-    letterSpacing:
-      "0.06em",
-  },
-
-  filters: {
-    display:
-      "grid",
-
-    gridTemplateColumns:
-      "repeat(auto-fit, minmax(220px, 1fr))",
-
-    gap:
-      16,
-  },
-
-  resultsBar: {
-    display:
-      "flex",
+    display: "flex",
 
     justifyContent:
       "space-between",
 
-    gap:
-      16,
-
     alignItems:
-      "flex-start",
+      "stretch",
 
-    flexWrap:
-      "wrap",
-
-    marginBottom:
-      18,
-  },
-
-  resultsTitle: {
-    margin:
-      "0 0 6px",
-
-    fontSize:
-      20,
-
-    fontWeight:
-      900,
-
-    color:
-      "#1e3a8a",
-  },
-
-  resultsText: {
-    margin:
-      0,
-
-    color:
-      "#475569",
-
-    lineHeight:
-      1.7,
-  },
-
-  grid: {
-    display:
-      "grid",
-
-    gridTemplateColumns:
-      "repeat(auto-fit, minmax(280px, 1fr))",
-
-    gap:
-      22,
-  },
-
-  card: {
-    display:
-      "flex",
-
-    flexDirection:
-      "column",
-
-    minHeight:
-      "100%",
-
-    overflow:
-      "hidden",
-
-    borderRadius:
-      18,
-
-    background:
-      "rgba(255, 255, 255, 0.72)",
-
-    border:
-      "1px solid #bfdbfe",
-
-    boxShadow:
-      "0 18px 44px rgba(96, 165, 250, 0.16)",
-
-    backdropFilter:
-      "blur(16px)",
-
-    WebkitBackdropFilter:
-      "blur(16px)",
-  },
-
-  image: {
-    width:
-      "100%",
-
-    height:
-      210,
-
-    objectFit:
-      "cover",
-  },
-
-  body: {
-    display:
-      "flex",
-
-    flexDirection:
-      "column",
-
-    flex:
-      1,
-
-    padding:
-      22,
+    padding: 22,
 
     boxSizing:
       "border-box",
   },
 
-  tags: {
-    display:
-      "flex",
+  mainInfo: {
+    flex: 1,
+  },
 
-    justifyContent:
-      "space-between",
+  titleRow: {
+    display: "flex",
 
-    gap:
-      10,
+    alignItems: "center",
 
-    flexWrap:
-      "wrap",
+    gap: 12,
+
+    flexWrap: "wrap",
+
+    marginBottom: 6,
   },
 
   title: {
-    margin:
-      "14px 0 8px",
+    margin: "5px 0",
 
-    fontSize:
-      22,
+    fontSize: 23,
 
-    fontWeight:
-      900,
+    fontWeight: 900,
 
     color:
       "#1e3a8a",
@@ -1189,101 +1388,85 @@ const styles = {
 
   route: {
     margin:
-      "0 0 12px",
-
-    fontWeight:
-      700,
+      "5px 0 15px",
 
     color:
       "#2563eb",
-  },
 
-  description: {
-    margin:
-      0,
-
-    color:
-      "#475569",
-
-    lineHeight:
-      1.7,
-
-    minHeight:
-      72,
+    fontWeight: 700,
   },
 
   details: {
-    display:
-      "grid",
+    display: "flex",
 
-    gap:
-      7,
+    flexWrap: "wrap",
 
-    margin:
-      "16px 0",
+    gap: 15,
 
     color:
       "#475569",
 
-    minHeight:
-      90,
+    marginBottom: 18,
+
+    fontSize: 14,
   },
 
-  bottom: {
-    display:
-      "flex",
+  statusBadge: {
+    padding:
+      "6px 12px",
 
-    justifyContent:
-      "space-between",
+    borderRadius: 20,
 
-    alignItems:
-      "center",
+    fontSize: 12,
 
-    gap:
-      12,
+    fontWeight: 800,
 
-    flexWrap:
-      "wrap",
+    color: "#ffffff",
 
-    marginBottom:
-      16,
+    textTransform:
+      "uppercase",
+
+    letterSpacing:
+      "0.5px",
   },
 
-  price: {
-    fontSize:
-      20,
-
-    color:
-      "#1e3a8a",
+  planned: {
+    background:
+      "#3b8ce9",
   },
 
-  seats: {
-    color:
-      "#475569",
+  ongoing: {
+    background:
+      "#f59e0b",
+  },
 
-    fontWeight:
-      700,
+  completed: {
+    background:
+      "#dc2626",
   },
 
   actions: {
-    display:
-      "grid",
+    display: "flex",
 
-    gridTemplateColumns:
-      "repeat(2, minmax(0, 1fr))",
+    gap: 12,
 
-    gap:
-      10,
+    marginTop: 18,
 
-    marginTop:
-      "auto",
+    flexWrap: "wrap",
   },
 
   actionButton: {
-    display:
-      "block",
+    textDecoration:
+      "none",
 
     textAlign:
       "center",
+
+    padding:
+      "10px 18px",
+
+    borderRadius: 12,
+
+    fontWeight: 800,
   },
 };

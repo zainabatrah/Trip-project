@@ -17,6 +17,12 @@ const {
 } = require(
   "../middleware/auth"
 );
+const {
+  createNotification,
+  notifyOrganizers,
+} = require(
+  "../services/notificationService"
+);
 
 const router = express.Router();
 
@@ -1394,6 +1400,20 @@ router.post(
           }
         );
 
+      await notifyOrganizers({
+        type:
+          "private-trip-request",
+        title:
+          "New private trip request",
+        message: `${identity.clientName} requested a private trip to ${destination}.`,
+        link: "/approve",
+        metadata: {
+          requestId: String(
+            request._id
+          ),
+        },
+      });
+
       return res
         .status(201)
         .json({
@@ -1598,6 +1618,44 @@ router.post(
 
       await request.save();
 
+      if (
+        sender === "organizer" &&
+        request.client
+      ) {
+        await createNotification({
+          userId: String(
+            request.client
+          ),
+          type:
+            "private-trip-message",
+          title:
+            "New organizer message",
+          message: `You received a new message about ${request.title}.`,
+          link: "/my-requests",
+          metadata: {
+            requestId: String(
+              request._id
+            ),
+          },
+        });
+      }
+
+      if (sender === "client") {
+        await notifyOrganizers({
+          type:
+            "private-trip-message",
+          title:
+            "New client message",
+          message: `${request.clientName} sent a new message about ${request.title}.`,
+          link: "/approve",
+          metadata: {
+            requestId: String(
+              request._id
+            ),
+          },
+        });
+      }
+
       const message =
         request.messages[
           request.messages.length -
@@ -1705,6 +1763,25 @@ router.post(
       });
 
       await request.save();
+
+      if (request.client) {
+        await createNotification({
+          userId: String(
+            request.client
+          ),
+          type:
+            "private-trip-message",
+          title:
+            "New organizer message",
+          message: `You received a new message about ${request.title}.`,
+          link: "/my-requests",
+          metadata: {
+            requestId: String(
+              request._id
+            ),
+          },
+        });
+      }
 
       const message =
         request.messages[
@@ -2019,6 +2096,36 @@ router.patch(
       }
 
       await request.save();
+
+      if (request.client) {
+        const notificationMessage =
+          status === "APPROVED"
+            ? `Your private trip request "${request.title}" was approved.`
+            : status === "REJECTED"
+              ? `Your private trip request "${request.title}" was rejected.`
+              : status === "POSTPONED"
+                ? `Your private trip request "${request.title}" was postponed.`
+                : `Your private trip request "${request.title}" is pending again.`;
+
+        await createNotification({
+          userId: String(
+            request.client
+          ),
+          type:
+            "private-trip-status",
+          title:
+            "Private trip request updated",
+          message:
+            notificationMessage,
+          link: "/my-requests",
+          metadata: {
+            requestId: String(
+              request._id
+            ),
+            status,
+          },
+        });
+      }
 
       const successMessage =
         status ===

@@ -9,6 +9,9 @@ const upload = require("../middleware/upload");
 const {
   requireAuth,
 } = require("../middleware/auth");
+const {
+  createNotification,
+} = require("../services/notificationService");
 
 const router = express.Router();
 
@@ -764,6 +767,22 @@ router.post(
 
       await friendship.save();
 
+      await createNotification({
+        userId: recipientId,
+        type: "friend-request",
+        title: "New friend request",
+        message: `${req.user.fullName || "A traveler"} sent you a friend request.`,
+        link: "/profile/friends",
+        metadata: {
+          friendshipId: String(
+            friendship._id
+          ),
+          requesterId: String(
+            req.user._id
+          ),
+        },
+      });
+
       const populated =
         await Friendship.findById(
           friendship._id
@@ -876,6 +895,33 @@ router.patch(
         new Date();
 
       await friendship.save();
+
+      await createNotification({
+        userId: String(
+          friendship.requester
+        ),
+        type:
+          action === "accept"
+            ? "friend-request-accepted"
+            : "friend-request-rejected",
+        title:
+          action === "accept"
+            ? "Friend request accepted"
+            : "Friend request rejected",
+        message:
+          action === "accept"
+            ? `${req.user.fullName || "A traveler"} accepted your friend request.`
+            : `${req.user.fullName || "A traveler"} rejected your friend request.`,
+        link: "/profile/friends",
+        metadata: {
+          friendshipId: String(
+            friendship._id
+          ),
+          recipientId: String(
+            req.user._id
+          ),
+        },
+      });
 
       const populated =
         await Friendship.findById(

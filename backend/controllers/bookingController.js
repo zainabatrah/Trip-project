@@ -1,6 +1,11 @@
 const Booking = require("../models/Booking");
 
 const Trip=require("../models/Trip")
+const {
+    createNotification,
+} = require(
+    "../services/notificationService"
+);
 
  const cancelBooking = async (req, res) => {
 
@@ -50,6 +55,18 @@ const Trip=require("../models/Trip")
         booking.bookingStatus = "cancelled";
 
         await booking.save();
+
+        await createNotification({
+            userId: booking.userId,
+            type: "booking-cancelled",
+            title: "Trip cancelled",
+            message: `Your booking for ${trip?.title || "your trip"} has been cancelled.`,
+            link: "/my-trips",
+            metadata: {
+                tripId: trip?._id ? String(trip._id) : "",
+                bookingId: String(booking._id),
+            },
+        });
 
 
 

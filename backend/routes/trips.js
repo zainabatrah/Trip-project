@@ -703,6 +703,75 @@ function resolveTripPhoto(
 
 /*
 |--------------------------------------------------------------------------
+| Resolve the trips-list image only
+|--------------------------------------------------------------------------
+|
+| For the trips page, keep only a real
+| unique stored image. If there is no
+| unique valid local/remote image here,
+| the frontend already falls back to:
+|
+| 1. a destination-based image path
+| 2. Libanon233.jpg
+|
+*/
+
+function resolveTripListPhoto(
+  trip,
+  usedImages
+) {
+  const savedTripPhoto =
+    normalizeImagePath(
+      trip?.photo
+    );
+
+  if (
+    savedTripPhoto &&
+    !usedImages.has(
+      savedTripPhoto
+    )
+  ) {
+    usedImages.add(
+      savedTripPhoto
+    );
+
+    return savedTripPhoto;
+  }
+
+  const places =
+    Array.isArray(
+      trip?.places
+    )
+      ? trip.places
+      : [];
+
+  for (
+    const place of places
+  ) {
+    const savedPlaceImage =
+      normalizeImagePath(
+        place?.image
+      );
+
+    if (
+      savedPlaceImage &&
+      !usedImages.has(
+        savedPlaceImage
+      )
+    ) {
+      usedImages.add(
+        savedPlaceImage
+      );
+
+      return savedPlaceImage;
+    }
+  }
+
+  return "";
+}
+
+/*
+|--------------------------------------------------------------------------
 | Resolve each place image
 |--------------------------------------------------------------------------
 */
@@ -859,11 +928,15 @@ function normalizeTripResponse(
         ""
       ),
 
-    photo:
-      resolveTripPhoto(
-        trip,
-        usedImages
-      ),
+    photo: usedImages
+      ? resolveTripListPhoto(
+          trip,
+          usedImages
+        )
+      : resolveTripPhoto(
+          trip,
+          usedImages
+        ),
 
     duration:
       normalizeDurationValue(
@@ -1391,22 +1464,47 @@ router.get(
       }
 
       /*
-       * Calculate days until trip.
+       * Calculate days until trip using
+       * calendar dates instead of exact
+       * timestamps. This keeps weather
+       * available for trips happening
+       * today and for trips exactly
+       * seven calendar days away.
        */
+      const millisecondsPerDay =
+        1000 *
+        60 *
+        60 *
+        24;
+
       const today =
         new Date();
 
+      const todayAtMidnight =
+        new Date(today);
+
+      todayAtMidnight.setHours(
+        0,
+        0,
+        0,
+        0
+      );
+
+      const tripDateAtMidnight =
+        new Date(currentDate);
+
+      tripDateAtMidnight.setHours(
+        0,
+        0,
+        0,
+        0
+      );
+
       const daysUntilTrip =
         (
-          currentDate -
-          today
-        ) /
-        (
-          1000 *
-          60 *
-          60 *
-          24
-        );
+          tripDateAtMidnight -
+          todayAtMidnight
+        ) / millisecondsPerDay;
 
       let weather;
 

@@ -72,6 +72,9 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const bookingRoute = require("./routes/bookingRoutes");
 const userRoutes=require("./routes/userRoutes");
 const socialRoutes = require("./routes/socialRoutes");
+const notificationRoutes = require(
+  "./routes/notificationRoutes"
+);
 const app = express();
 
 const PORT =
@@ -300,6 +303,10 @@ app.use(
 app.use(
   "/api/social",
   socialRoutes
+);
+app.use(
+  "/api/notifications",
+  notificationRoutes
 );
 /*
 |--------------------------------------------------------------------------
