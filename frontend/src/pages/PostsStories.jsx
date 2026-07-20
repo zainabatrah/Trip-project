@@ -60,27 +60,36 @@ export default function PostsStories() {
     setBusyDeleteStoryId,
   ] = useState("");
 
-  async function loadFeed() {
-    try {
-      setLoading(true);
-      setError("");
-
-      const data =
-        await getSocialFeed();
-
-      setFeed(data);
-    } catch (requestError) {
-      setError(
-        requestError?.message ||
-          "Could not load posts and stories."
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
-    loadFeed();
+    let cancelled = false;
+
+    async function loadInitialFeed() {
+      try {
+        const data =
+          await getSocialFeed();
+
+        if (!cancelled) {
+          setFeed(data);
+        }
+      } catch (requestError) {
+        if (!cancelled) {
+          setError(
+            requestError?.message ||
+              "Could not load posts and stories."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadInitialFeed();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {

@@ -9,11 +9,9 @@ import {
 } from "react-router-dom";
 
 import PublicPageLayout from "../components/PublicPageLayout.jsx";
-
 import {
   pageTheme,
 } from "../components/publicPageTheme.js";
-
 import {
   getTrips,
 } from "../api/trips.js";
@@ -21,24 +19,11 @@ import {
 const defaultTripImage =
   "/Images/Libanon233.jpg";
 
-<<<<<<< HEAD
-/*
-|--------------------------------------------------------------------------
-| Text helpers
-|--------------------------------------------------------------------------
-*/
-=======
-
-function formatDate(value) {
-  const date = new Date(value);
->>>>>>> origin/Final-Work
-
 function normalizeText(value) {
   return String(value || "")
     .trim()
     .toLowerCase();
 }
-
 
 function capitalize(value) {
   const text = String(
@@ -54,13 +39,6 @@ function capitalize(value) {
     text.slice(1)
   );
 }
-
-<<<<<<< HEAD
-/*
-|--------------------------------------------------------------------------
-| Date formatting
-|--------------------------------------------------------------------------
-*/
 
 function formatDate(value) {
   if (!value) {
@@ -105,12 +83,6 @@ function getDateTimestamp(value) {
     : timestamp;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Destination name
-|--------------------------------------------------------------------------
-*/
-
 function getDestinationName(trip) {
   const firstPlace =
     Array.isArray(
@@ -128,19 +100,6 @@ function getDestinationName(trip) {
       ""
   ).trim();
 }
-
-/*
-|--------------------------------------------------------------------------
-| Destination image filename
-|--------------------------------------------------------------------------
-|
-| Examples:
-|
-| Byblos        -> byblos.jpg
-| Deir El Qamar -> deir-el-qamar.jpg
-| El Mina       -> el-mina.jpg
-|
-*/
 
 function createDestinationSlug(
   destination
@@ -164,12 +123,6 @@ function createDestinationSlug(
     );
 }
 
-/*
-|--------------------------------------------------------------------------
-| Destination image path
-|--------------------------------------------------------------------------
-*/
-
 function getDestinationImage(trip) {
   const destination =
     getDestinationName(trip);
@@ -186,19 +139,6 @@ function getDestinationImage(trip) {
   return `/Images/${slug}.jpg`;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Initial trip image
-|--------------------------------------------------------------------------
-|
-| First:
-| Use trip.photo from MongoDB.
-|
-| If trip.photo is missing:
-| Use an image based on the destination name.
-|
-*/
-
 function getInitialTripImage(trip) {
   const savedPhoto =
     String(
@@ -214,19 +154,6 @@ function getInitialTripImage(trip) {
   );
 }
 
-/*
-|--------------------------------------------------------------------------
-| Trip image component
-|--------------------------------------------------------------------------
-|
-| Image loading order:
-|
-| 1. trip.photo
-| 2. /Images/destination-name.jpg
-| 3. /Images/Libanon233.jpg
-|
-*/
-
 function TripImage({ trip }) {
   const [
     image,
@@ -235,12 +162,6 @@ function TripImage({ trip }) {
     getInitialTripImage(trip)
   );
 
-  useEffect(() => {
-    setImage(
-      getInitialTripImage(trip)
-    );
-  }, [trip]);
-
   function handleImageError(
     event
   ) {
@@ -248,11 +169,6 @@ function TripImage({ trip }) {
       getDestinationImage(
         trip
       );
-
-    /*
-     * Database photo failed.
-     * Try the destination image.
-     */
 
     if (
       image !==
@@ -267,11 +183,6 @@ function TripImage({ trip }) {
       return;
     }
 
-    /*
-     * Destination image failed.
-     * Use the final Lebanese image.
-     */
-
     if (
       image !==
       defaultTripImage
@@ -282,11 +193,6 @@ function TripImage({ trip }) {
 
       return;
     }
-
-    /*
-     * Prevent an infinite loop if
-     * Libanon233.jpg is also missing.
-     */
 
     event.currentTarget.onerror =
       null;
@@ -311,12 +217,6 @@ function TripImage({ trip }) {
   );
 }
 
-/*
-|--------------------------------------------------------------------------
-| Available seats
-|--------------------------------------------------------------------------
-*/
-
 function seatsLeft(trip) {
   const totalTravelers =
     Number(
@@ -337,12 +237,6 @@ function seatsLeft(trip) {
   );
 }
 
-/*
-|--------------------------------------------------------------------------
-| Database ID validation
-|--------------------------------------------------------------------------
-*/
-
 function hasDatabaseId(trip) {
   return Boolean(
     String(
@@ -352,35 +246,6 @@ function hasDatabaseId(trip) {
     ).trim()
   );
 }
-
-/*
-|--------------------------------------------------------------------------
-| Map link
-|--------------------------------------------------------------------------
-*/
-=======
-
-function resolveTripCardImage(trip) {
-  // Use the image saved in database first
-  if (trip?.photo) {
-    return trip.photo;
-  }
-
-  // fallback to place image
-  if (Array.isArray(trip?.places)) {
-    const placeImage = trip.places.find(
-      (place) => place?.image
-    )?.image;
-
-    if (placeImage) {
-      return placeImage;
-    }
-  }
-
-  return defaultTripImage;
-}
-
->>>>>>> origin/Final-Work
 
 function buildMapLink(trip) {
   const tripId =
@@ -406,7 +271,6 @@ function buildMapLink(trip) {
   const params =
     new URLSearchParams();
 
-<<<<<<< HEAD
   if (trip?.title) {
     params.set(
       "title",
@@ -434,22 +298,6 @@ function buildMapLink(trip) {
     latitude !== null &&
     longitude !== undefined &&
     longitude !== null
-=======
-
-  if (trip.title) {
-    params.set("title", trip.title);
-  }
-
-
-  if (trip.to) {
-    params.set("city", trip.to);
-  }
-
-
-  if (
-    firstPlace?.latitude !== undefined &&
-    firstPlace?.longitude !== undefined
->>>>>>> origin/Final-Work
   ) {
     params.set(
       "lat",
@@ -462,111 +310,48 @@ function buildMapLink(trip) {
     );
   }
 
-<<<<<<< HEAD
   const query =
     params.toString();
-=======
-
-  const query = params.toString();
->>>>>>> origin/Final-Work
 
   return query
     ? `/map?${query}`
     : "/map";
 }
 
-<<<<<<< HEAD
-/*
-|--------------------------------------------------------------------------
-| Main Trips component
-|--------------------------------------------------------------------------
-*/
-
 export default function Trips() {
   const [
     trips,
     setTrips,
   ] = useState([]);
-
   const [
     search,
     setSearch,
   ] = useState("");
-
   const [
     transportation,
     setTransportation,
   ] = useState("all");
-
   const [
     sort,
     setSort,
   ] = useState("date");
-
   const [
     loading,
     setLoading,
   ] = useState(true);
-
   const [
     error,
     setError,
   ] = useState("");
 
-  /*
-  |--------------------------------------------------------------------------
-  | Load trips
-  |--------------------------------------------------------------------------
-  */
-=======
-
-
-function seatsLeft(trip) {
-  return Math.max(
-    Number(trip.numberOfTravelers || 0) -
-      Number(trip.reservedTravelers || 0),
-    0
-  );
-}
-
-
-
-export default function Trips() {
-
-  const [trips, setTrips] =
-    useState([]);
-
-  const [search, setSearch] =
-    useState("");
-
-  const [transportation, setTransportation] =
-    useState("all");
-
-  const [sort, setSort] =
-    useState("date");
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [error, setError] =
-    useState("");
-
-
->>>>>>> origin/Final-Work
-
   useEffect(() => {
-
     let cancelled = false;
 
-
     async function loadTrips() {
-
       try {
-
         setLoading(true);
         setError("");
 
-<<<<<<< HEAD
         const data =
           await getTrips();
 
@@ -606,67 +391,19 @@ export default function Trips() {
         );
 
         setTrips([]);
-=======
-
-        const data = await getTrips();
-
-
-        if (!cancelled) {
-
-          setTrips(
-            Array.isArray(data?.trips)
-              ? data.trips
-              : []
-          );
-
-        }
-
-
-      } catch (requestError) {
-
-
-        if (!cancelled) {
-
-          setError(
-            requestError.message ||
-            "Could not load trips."
-          );
-
-          setTrips([]);
-
-        }
-
-
->>>>>>> origin/Final-Work
       } finally {
-
-
         if (!cancelled) {
           setLoading(false);
         }
-
-
       }
-
     }
 
-
     loadTrips();
-
 
     return () => {
       cancelled = true;
     };
-
-
   }, []);
-
-<<<<<<< HEAD
-  /*
-  |--------------------------------------------------------------------------
-  | Search, filter and sort
-  |--------------------------------------------------------------------------
-  */
 
   const filteredTrips =
     useMemo(() => {
@@ -727,10 +464,6 @@ export default function Trips() {
           }
         );
 
-      /*
-       * Lowest price first
-       */
-
       if (
         sort === "price-low"
       ) {
@@ -749,10 +482,6 @@ export default function Trips() {
           );
       }
 
-      /*
-       * Highest price first
-       */
-
       if (
         sort === "price-high"
       ) {
@@ -770,11 +499,6 @@ export default function Trips() {
               )
           );
       }
-
-      /*
-       * Ongoing first, then planned,
-       * then completed.
-       */
 
       if (sort === "date") {
         const statusPriority = {
@@ -831,11 +555,6 @@ export default function Trips() {
           );
       }
 
-      /*
-       * Highest rating first.
-       * Trips without reviews appear last.
-       */
-
       if (
         sort === "rating"
       ) {
@@ -887,184 +606,11 @@ export default function Trips() {
       sort,
     ]);
 
-=======
-
-
-
-  const filteredTrips = useMemo(() => {
-
-    const query =
-      search.trim().toLowerCase();
-
-
-    let result = trips.filter((trip) => {
-
-
-      const searchableText = [
-        trip.title,
-        trip.country,
-        trip.from,
-        trip.to,
-        trip.tripType,
-      ]
-        .join(" ")
-        .toLowerCase();
-
-
-
-      const matchesSearch =
-        searchableText.includes(query);
-
-
-
-      const matchesTransportation =
-        transportation === "all" ||
-        trip.transportation === transportation;
-
-
-
-      return (
-        matchesSearch &&
-        matchesTransportation
-      );
-
-    });
-
-
-
-
-    if (sort === "price-low") {
-
-      result = [...result].sort(
-        (a,b)=>
-          Number(a.price || 0) -
-          Number(b.price || 0)
-      );
-
-    }
-
-
-
-
-    if (sort === "price-high") {
-
-      result = [...result].sort(
-        (a,b)=>
-          Number(b.price || 0) -
-          Number(a.price || 0)
-      );
-
-    }
-
-
-
-
-    if (sort === "date") {
-
-      result = [...result].sort(
-        (a,b)=> {
-
-          const priority = {
-            ongoing:0,
-            planned:1,
-            completed:2,
-          };
-
-
-          if (
-            priority[a.status] !==
-            priority[b.status]
-          ) {
-
-            return (
-              priority[a.status] -
-              priority[b.status]
-            );
-
-          }
-
-
-          return (
-            new Date(a.date) -
-            new Date(b.date)
-          );
-
-        }
-      );
-
-    }
-
-
-
-
-
-    if (sort === "rating") {
-
-      result = [...result].sort(
-        (a,b)=> {
-
-          const ratingA =
-            Number(a.rating || 0);
-
-          const ratingB =
-            Number(b.rating || 0);
-
-
-          if (
-            ratingA === 0 &&
-            ratingB > 0
-          )
-            return 1;
-
-
-          if (
-            ratingB === 0 &&
-            ratingA > 0
-          )
-            return -1;
-
-
-          return ratingB-ratingA;
-
-        }
-      );
-
-    }
-
-
-
-    return result;
-
-
-  },[
-    trips,
-    search,
-    transportation,
-    sort
-  ]);
-
-
-
-
-  const displayTrips =
-    useMemo(
-      () =>
-        filteredTrips.map((trip)=>({
-          ...trip,
-          displayImage:
-            resolveTripCardImage(trip),
-        })),
-      [filteredTrips]
-    );
->>>>>>> origin/Final-Work
   return (
     <PublicPageLayout
       title="Explore Our Trips"
       subtitle="Browse available trips, destinations, dates, and transportation options."
     >
-<<<<<<< HEAD
-      {/* Filters */}
-
       <section
         style={
           pageTheme.surface
@@ -1083,20 +629,10 @@ export default function Trips() {
             <span>
               Search
             </span>
-=======
-
-      <section style={pageTheme.surface}>
-
-        <div style={styles.filters}>
-
-          <label style={pageTheme.field}>
-            <span>Search</span>
->>>>>>> origin/Final-Work
 
             <input
               type="search"
               value={search}
-<<<<<<< HEAD
               onChange={(
                 event
               ) =>
@@ -1104,20 +640,14 @@ export default function Trips() {
                   event.target
                     .value
                 )
-=======
-              onChange={(event)=>
-                setSearch(event.target.value)
->>>>>>> origin/Final-Work
               }
               placeholder="Search trips..."
               style={
                 pageTheme.control
               }
             />
-
           </label>
 
-<<<<<<< HEAD
           <label
             style={
               pageTheme.field
@@ -1134,17 +664,6 @@ export default function Trips() {
               onChange={(
                 event
               ) =>
-=======
-
-
-          <label style={pageTheme.field}>
-
-            <span>Transportation</span>
-
-            <select
-              value={transportation}
-              onChange={(event)=>
->>>>>>> origin/Final-Work
                 setTransportation(
                   event.target
                     .value
@@ -1154,14 +673,12 @@ export default function Trips() {
                 pageTheme.control
               }
             >
-
               <option value="all">
                 All transportation
               </option>
 
               <option value="bus">
                 Bus
-<<<<<<< HEAD
               </option>
 
               <option value="car">
@@ -1175,19 +692,9 @@ export default function Trips() {
               <option value="boat">
                 Boat
               </option>
-=======
-              </option>
-
-              <option value="car">
-                Car
-              </option>
-
->>>>>>> origin/Final-Work
             </select>
-
           </label>
 
-<<<<<<< HEAD
           <label
             style={
               pageTheme.field
@@ -1209,24 +716,8 @@ export default function Trips() {
               }
               style={
                 pageTheme.control
-=======
-
-
-
-          <label style={pageTheme.field}>
-
-            <span>Sort by</span>
-
-            <select
-              value={sort}
-              onChange={(event)=>
-                setSort(
-                  event.target.value
-                )
->>>>>>> origin/Final-Work
               }
             >
-
               <option value="date">
                 Nearest Upcoming
               </option>
@@ -1242,89 +733,48 @@ export default function Trips() {
               <option value="price-high">
                 Highest Price
               </option>
-
-
             </select>
-
           </label>
-
-
         </div>
-
       </section>
 
-<<<<<<< HEAD
-      {/* Request error */}
-=======
-
-
->>>>>>> origin/Final-Work
-
       {error && (
-
         <div
           style={{
             ...pageTheme.errorBox,
-            marginTop:18,
+            marginTop: 18,
           }}
         >
-
           {error}
-
         </div>
-
       )}
 
-<<<<<<< HEAD
-      {/* Loading */}
-=======
-
-
->>>>>>> origin/Final-Work
-
       {loading ? (
-
         <div
           style={{
             ...pageTheme.emptyBox,
-            marginTop:18,
+            marginTop: 18,
           }}
         >
           Loading trips...
         </div>
-<<<<<<< HEAD
       ) : filteredTrips.length ===
         0 ? (
-=======
-
-
-      ) : displayTrips.length === 0 ? (
-
-
->>>>>>> origin/Final-Work
         <div
           style={{
             ...pageTheme.emptyBox,
-            marginTop:18,
+            marginTop: 18,
           }}
         >
           No trips found.
         </div>
-
-
       ) : (
-
-
-
         <section
           style={{
             ...pageTheme.surface,
-            marginTop:18,
+            marginTop: 18,
           }}
         >
-<<<<<<< HEAD
-          {/* Results header */}
-
           <div
             style={
               styles.resultsBar
@@ -1344,28 +794,10 @@ export default function Trips() {
                   styles.resultsText
                 }
               >
-=======
-
-
-
-          <div style={styles.resultsBar}>
-
-
-            <div>
-
-              <h2 style={styles.resultsTitle}>
-                Available trips
-              </h2>
-
-
-              <p style={styles.resultsText}>
->>>>>>> origin/Final-Work
                 Open a trip for full details or jump to the map directly from the card.
               </p>
-
             </div>
 
-<<<<<<< HEAD
             <span
               style={
                 pageTheme.pill
@@ -1375,19 +807,8 @@ export default function Trips() {
                 filteredTrips.length
               }{" "}
               visible
-=======
-
-
-            <span style={pageTheme.pill}>
-              {displayTrips.length} visible
->>>>>>> origin/Final-Work
             </span>
-
-
           </div>
-
-<<<<<<< HEAD
-          {/* Trip list */}
 
           <div
             style={
@@ -1435,14 +856,18 @@ export default function Trips() {
                       styles.card
                     }
                   >
-                    {/* Image section */}
-
                     <div
                       style={
                         styles.imageSection
                       }
                     >
                       <TripImage
+                        key={[
+                          id,
+                          trip?.photo || "",
+                          trip?.to || "",
+                          trip?.country || "",
+                        ].join(":")}
                         trip={trip}
                       />
 
@@ -1467,8 +892,6 @@ export default function Trips() {
                         </div>
                       )}
                     </div>
-
-                    {/* Information section */}
 
                     <div
                       style={
@@ -1497,7 +920,6 @@ export default function Trips() {
                           <span
                             style={{
                               ...styles.statusBadge,
-
                               ...(status ===
                               "completed"
                                 ? styles.completed
@@ -1605,491 +1027,124 @@ export default function Trips() {
                 );
               }
             )}
-=======
-
-
-
-
-
-          <div style={styles.list}>
-
-
-            {displayTrips.map((trip)=>{
-
-
-              const id =
-                trip._id || trip.id;
-
-
-              return (
-
-                <article
-                  key={id}
-                  style={styles.card}
-                >
-
-
-
-                  {/* IMAGE */}
-
-                  <div style={styles.imageSection}>
-
-
-                    <img
-                      src={
-                        trip.displayImage ||
-                        defaultTripImage
-                      }
-                      alt={trip.title}
-                      style={styles.image}
-
-                      onError={(event)=>{
-
-                        event.currentTarget.src =
-                          defaultTripImage;
-
-                        event.currentTarget.onerror =
-                          null;
-
-                      }}
-
-                    />
-
-
-
-
-                    {trip.status === "completed" ? (
-
-                      <Link
-                        to={`/feedback/${trip._id}`}
-                        style={styles.commentsButton}
-                      >
-
-                        💬 Reviews
-
-                      </Link>
-
-
-                    ) : (
-
-
-                      <div
-                        style={styles.commentsDisabled}
-                      >
-
-                        💬 Reviews available after trip
-
-                      </div>
-
-
-                    )}
-
-
-
-                  </div>
-
-
-
-
-
-
-
-                  {/* DETAILS */}
-
-                  <div style={styles.body}>
-
-
-                    <div style={styles.mainInfo}>
-
-
-                      <div style={styles.titleRow}>
-
-
-                        <h2 style={styles.title}>
-                          {trip.title}
-                        </h2>
-
-
-
-
-                        <span
-                          style={{
-                            ...styles.statusBadge,
-
-                            ...(trip.status === "completed"
-                              ? styles.completed
-                              : trip.status === "ongoing"
-                              ? styles.ongoing
-                              : styles.planned)
-
-                          }}
-                        >
-
-                          {trip.status?.toUpperCase()}
-
-                        </span>
-
-
-
-                      </div>
-
-
-
-
-
-
-                      <p style={styles.route}>
-                        {trip.from} → {trip.to}
-                      </p>
-
-
-
-
-
-
-                      <div style={styles.details}>
-
-
-                        <span>
-                          📅 {formatDate(trip.date)}
-                        </span>
-
-
-
-
-                        {trip.rating > 0 ? (
-
-                          <span>
-                            ⭐ {trip.rating}
-                          </span>
-
-
-                        ) : (
-
-                          <span>
-                            ⭐ No reviews yet
-                          </span>
-
-                        )}
-
-
-
-
-
-
-                        <span>
-                          💰 $
-                          {Number(
-                            trip.price || 0
-                          ).toFixed(2)}
-                        </span>
-
-
-
-
-
-                        <span>
-                          🚗 {capitalize(
-                            trip.transportation
-                          )}
-                        </span>
-
-
-
-                        <span>
-                          🧳 {seatsLeft(trip)} seats left
-                        </span>
-
-
-
-                      </div>
-
-
-
-
-
-
-
-                      <div style={styles.actions}>
-
-
-                        <Link
-                          to={`/trips/${id}`}
-                          style={{
-                            ...pageTheme.buttonSecondary,
-                            ...styles.actionButton,
-                          }}
-                        >
-
-                          Trip Details
-
-                        </Link>
-
-
-
-
-
-                        <Link
-                          to={`/map/${id}`}
-                          style={{
-                            ...pageTheme.buttonSecondary,
-                            ...styles.actionButton,
-                          }}
-                        >
-
-                          Open Map
-
-                        </Link>
-
-
-
-                      </div>
-
-
-
-                    </div>
-
-
-                  </div>
-
-
-
-                </article>
-
-
-              );
-
-
-            })}
-
-
->>>>>>> origin/Final-Work
           </div>
-
-
-
-
         </section>
-
-
       )}
-
-
-
     </PublicPageLayout>
   );
-
 }
-<<<<<<< HEAD
-
-/*
-|--------------------------------------------------------------------------
-| Styles
-|--------------------------------------------------------------------------
-*/
 
 const styles = {
-=======
-const styles = {
-
->>>>>>> origin/Final-Work
   filters: {
     display: "grid",
-
     gridTemplateColumns:
       "repeat(auto-fit, minmax(220px, 1fr))",
-
     gap: 16,
   },
-
 
   resultsBar: {
     display: "flex",
-
     justifyContent:
       "space-between",
-
     gap: 16,
-
     alignItems:
       "flex-start",
-
     flexWrap: "wrap",
-
     marginBottom: 18,
   },
 
-
   resultsTitle: {
     margin: "0 0 6px",
-
     fontSize: 20,
-
     fontWeight: 900,
-
     color: "#1e3a8a",
   },
 
-
   resultsText: {
     margin: 0,
-
     color: "#475569",
-
     lineHeight: 1.7,
   },
 
-<<<<<<< HEAD
-  list: {
-    display: "flex",
-
-    flexDirection: "column",
-
-=======
-
   list: {
     display: "flex",
     flexDirection: "column",
->>>>>>> origin/Final-Work
     gap: 18,
   },
 
-
   card: {
     display: "flex",
-<<<<<<< HEAD
-
     alignItems: "stretch",
-
     width: "100%",
-
     background:
       "rgba(255,255,255,0.8)",
-
     border:
       "1px solid #bfdbfe",
-
     borderRadius: 18,
-
     overflow: "hidden",
-
     boxShadow:
       "0 12px 30px rgba(96,165,250,0.15)",
   },
 
   imageSection: {
     width: 230,
-
     minWidth: 230,
-
-    display: "flex",
-
-    flexDirection: "column",
-=======
-    alignItems: "stretch",
-    width: "100%",
-    background:
-      "rgba(255,255,255,0.8)",
-    border:
-      "1px solid #bfdbfe",
-    borderRadius: 18,
-    overflow: "hidden",
-    boxShadow:
-      "0 12px 30px rgba(96,165,250,0.15)",
->>>>>>> origin/Final-Work
-  },
-
-
-  imageSection: {
-    width: 230,
     display: "flex",
     flexDirection: "column",
   },
-
 
   image: {
     width: 230,
-<<<<<<< HEAD
-
     height: 200,
-
-=======
-    height: 200,
->>>>>>> origin/Final-Work
     objectFit: "cover",
-
     display: "block",
   },
 
   commentsButton: {
     display: "flex",
-
     alignItems: "center",
-
     justifyContent:
       "center",
-
     gap: 8,
-
     padding: "12px",
-
     background:
       "#f8fbff",
-
     borderTop:
       "1px solid #dbeafe",
-
     color:
       "#2563eb",
-
     textDecoration:
       "none",
-
     fontWeight: 700,
   },
 
   commentsDisabled: {
     display: "flex",
-
     justifyContent:
       "center",
-
     alignItems:
       "center",
-
     padding: "12px",
-
     background:
       "#f8fafc",
-
     color:
       "#94a3b8",
-
     borderTop:
       "1px solid #e2e8f0",
-
     fontSize: 14,
-
     fontWeight: 600,
-
     textAlign:
       "center",
   },
 
-<<<<<<< HEAD
   body: {
     flex: 1,
-
     display: "flex",
-
     justifyContent:
       "space-between",
-
     alignItems:
       "stretch",
-
     padding: 22,
-
     boxSizing:
       "border-box",
   },
@@ -2100,23 +1155,16 @@ const styles = {
 
   titleRow: {
     display: "flex",
-
     alignItems: "center",
-
     gap: 12,
-
     flexWrap: "wrap",
-
     marginBottom: 6,
   },
 
   title: {
     margin: "5px 0",
-
     fontSize: 23,
-
     fontWeight: 900,
-
     color:
       "#1e3a8a",
   },
@@ -2124,43 +1172,30 @@ const styles = {
   route: {
     margin:
       "5px 0 15px",
-
     color:
       "#2563eb",
-
     fontWeight: 700,
   },
 
   details: {
     display: "flex",
-
     flexWrap: "wrap",
-
     gap: 15,
-
     color:
       "#475569",
-
     marginBottom: 18,
-
     fontSize: 14,
   },
 
   statusBadge: {
     padding:
       "6px 12px",
-
     borderRadius: 20,
-
     fontSize: 12,
-
     fontWeight: 800,
-
     color: "#ffffff",
-
     textTransform:
       "uppercase",
-
     letterSpacing:
       "0.5px",
   },
@@ -2182,179 +1217,19 @@ const styles = {
 
   actions: {
     display: "flex",
-
     gap: 12,
-
     marginTop: 18,
-
     flexWrap: "wrap",
   },
 
   actionButton: {
     textDecoration:
       "none",
-
     textAlign:
       "center",
-
     padding:
       "10px 18px",
-
     borderRadius: 12,
-
     fontWeight: 800,
   },
-=======
-
-  commentsButton: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    padding: "12px",
-    background:
-      "#f8fbff",
-    borderTop:
-      "1px solid #dbeafe",
-    color:
-      "#2563eb",
-    textDecoration:
-      "none",
-    fontWeight: 700,
-  },
-
-
-  commentsDisabled: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: "12px",
-    background:
-      "#f8fafc",
-    color:
-      "#94a3b8",
-    borderTop:
-      "1px solid #e2e8f0",
-    fontSize: 14,
-    fontWeight: 600,
-    textAlign: "center",
-  },
-
-
-  body: {
-    flex: 1,
-    display: "flex",
-    justifyContent:
-      "space-between",
-    alignItems:
-      "stretch",
-    padding: 22,
-  },
-
-
-  mainInfo: {
-    flex: 1,
-  },
-
-
-  titleRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: 12,
-    flexWrap: "wrap",
-    marginBottom: 6,
-  },
-
-
-  title: {
-    margin: "5px 0",
-    fontSize: 23,
-    fontWeight: 900,
-    color:
-      "#1e3a8a",
-  },
-
-
-  route: {
-    margin:
-      "5px 0 15px",
-    color:
-      "#2563eb",
-    fontWeight: 700,
-  },
-
-
-  details: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: 15,
-    color:
-      "#475569",
-    marginBottom: 18,
-    fontSize: 14,
-  },
-
-
-  statusBadge: {
-    padding:
-      "6px 12px",
-    borderRadius:
-      20,
-    fontSize:
-      12,
-    fontWeight:
-      800,
-    color:
-      "#fff",
-    textTransform:
-      "uppercase",
-    letterSpacing:
-      "0.5px",
-  },
-
-
-  planned: {
-    background:
-      "#3b8ce9",
-  },
-
-
-  ongoing: {
-    background:
-      "#f59e0b",
-  },
-
-
-  completed: {
-    background:
-      "#dc2626",
-  },
-
-
-  actions: {
-    display:
-      "flex",
-    gap:
-      12,
-    marginTop:
-      18,
-    flexWrap:
-      "wrap",
-  },
-
-
-  actionButton: {
-    textDecoration:
-      "none",
-    textAlign:
-      "center",
-    padding:
-      "10px 18px",
-    borderRadius:
-      12,
-    fontWeight:
-      800,
-  },
-
->>>>>>> origin/Final-Work
 };

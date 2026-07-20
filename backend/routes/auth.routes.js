@@ -187,28 +187,30 @@ router.post(
 // LOGIN (CHECK DB)
 router.post("/login", async (req, res, next) => {
   try {
-<<<<<<< HEAD:backend/routes/auth.routes.js
     const email =
       normalizeAuthEmail(
         req.body.email
       );
-=======
-    const { email, password } = req.body;
->>>>>>> origin/Final-Work:backend/src/routes/auth.routes.js
+    const password = String(
+      req.body.password || ""
+    );
+
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Email and password are required.",
+      });
+    }
 
     const user = await User.findOne({ email })
       .select("+passwordHash");
 
     if (!user) {
-<<<<<<< HEAD:backend/routes/auth.routes.js
       return res.status(401).json({
         success: false,
         message:
           "This email does not exist. Please register first.",
-=======
-      return res.status(404).json({
-        message: "User not found"
->>>>>>> origin/Final-Work:backend/src/routes/auth.routes.js
       });
     }
 
@@ -219,13 +221,9 @@ router.post("/login", async (req, res, next) => {
 
     if (!isMatch) {
       return res.status(401).json({
-<<<<<<< HEAD:backend/routes/auth.routes.js
         success: false,
         message:
           "The password is incorrect. Please try again.",
-=======
-        message: "Wrong password"
->>>>>>> origin/Final-Work:backend/src/routes/auth.routes.js
       });
     }
 
@@ -233,13 +231,10 @@ router.post("/login", async (req, res, next) => {
 
     res.json({
       message: "Login successful",
-      token
+      token,
     });
-
-  } catch (err) {
-    res.status(500).json({
-      error: err.message
-    });
+  } catch (error) {
+    next(error);
   }
 });
 

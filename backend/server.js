@@ -65,7 +65,7 @@ const tripRoutes = require(
   "./routes/trips"
 );
 const feedbackRoutes = require(
-  "./src/routes/feedback"
+  "./routes/feedback"
 );
 const privateTripRequestRoutes = require(
   "./routes/privateTripRequests"

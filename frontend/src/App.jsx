@@ -10,47 +10,31 @@ import {
   useNavigate,
 } from "react-router-dom";
 
-import Welcome from "./pages/Welcome.jsx";
-import About from "./pages/About.jsx";
-import Trips from "./pages/Trips.jsx";
-import TripDetails from "./pages/TripDetails.jsx";
-import PrivateTrip from "./pages/PrivateTrip.jsx";
-import MyRequests from "./pages/MyRequests.jsx";
-import Login from "./pages/Login.jsx";
-import Register from "./pages/Register.jsx";
-import Map from "./pages/Map.jsx";
-import Approve from "./pages/Approve.jsx";
-<<<<<<< HEAD
-import Payment from "./pages/Payment.jsx"
 import DashboardLayout from "./components/DashboardLayout.jsx";
-import MyTrips from "./pages/MyTrips";
-import Profile from "./pages/Profile.jsx";
-import ManageTrips from "./pages/ManageTrips.jsx";
-import PostsStories from "./pages/PostsStories.jsx";
+import About from "./pages/About.jsx";
+import Approve from "./pages/Approve.jsx";
+import Feedback from "./pages/feedback.jsx";
 import Friends from "./pages/Friends.jsx";
-
-=======
-import Feedback from "./pages/Feedback";
->>>>>>> origin/Final-Work
+import Login from "./pages/Login.jsx";
+import ManageTrips from "./pages/ManageTrips.jsx";
+import MapPage from "./pages/Map.jsx";
+import MyRequests from "./pages/MyRequests.jsx";
+import MyTrips from "./pages/MyTrips.jsx";
+import Payment from "./pages/Payment.jsx";
+import PostsStories from "./pages/PostsStories.jsx";
+import PrivateTrip from "./pages/PrivateTrip.jsx";
+import Profile from "./pages/Profile.jsx";
+import Register from "./pages/Register.jsx";
+import TripDetails from "./pages/TripDetails.jsx";
+import Trips from "./pages/Trips.jsx";
+import Welcome from "./pages/Welcome.jsx";
 import {
   getAuthenticatedUser,
   getCurrentUser,
-  isOrganizerRole,
   isLoggedIn,
+  isOrganizerRole,
   logoutUser,
 } from "./api/auth.js";
-
-/*
-|--------------------------------------------------------------------------
-| Development console preview
-|--------------------------------------------------------------------------
-|
-| This allows a guest or client account to open /approve from the browser
-| console for UI preview.
-|
-| It does not bypass backend authorization.
-|
-*/
 
 const APPROVE_PREVIEW_KEY =
   "tripAppApprovePreview";
@@ -113,12 +97,6 @@ function hasApprovePreview() {
   );
 }
 
-/*
-|--------------------------------------------------------------------------
-| Normal protected route
-|--------------------------------------------------------------------------
-*/
-
 function ProtectedRoute({
   children,
 }) {
@@ -133,21 +111,6 @@ function ProtectedRoute({
 
   return children;
 }
-
-/*
-|--------------------------------------------------------------------------
-| Organizer route
-|--------------------------------------------------------------------------
-|
-| Normal behavior:
-| - organizer/admin: allowed
-| - client: redirected
-| - guest: redirected to login
-|
-| Development console preview:
-| - allows the page to render for UI testing
-|
-*/
 
 function OrganizerRoute({
   children,
@@ -210,14 +173,12 @@ function OrganizerRoute({
 
         setAccessState({
           checking: false,
-
           redirectTo:
             allowed
               ? "/approve"
               : previewRequested
                 ? "/approve"
                 : "/my-requests",
-
           allowed:
             allowed ||
             previewRequested,
@@ -278,9 +239,6 @@ function OrganizerRoute({
     previewRequested,
   ]);
 
-  /*
-   * Development console preview.
-   */
   if (
     accessState.preview &&
     accessState.allowed
@@ -335,12 +293,6 @@ function OrganizerRoute({
   return children;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Application
-|--------------------------------------------------------------------------
-*/
-
 export default function App() {
   const navigate =
     useNavigate();
@@ -353,15 +305,6 @@ export default function App() {
       return undefined;
     }
 
-    /*
-     * Open the Approve page.
-     *
-     * Organizer/admin:
-     * - opens normally.
-     *
-     * Client/guest:
-     * - enables preview mode.
-     */
     async function goToApprove() {
       try {
         if (
@@ -398,10 +341,6 @@ export default function App() {
             };
           }
 
-          /*
-           * Logged-in client:
-           * allow UI preview only.
-           */
           if (
             enableApprovePreview()
           ) {
@@ -417,7 +356,6 @@ export default function App() {
                 "client",
               page:
                 "/approve",
-
               message:
                 "Approve page opened in console preview mode.",
             };
@@ -433,15 +371,11 @@ export default function App() {
             role,
             page:
               "/my-requests",
-
             message:
               "Only organizers and administrators can access the approval page.",
           };
         }
 
-        /*
-         * Guest preview is also allowed.
-         */
         if (
           enableApprovePreview()
         ) {
@@ -455,7 +389,6 @@ export default function App() {
             guest: true,
             page:
               "/approve",
-
             message:
               "Approve page opened in console preview mode.",
           };
@@ -468,7 +401,6 @@ export default function App() {
           preview: false,
           guest: true,
           page: "/login",
-
           message:
             "Login is required before opening /approve.",
         };
@@ -478,10 +410,6 @@ export default function App() {
           error
         );
 
-        /*
-         * Fallback:
-         * open the page for UI testing.
-         */
         if (
           enableApprovePreview()
         ) {
@@ -494,7 +422,6 @@ export default function App() {
             preview: true,
             page:
               "/approve",
-
             message:
               "User verification failed, so the page was opened in console preview mode.",
           };
@@ -502,7 +429,6 @@ export default function App() {
 
         return {
           success: false,
-
           message:
             error?.message ||
             "Could not open the approval page.",
@@ -510,12 +436,6 @@ export default function App() {
       }
     }
 
-    /*
-     * Open My Requests.
-     *
-     * This also disables the
-     * Approve preview.
-     */
     async function goToMyRequests() {
       disableApprovePreview();
 
@@ -533,9 +453,6 @@ export default function App() {
       };
     }
 
-    /*
-     * Disable preview manually.
-     */
     async function stopApprovePreview() {
       disableApprovePreview();
 
@@ -548,51 +465,37 @@ export default function App() {
         preview: false,
         page:
           "/my-requests",
-
         message:
           "Approve preview mode disabled.",
       };
     }
 
-    /*
-     * Browser-console API.
-     */
     window.tripApp = {
       ...(
         window.tripApp ||
         {}
       ),
-
       goToApprove:
         goToApprove,
-
       openApprove:
         goToApprove,
-
       goToMyRequests:
         goToMyRequests,
-
       openMyRequests:
         goToMyRequests,
-
       disableApprovePreview:
         stopApprovePreview,
-
       getState: () => ({
         loggedIn:
           isLoggedIn(),
-
         development:
           isDevelopmentMode(),
-
         approvePreview:
           hasApprovePreview(),
-
         currentPage:
           window.location
             .pathname,
       }),
-
       switchPage: async (
         target
       ) => {
@@ -629,7 +532,6 @@ export default function App() {
 
         return {
           success: false,
-
           message:
             "Use 'approve' or 'my-requests'.",
         };
@@ -638,10 +540,6 @@ export default function App() {
 
     window.tripApp.goToSection =
       window.tripApp.switchPage;
-
-    /*
-     * Backward-compatible browser-console aliases.
-     */
     window.goToApprove =
       goToApprove;
     window.openApprove =
@@ -661,163 +559,160 @@ export default function App() {
         target
       );
 
-    return () => {
-      /*
-       * Keep tripApp available
-       * during React development
-       * remounts.
-       */
-    };
+    return () => {};
   }, [navigate]);
 
   return (
-   <Routes>
-
-<Route element={<DashboardLayout />}>
-
-  <Route path="/" element={<Welcome />} />
-
-  <Route path="/about" element={<About />} />
-
-<<<<<<< HEAD
-  <Route
-  path="/trips"
-  element={
-    <ProtectedRoute>
-      <Trips />
-    </ProtectedRoute>
-  }
-  />
-
-  <Route
-  path="/trips/:id"
-  element={
-    <ProtectedRoute>
-      <TripDetails />
-    </ProtectedRoute>
-  }
-  />
-=======
+    <Routes>
       <Route
-        path="/private-trip"
+        element={
+          <DashboardLayout />
+        }
+      >
+        <Route
+          path="/"
+          element={<Welcome />}
+        />
+
+        <Route
+          path="/about"
+          element={<About />}
+        />
+
+        <Route
+          path="/trips"
+          element={
+            <ProtectedRoute>
+              <Trips />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/trips/:id"
+          element={
+            <ProtectedRoute>
+              <TripDetails />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profile/posts-stories"
+          element={
+            <ProtectedRoute>
+              <PostsStories />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profile/friends"
+          element={
+            <ProtectedRoute>
+              <Friends />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/private-trip"
+          element={
+            <ProtectedRoute>
+              <PrivateTrip />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/my-requests"
+          element={
+            <ProtectedRoute>
+              <MyRequests />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/approve"
+          element={
+            <OrganizerRoute>
+              <Approve />
+            </OrganizerRoute>
+          }
+        />
+
+        <Route
+          path="/map"
+          element={<MapPage />}
+        />
+
+        <Route
+          path="/map/:tripId"
+          element={<MapPage />}
+        />
+
+        <Route
+          path="/manage-trips"
+          element={
+            <OrganizerRoute>
+              <ManageTrips />
+            </OrganizerRoute>
+          }
+        />
+
+        <Route
+          path="/my-trips"
+          element={
+            <ProtectedRoute>
+              <MyTrips />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/feedback/:tripId"
+          element={<Feedback />}
+        />
+      </Route>
+
+      <Route
+        path="/payment/:id"
         element={
           <ProtectedRoute>
-            <PrivateTrip />
+            <Payment />
           </ProtectedRoute>
         }
       />
-<Route
-  path="/feedback/:tripId"
-  element={<Feedback />}
-/>
-      <Route
-        path="/my-requests"
-        element={
-          <ProtectedRoute>
-            <MyRequests />
-          </ProtectedRoute>
-        }
-      />
->>>>>>> origin/Final-Work
 
- <Route
-path="/profile"
-element={
-  <ProtectedRoute>
-    <Profile/>
-  </ProtectedRoute>
-}
-/>
- <Route
-path="/profile/posts-stories"
-element={
-  <ProtectedRoute>
-    <PostsStories />
-  </ProtectedRoute>
-}
-/>
- <Route
-path="/profile/friends"
-element={
-  <ProtectedRoute>
-    <Friends />
-  </ProtectedRoute>
-}
-/>
-
-<<<<<<< HEAD
-  <Route
-  path="/private-trip"
-  element={
-    <ProtectedRoute>
-      <PrivateTrip />
-    </ProtectedRoute>
-  }
-/>
-
-  <Route path="/my-requests" element={<MyRequests />} />
-=======
-      <Route
-        path="/map"
-        element={<Map />}
-      />
-      <Route 
- path="/map/:tripId" 
- element={<Map />} 
-/>
       <Route
         path="/login"
         element={<Login />}
       />
->>>>>>> origin/Final-Work
 
-  <Route
-  path="/approve"
-  element={
-    <OrganizerRoute>
-      <Approve />
-    </OrganizerRoute>
-  }
-  />
+      <Route
+        path="/register"
+        element={<Register />}
+      />
 
-  <Route path="/map" element={<MapPage />} />
-  <Route
-path="/manage-trips"
-element={
-  <OrganizerRoute>
-    <ManageTrips />
-  </OrganizerRoute>
-}
-/>
-  <Route
-path="/my-trips"
-element={
-  <ProtectedRoute>
-    <MyTrips/>
-  </ProtectedRoute>
-}
-/>
-
-</Route>
-  <Route
-  path="/payment/:id"
-  element={
-    <ProtectedRoute>
-      <Payment />
-    </ProtectedRoute>
-  }
-  />
-
-<Route path="/login" element={<Login />} />
-
-<Route path="/register" element={<Register />} />
-
-
-<Route
- path="*"
- element={<Navigate to="/" replace />}
-/>
-
-</Routes>
+      <Route
+        path="*"
+        element={
+          <Navigate
+            to="/"
+            replace
+          />
+        }
+      />
+    </Routes>
   );
 }

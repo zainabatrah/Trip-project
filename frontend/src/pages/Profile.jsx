@@ -32,6 +32,8 @@ import {
   getUserAvatarUrl,
 } from "../components/social/socialHelpers.js";
 
+const emptyStatistics = {};
+
 function createProfileForm(
   profile
 ) {
@@ -105,7 +107,40 @@ export default function Profile() {
   }
 
   useEffect(() => {
-    loadDashboard();
+    let cancelled = false;
+
+    async function loadInitialDashboard() {
+      try {
+        const data =
+          await getSocialProfile();
+
+        if (!cancelled) {
+          setDashboard(data);
+          setFormData(
+            createProfileForm(
+              data.profile
+            )
+          );
+        }
+      } catch (requestError) {
+        if (!cancelled) {
+          setError(
+            requestError?.message ||
+              "Could not load your profile."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadInitialDashboard();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -128,7 +163,8 @@ export default function Profile() {
   const profile =
     dashboard?.profile || null;
   const statistics =
-    dashboard?.statistics || {};
+    dashboard?.statistics ||
+    emptyStatistics;
   const recentPosts =
     dashboard?.recentPosts || [];
   const activeStories =

@@ -405,10 +405,6 @@ export default function TripDetails() {
 
   useEffect(() => {
     if (!trip) {
-      setHeroImage(
-        defaultTripImage
-      );
-
       return undefined;
     }
 
@@ -419,14 +415,6 @@ export default function TripDetails() {
       getTripDisplayImage(
         trip
       );
-
-    /*
-     * Show the default while checking
-     * the selected image.
-     */
-    setHeroImage(
-      defaultTripImage
-    );
 
     const imageLoader =
       new window.Image();

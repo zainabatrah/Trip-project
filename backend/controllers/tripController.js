@@ -1,4 +1,4 @@
-const Trip = require("../src/models/Trip");
+const Trip = require("../models/Trip");
 
 async function getTrips(req, res) {
   try {

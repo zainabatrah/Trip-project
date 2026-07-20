@@ -125,10 +125,6 @@ export default function TopNavbar() {
 
   useEffect(() => {
     if (!user?._id) {
-      setNotifications([]);
-      setUnreadCount(0);
-      setNotificationOpen(false);
-
       return undefined;
     }
 
@@ -595,7 +591,7 @@ export default function TopNavbar() {
       ) : null}
     </div>
 
-    <Link to="/Profile" className={`{styles.profileCircle} ${styles.circles}`}>
+    <Link to="/Profile" className={`${styles.profileCircle} ${styles.circles}`}>
       {profileImage ? (
         <img
           src={profileImage}
@@ -612,6 +608,9 @@ export default function TopNavbar() {
     <button
       className={styles.secondaryBtn}
       onClick={() => {
+        setNotifications([]);
+        setUnreadCount(0);
+        setNotificationOpen(false);
         logoutUser();
         setUser(null);
         window.location.href = "/";

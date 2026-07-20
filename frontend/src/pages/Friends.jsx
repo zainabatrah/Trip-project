@@ -63,7 +63,35 @@ export default function Friends() {
   }
 
   useEffect(() => {
-    loadHub("");
+    let cancelled = false;
+
+    async function loadInitialHub() {
+      try {
+        const data =
+          await getFriendsHub("");
+
+        if (!cancelled) {
+          setHub(data);
+        }
+      } catch (requestError) {
+        if (!cancelled) {
+          setError(
+            requestError?.message ||
+              "Could not load the friends page."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadInitialHub();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
