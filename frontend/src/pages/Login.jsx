@@ -1,10 +1,15 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+<<<<<<< HEAD
 import {
   isOrganizerRole,
   loginUser,
 } from "../api/auth.js";
 import "./Login.css";
+=======
+import "./Login.css";
+
+>>>>>>> origin/Final-Work
 export default function Login() {
   const navigate = useNavigate();
 
@@ -18,6 +23,7 @@ export default function Login() {
     setError("");
 
     try {
+<<<<<<< HEAD
       const data = await loginUser({
         email,
         password,
@@ -39,6 +45,30 @@ export default function Login() {
         err?.message ||
           "Login failed"
       );
+=======
+      const res = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        // Save token
+        localStorage.setItem("token", data.token);
+
+        // Go to List of Trips
+        navigate("/trips");
+      } else {
+        setError(data.error || "Login failed");
+      }
+    } catch (err) {
+      console.error("Error:", err);
+      setError("Server not reachable");
+>>>>>>> origin/Final-Work
     }
   };
 
@@ -67,11 +97,15 @@ export default function Login() {
           </div>
         )}
 
+<<<<<<< HEAD
         <form
           className="login-form"
           onSubmit={handleLogin}
           noValidate
         >
+=======
+        <form className="login-form" onSubmit={handleLogin}>
+>>>>>>> origin/Final-Work
           {/* Email */}
           <div className="form-group">
             <label>Email</label>
@@ -124,4 +158,8 @@ export default function Login() {
       </div>
     </div>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/Final-Work

@@ -184,67 +184,63 @@ router.post(
   }
 );
 
+// LOGIN (CHECK DB)
 router.post("/login", async (req, res, next) => {
   try {
+<<<<<<< HEAD:backend/routes/auth.routes.js
     const email =
       normalizeAuthEmail(
         req.body.email
       );
+=======
+    const { email, password } = req.body;
+>>>>>>> origin/Final-Work:backend/src/routes/auth.routes.js
 
-    const password = String(
-      req.body.password || ""
-    );
-
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "Email and password are required.",
-      });
-    }
-
-    const user = await User.findOne({
-      email,
-    }).select("+passwordHash");
+    const user = await User.findOne({ email })
+      .select("+passwordHash");
 
     if (!user) {
+<<<<<<< HEAD:backend/routes/auth.routes.js
       return res.status(401).json({
         success: false,
         message:
           "This email does not exist. Please register first.",
+=======
+      return res.status(404).json({
+        message: "User not found"
+>>>>>>> origin/Final-Work:backend/src/routes/auth.routes.js
       });
     }
 
-    const passwordMatches = await bcrypt.compare(
+    const isMatch = await bcrypt.compare(
       password,
       user.passwordHash
     );
 
-    if (!passwordMatches) {
+    if (!isMatch) {
       return res.status(401).json({
+<<<<<<< HEAD:backend/routes/auth.routes.js
         success: false,
         message:
           "The password is incorrect. Please try again.",
+=======
+        message: "Wrong password"
+>>>>>>> origin/Final-Work:backend/src/routes/auth.routes.js
       });
     }
 
     const token = signUserToken(user);
 
-    return res.status(200).json({
-      success: true,
-      message: "Login successful.",
-      token,
-      user: publicUser(user),
+    res.json({
+      message: "Login successful",
+      token
     });
-  } catch (error) {
-    next(error);
-  }
-});
 
-router.get("/me", requireAuth, (req, res) => {
-  return res.status(200).json({
-    success: true,
-    user: publicUser(req.user),
-  });
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
+  }
 });
 
 module.exports = router;

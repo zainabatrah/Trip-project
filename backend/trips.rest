@@ -1,0 +1,187 @@
+### 1. Baalbek Temples & Bekaa Heritage Tour
+POST http://localhost:5000/api/trips
+Content-Type: application/json
+
+{
+  "title": "Baalbek Temples & Bekaa Heritage Tour",
+  "country": "Lebanon",
+  "from": "Beirut",
+  "to": "Baalbek",
+  "date": "2026-10-05",
+  "description": "Explore the magnificent Roman temples of Baalbek while discovering the cultural heritage and scenic landscapes of the Bekaa Valley.",
+  "photo": "/Images/Baalbeck.jpg",
+  "price": 90,
+  "duration": 1,
+  "numberOfTravelers": 20,
+  "reservedTravelers": 0,
+  "transportation": "bus",
+  "tripType": "family",
+  "rating": 0,
+  "inclusions": [
+    "Transportation",
+    "Professional Guide",
+    "Lunch"
+  ],
+  "stops": [
+    { "name": "Anjar" },
+    { "name": "Zahle" },
+    { "name": "Baalbek Temples" }
+  ]
+}
+
+### 3. Jeita Grotto & Byblos Coastal Discovery
+POST http://localhost:5000/api/trips
+Content-Type: application/json
+
+{
+  "title": "Jeita Grotto & Byblos Coastal Discovery",
+  "country": "Lebanon",
+  "from": "Beirut",
+  "to": "Byblos",
+  "date": "2026-07-15",
+  "description": "Visit Lebanon's famous Jeita Grotto before exploring the ancient streets, harbor, and old souks of Byblos.",
+  "photo": "/Images/Jeita.jpg",
+  "price": 75,
+  "duration": 1,
+  "numberOfTravelers": 25,
+  "reservedTravelers": 0,
+  "transportation": "bus",
+  "tripType": "family",
+  "rating": 0,
+  "inclusions": [
+    "Transportation",
+    "Guide",
+    "Entrance Tickets",
+    "Lunch"
+  ],
+  "stops": [
+    { "name": "Jounieh" },
+    { "name": "Jeita Grotto" },
+    { "name": "Byblos Old Souk" }
+  ]
+}
+
+### 4. Sidon & Tyre Ancient Coastline Tour
+POST http://localhost:5000/api/trips
+Content-Type: application/json
+
+{
+  "title": "Sidon & Tyre Ancient Coastline Tour",
+  "country": "Lebanon",
+  "from": "Beirut",
+  "to": "Tyre",
+  "date": "2026-07-25",
+  "description": "Discover southern Lebanon through Sidon's historic landmarks before relaxing along the beautiful coastline of Tyre.",
+  "photo": "/Images/Tyre-Beach-Lebanon.jpg",
+  "price": 110,
+  "duration": 1,
+  "numberOfTravelers": 35,
+  "reservedTravelers": 0,
+  "transportation": "bus",
+  "tripType": "relax",
+  "rating": 0,
+  "inclusions": [
+    "Transportation",
+    "Historical Guide",
+    "Lunch"
+  ],
+  "stops": [
+    { "name": "Sidon Sea Castle" },
+    { "name": "Saida Old Souk" },
+    { "name": "Tyre Coast" }
+  ]
+}
+
+### 5. Cedars of God & Qadisha Valley Escape
+POST http://localhost:5000/api/trips
+Content-Type: application/json
+
+{
+  "title": "Cedars of God & Qadisha Valley Escape",
+  "country": "Lebanon",
+  "from": "Beirut",
+  "to": "Bcharre",
+  "date": "2026-09-10",
+  "description": "Enjoy breathtaking mountain scenery while exploring the Cedars of God forest and the spectacular Qadisha Valley.",
+  "photo": "/Images/download.avif",
+  "price": 150,
+  "duration": 1,
+  "numberOfTravelers": 30,
+  "reservedTravelers": 0,
+  "transportation": "bus",
+  "tripType": "adventure",
+  "rating": 0,
+  "inclusions": [
+    "Transportation",
+    "Mountain Guide",
+    "Lunch",
+    "Entrance Fees"
+  ],
+  "stops": [
+    { "name": "Ehden" },
+    { "name": "Qadisha Valley" },
+    { "name": "Cedars of God" }
+  ]
+}
+
+### 6. Cedars Summer Hiking Adventure
+POST http://localhost:5000/api/trips
+Content-Type: application/json
+
+{
+  "title": "Cedars Summer Hiking Adventure",
+  "country": "Lebanon",
+  "from": "Beirut",
+  "to": "Bcharre",
+  "date": "2026-07-15",
+  "description": "Spend a memorable summer day hiking through Lebanon's cedar forests while enjoying fresh mountain air and stunning panoramic views.",
+  "photo": "/Images/Outdoor-Adventures-Lebanon_FT1_.webp",
+  "price": 150,
+  "duration": 1,
+  "numberOfTravelers": 30,
+  "reservedTravelers": 0,
+  "transportation": "bus",
+  "tripType": "adventure",
+  "inclusions": [
+    "Transportation",
+    "Professional Guide",
+    "Lunch",
+    "Outdoor Activities"
+  ],
+  "stops": [
+    { "name": "Bcharre" },
+    { "name": "Qadisha Valley" },
+    { "name": "Cedars of God" }
+  ]
+}
+
+
+### 8. Marjayoun & Hasbaya Countryside Escape
+POST http://localhost:5000/api/trips
+Content-Type: application/json
+
+{
+  "title": "Marjayoun & Hasbaya Countryside Escape",
+  "country": "Lebanon",
+  "from": "Beirut",
+  "to": "Marjayoun",
+  "date": "2026-09-22",
+  "description": "Escape to the peaceful countryside of Marjayoun and Hasbaya, surrounded by green hills, historic villages, and breathtaking landscapes.",
+  "photo":"/Images/South.jpg",
+  "price": 65,
+  "duration": 1,
+  "numberOfTravelers": 20,
+  "reservedTravelers": 0,
+  "transportation": "bus",
+  "tripType": "relax",
+  "rating": 0,
+  "inclusions": [
+    "Transportation",
+    "Local Guide",
+    "Lunch"
+  ],
+  "stops": [
+    { "name": "Hasbaya" },
+    { "name": "Marjayoun" }
+  ]
+}

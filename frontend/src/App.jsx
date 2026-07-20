@@ -18,8 +18,9 @@ import PrivateTrip from "./pages/PrivateTrip.jsx";
 import MyRequests from "./pages/MyRequests.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
-import MapPage from "./pages/Map.jsx";
+import Map from "./pages/Map.jsx";
 import Approve from "./pages/Approve.jsx";
+<<<<<<< HEAD
 import Payment from "./pages/Payment.jsx"
 import DashboardLayout from "./components/DashboardLayout.jsx";
 import MyTrips from "./pages/MyTrips";
@@ -28,6 +29,9 @@ import ManageTrips from "./pages/ManageTrips.jsx";
 import PostsStories from "./pages/PostsStories.jsx";
 import Friends from "./pages/Friends.jsx";
 
+=======
+import Feedback from "./pages/Feedback";
+>>>>>>> origin/Final-Work
 import {
   getAuthenticatedUser,
   getCurrentUser,
@@ -675,6 +679,7 @@ export default function App() {
 
   <Route path="/about" element={<About />} />
 
+<<<<<<< HEAD
   <Route
   path="/trips"
   element={
@@ -692,6 +697,28 @@ export default function App() {
     </ProtectedRoute>
   }
   />
+=======
+      <Route
+        path="/private-trip"
+        element={
+          <ProtectedRoute>
+            <PrivateTrip />
+          </ProtectedRoute>
+        }
+      />
+<Route
+  path="/feedback/:tripId"
+  element={<Feedback />}
+/>
+      <Route
+        path="/my-requests"
+        element={
+          <ProtectedRoute>
+            <MyRequests />
+          </ProtectedRoute>
+        }
+      />
+>>>>>>> origin/Final-Work
 
  <Route
 path="/profile"
@@ -718,6 +745,7 @@ element={
 }
 />
 
+<<<<<<< HEAD
   <Route
   path="/private-trip"
   element={
@@ -728,6 +756,20 @@ element={
 />
 
   <Route path="/my-requests" element={<MyRequests />} />
+=======
+      <Route
+        path="/map"
+        element={<Map />}
+      />
+      <Route 
+ path="/map/:tripId" 
+ element={<Map />} 
+/>
+      <Route
+        path="/login"
+        element={<Login />}
+      />
+>>>>>>> origin/Final-Work
 
   <Route
   path="/approve"

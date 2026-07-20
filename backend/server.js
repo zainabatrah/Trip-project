@@ -64,7 +64,9 @@ const authRoutes = require(
 const tripRoutes = require(
   "./routes/trips"
 );
-
+const feedbackRoutes = require(
+  "./src/routes/feedback"
+);
 const privateTripRequestRoutes = require(
   "./routes/privateTripRequests"
 );
@@ -293,6 +295,7 @@ app.use(
   "/api/private-trip-requests",
   privateTripRequestRoutes
 );
+app.use("/api/feedback", feedbackRoutes);
 
 app.use("/api/payment", paymentRoutes);
 app.use("/api/bookings", bookingRoute);
