@@ -395,12 +395,21 @@ export default function TopNavbar() {
    <Link to="/trips" className={styles.link}>
               Trips
             </Link>
-            <Link 
+<Link 
     to={isOrganizer ? "/manage-trips" : "/my-trips"} 
     className={styles.link}
 >
     {isOrganizer ? "Manage Trips" : "My Trips"}
 </Link>
+
+    {isOrganizer ? (
+      <Link
+        to="/manage-travelers"
+        className={styles.link}
+      >
+        Manage Travelers
+      </Link>
+    ) : null}
 
     {isOrganizer ? (
       <Link to="/approve" className={styles.link}>

@@ -4,6 +4,12 @@ const router = express.Router();
 const Booking = require("../models/Booking");
 const Trip = require("../models/Trip");
 const {
+    requireAuth,
+    requireOrganizer,
+} = require(
+    "../middleware/auth"
+);
+const {
     createNotification,
 } = require(
     "../services/notificationService"
@@ -14,16 +20,18 @@ const {
 
 // Create booking after successful payment
 
-router.post("/", async (req, res) => {
+router.post("/", requireAuth, async (req, res) => {
 
     try {
 
      const {
-    userId,
     tripId,
     travelers,
     totalPrice
 } = req.body;
+        const userId = String(
+            req.user?._id || ""
+        );
 
 
 
@@ -128,9 +136,67 @@ trip.reservedTravelers += travelers;
 
 });
 
-router.get("/my-trips/:userId", async(req,res)=>{
+router.get(
+    "/manage",
+    requireAuth,
+    requireOrganizer,
+    async (req, res) => {
+
+        try {
+
+            const bookings = await Booking.find({})
+                .populate({
+                    path: "tripId",
+                    select: "title country tripType photo transportation duration date numberOfTravelers reservedTravelers"
+                })
+                .populate({
+                    path: "userId",
+                    model: "User",
+                    select: "fullName email profileImage country"
+                })
+                .sort({ createdAt: -1 });
+
+            res.json({
+                success: true,
+                bookings
+            });
+
+        } catch (error) {
+
+            res.status(500).json({
+                success: false,
+                message: error.message
+            });
+
+        }
+
+    }
+);
+
+router.get("/my-trips/:userId", requireAuth, async(req,res)=>{
 
     try{
+
+        const requestedUserId = String(
+            req.params.userId || ""
+        );
+        const authenticatedUserId = String(
+            req.user?._id || ""
+        );
+        const isOrganizer =
+            ["organizer", "admin"].includes(
+                String(req.user?.role || "").toLowerCase()
+            );
+
+        if (
+            requestedUserId !== authenticatedUserId &&
+            !isOrganizer
+        ) {
+            return res.status(403).json({
+                success: false,
+                message: "You do not have permission to view these bookings"
+            });
+        }
 
         const bookings = await Booking.find({
             userId:req.params.userId
@@ -164,6 +230,7 @@ router.get("/my-trips/:userId", async(req,res)=>{
 
 router.put(
     "/cancel/:id",
+    requireAuth,
     cancelBooking
 );
 

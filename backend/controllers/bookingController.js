@@ -6,6 +6,11 @@ const {
 } = require(
     "../services/notificationService"
 );
+const {
+    getEffectiveUserRole,
+} = require(
+    "../middleware/auth"
+);
 
  const cancelBooking = async (req, res) => {
 
@@ -25,6 +30,25 @@ const {
         if (booking.bookingStatus === "cancelled") {
             return res.status(400).json({
                 message: "Booking already cancelled"
+            });
+        }
+
+        const authenticatedUserId =
+            String(req.user?._id || "");
+        const bookingUserId =
+            String(booking.userId || "");
+        const userRole =
+            getEffectiveUserRole(req.user);
+        const isOrganizer =
+            userRole === "organizer" ||
+            userRole === "admin";
+
+        if (
+            authenticatedUserId !== bookingUserId &&
+            !isOrganizer
+        ) {
+            return res.status(403).json({
+                message: "You do not have permission to cancel this booking"
             });
         }
 

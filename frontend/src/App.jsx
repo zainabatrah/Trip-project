@@ -16,6 +16,7 @@ import Approve from "./pages/Approve.jsx";
 import Feedback from "./pages/feedback.jsx";
 import Friends from "./pages/Friends.jsx";
 import Login from "./pages/Login.jsx";
+import ManageTravelers from "./pages/ManageTravelers.jsx";
 import ManageTrips from "./pages/ManageTrips.jsx";
 import MapPage from "./pages/Map.jsx";
 import MyRequests from "./pages/MyRequests.jsx";
@@ -666,6 +667,15 @@ export default function App() {
           element={
             <OrganizerRoute>
               <ManageTrips />
+            </OrganizerRoute>
+          }
+        />
+
+        <Route
+          path="/manage-travelers"
+          element={
+            <OrganizerRoute>
+              <ManageTravelers />
             </OrganizerRoute>
           }
         />

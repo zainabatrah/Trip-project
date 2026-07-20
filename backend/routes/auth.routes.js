@@ -230,12 +230,25 @@ router.post("/login", async (req, res, next) => {
     const token = signUserToken(user);
 
     res.json({
+      success: true,
       message: "Login successful",
       token,
+      user: publicUser(user),
     });
   } catch (error) {
     next(error);
   }
 });
+
+router.get(
+  "/me",
+  requireAuth,
+  async (req, res) => {
+    res.json({
+      success: true,
+      user: publicUser(req.user),
+    });
+  }
+);
 
 module.exports = router;
