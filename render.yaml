@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: trip-project-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGODB_URI
+        sync: false
+      - key: FRONTEND_URL
+        fromService:
+          type: web
+          name: trip-project-web
+          envVarKey: RENDER_EXTERNAL_URL
+
+  - type: web
+    name: trip-project-web
+    runtime: static
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && VITE_API_URL="${API_ORIGIN}/api" npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: API_ORIGIN
+        fromService:
+          type: web
+          name: trip-project-api
+          envVarKey: RENDER_EXTERNAL_URL
