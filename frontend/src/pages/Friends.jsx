@@ -16,6 +16,10 @@ import {
   pageTheme,
 } from "../components/publicPageTheme.js";
 import {
+  createAutoFitMinmax,
+  useCompactLayout,
+} from "../utils/responsive.js";
+import {
   getUserAvatarUrl,
 } from "../components/social/socialHelpers.js";
 import {
@@ -26,6 +30,8 @@ import {
 } from "../api/social.js";
 
 export default function Friends() {
+  const isCompact =
+    useCompactLayout();
   const [hub, setHub] =
     useState(null);
   const [loading, setLoading] =
@@ -292,7 +298,12 @@ export default function Friends() {
           onSubmit={
             handleSearchSubmit
           }
-          style={styles.searchForm}
+          style={{
+            ...styles.searchForm,
+            ...(isCompact
+              ? styles.searchFormCompact
+              : null),
+          }}
         >
           <input
             type="search"
@@ -460,7 +471,14 @@ export default function Friends() {
         )}
       </section>
 
-      <div style={styles.lowerGrid}>
+      <div
+        style={{
+          ...styles.lowerGrid,
+          ...(isCompact
+            ? styles.lowerGridCompact
+            : null),
+        }}
+      >
         <section style={pageTheme.surface}>
           <div style={styles.sectionHeader}>
             <div>
@@ -729,7 +747,7 @@ function FriendshipRow({
 }
 const styles = {
   headerCard: {
-    minWidth: 170,
+    minWidth: "min(100%, 170px)",
     padding: "18px 20px",
     borderRadius: 18,
     background:
@@ -759,7 +777,7 @@ const styles = {
   summaryGrid: {
     display: "grid",
     gridTemplateColumns:
-      "repeat(auto-fit, minmax(180px, 1fr))",
+      createAutoFitMinmax(180),
     gap: 14,
     marginBottom: 20,
   },
@@ -829,10 +847,14 @@ const styles = {
     marginBottom: 18,
   },
 
+  searchFormCompact: {
+    gridTemplateColumns: "1fr",
+  },
+
   directoryGrid: {
     display: "grid",
     gridTemplateColumns:
-      "repeat(auto-fit, minmax(250px, 1fr))",
+      createAutoFitMinmax(250),
     gap: 14,
   },
 
@@ -895,6 +917,10 @@ const styles = {
     marginTop: 20,
   },
 
+  lowerGridCompact: {
+    gridTemplateColumns: "1fr",
+  },
+
   listStack: {
     display: "grid",
     gap: 12,
@@ -919,6 +945,8 @@ const styles = {
     display: "flex",
     gap: 12,
     alignItems: "flex-start",
+    minWidth: 0,
+    flexWrap: "wrap",
   },
 
   rowAvatar: {
@@ -949,7 +977,7 @@ const styles = {
   friendsGrid: {
     display: "grid",
     gridTemplateColumns:
-      "repeat(auto-fit, minmax(220px, 1fr))",
+      createAutoFitMinmax(220),
     gap: 14,
   },
 

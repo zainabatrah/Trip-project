@@ -746,14 +746,16 @@ export default function Map() {
         background:
           "#eff6ff",
         minHeight: "100vh",
-        padding: "25px",
+        padding:
+          "clamp(14px, 4vw, 25px)",
       }}
     >
       <div
         style={{
           background:
             "white",
-          padding: "20px",
+          padding:
+            "clamp(16px, 4vw, 20px)",
           borderRadius:
             "22px",
           marginBottom:
@@ -766,6 +768,8 @@ export default function Map() {
           style={{
             margin: 0,
             color: "#0369a1",
+            fontSize:
+              "clamp(28px, 7vw, 38px)",
           }}
         >
           {trip.title}
@@ -792,7 +796,8 @@ export default function Map() {
 
       <div
         style={{
-          height: "600px",
+          height:
+            "clamp(340px, 70vh, 600px)",
           borderRadius:
             "25px",
           overflow: "hidden",

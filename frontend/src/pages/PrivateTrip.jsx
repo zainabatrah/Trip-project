@@ -5,6 +5,7 @@ import {
 
 import PublicPageLayout from "../components/PublicPageLayout.jsx";
 import { pageTheme } from "../components/publicPageTheme.js";
+import { createAutoFitMinmax } from "../utils/responsive.js";
 
 import {
   createPrivateTripRequest,
@@ -832,7 +833,7 @@ const styles = {
   highlightsGrid: {
     display: "grid",
     gridTemplateColumns:
-      "repeat(auto-fit, minmax(220px, 1fr))",
+      createAutoFitMinmax(220),
     gap: 16,
     marginBottom: 18,
   },
@@ -863,14 +864,14 @@ const styles = {
   grid: {
     display: "grid",
     gridTemplateColumns:
-      "repeat(auto-fit, minmax(240px, 1fr))",
+      createAutoFitMinmax(240),
     gap: 16,
   },
 
   notesGrid: {
     display: "grid",
     gridTemplateColumns:
-      "repeat(auto-fit, minmax(260px, 1fr))",
+      createAutoFitMinmax(260),
     gap: 18,
     alignItems: "start",
   },

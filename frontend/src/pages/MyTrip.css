@@ -1,5 +1,5 @@
 
-..mybody{
+.mybody{
     background: linear-gradient(rgba(168, 192, 255, 0.55) 0%, rgba(219, 234, 254, 0.82) 46%, rgba(255, 255, 255, 0.94) 100%);
 }
 
@@ -7,7 +7,7 @@
 .myTrips{
     max-width:1200px;
     margin:40px auto;
-    padding:20px;
+    padding:clamp(16px, 4vw, 20px);
     font-family:Arial,sans-serif;
 }
 
@@ -17,7 +17,7 @@
 }
 
 .header h1{
-    font-size:38px;
+    font-size:clamp(28px, 7vw, 38px);
     color:#5b3df5;
     margin-bottom:8px;
 }
@@ -87,6 +87,8 @@
     display:flex;
     justify-content:space-between;
     align-items:flex-start;
+    gap:12px;
+    flex-wrap:wrap;
 }
 
 .topRow h2{
@@ -111,6 +113,8 @@
     display:flex;
     justify-content:space-between;
     align-items:center;
+    gap:16px;
+    flex-wrap:wrap;
 }
 
 .bottomRow h3{
@@ -121,6 +125,7 @@
 .buttons{
     display:flex;
     gap:15px;
+    flex-wrap:wrap;
 }
 
 .detailsBtn,
@@ -182,9 +187,37 @@
         width:100%;
     }
 
+    .buttons > *{
+        flex:1 1 160px;
+    }
+
     .detailsBtn,
     .receiptBtn{
         flex:1;
+    }
+}
+
+@media(max-width:480px){
+
+    .header p{
+        font-size:15px;
+    }
+
+    .tripInfo{
+        padding:18px;
+    }
+
+    .topRow h2{
+        font-size:24px;
+    }
+
+    .bottomRow h3{
+        font-size:24px;
+    }
+
+    .details{
+        gap:14px;
+        margin:16px 0;
     }
 }
 

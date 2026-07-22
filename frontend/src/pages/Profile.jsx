@@ -26,6 +26,10 @@ import ProfileAreaLayout from "../components/ProfileAreaLayout.jsx";
 import {
   pageTheme,
 } from "../components/publicPageTheme.js";
+import {
+  createAutoFitMinmax,
+  useCompactLayout,
+} from "../utils/responsive.js";
 import SocialPostCard from "../components/social/SocialPostCard.jsx";
 import SocialStoryCard from "../components/social/SocialStoryCard.jsx";
 import {
@@ -47,6 +51,8 @@ function createProfileForm(
 }
 
 export default function Profile() {
+  const isCompact =
+    useCompactLayout();
   const [dashboard, setDashboard] =
     useState(null);
   const [loading, setLoading] =
@@ -477,7 +483,14 @@ export default function Profile() {
       ) : null}
 
       <section style={styles.heroCard}>
-        <div style={styles.heroMain}>
+        <div
+          style={{
+            ...styles.heroMain,
+            ...(isCompact
+              ? styles.heroMainCompact
+              : null),
+          }}
+        >
           <div style={styles.avatarShell}>
             <img
               src={
@@ -635,7 +648,14 @@ export default function Profile() {
         </Link>
       </section>
 
-      <div style={styles.contentGrid}>
+      <div
+        style={{
+          ...styles.contentGrid,
+          ...(isCompact
+            ? styles.contentGridCompact
+            : null),
+        }}
+      >
         <section style={pageTheme.surface}>
           <div style={styles.sectionHeader}>
             <div>
@@ -1011,7 +1031,7 @@ function ModalCard({
 
 const styles = {
   headerCard: {
-    minWidth: 180,
+    minWidth: "min(100%, 180px)",
     padding: "18px 20px",
     borderRadius: 18,
     background:
@@ -1039,7 +1059,7 @@ const styles = {
   },
 
   heroCard: {
-    padding: 28,
+    padding: "clamp(20px, 4vw, 28px)",
     borderRadius: 28,
     background:
       "linear-gradient(145deg, rgba(255, 255, 255, 0.86), rgba(219, 234, 254, 0.76), rgba(191, 219, 254, 0.62))",
@@ -1057,10 +1077,15 @@ const styles = {
     alignItems: "center",
   },
 
+  heroMainCompact: {
+    gridTemplateColumns: "1fr",
+    gap: 18,
+  },
+
   avatarShell: {
     position: "relative",
-    width: 160,
-    height: 160,
+    width: "clamp(120px, 34vw, 160px)",
+    height: "clamp(120px, 34vw, 160px)",
     margin: "0 auto",
   },
 
@@ -1112,7 +1137,7 @@ const styles = {
 
   heroTitle: {
     margin: "16px 0 8px",
-    fontSize: 34,
+    fontSize: "clamp(28px, 6vw, 34px)",
     color: "#1e3a8a",
     lineHeight: 1.05,
   },
@@ -1162,7 +1187,7 @@ const styles = {
   statsGrid: {
     display: "grid",
     gridTemplateColumns:
-      "repeat(auto-fit, minmax(150px, 1fr))",
+      createAutoFitMinmax(150),
     gap: 14,
     marginTop: 24,
   },
@@ -1193,7 +1218,7 @@ const styles = {
   quickGrid: {
     display: "grid",
     gridTemplateColumns:
-      "repeat(auto-fit, minmax(280px, 1fr))",
+      createAutoFitMinmax(280),
     gap: 16,
     marginTop: 22,
   },
@@ -1249,6 +1274,10 @@ const styles = {
     marginTop: 22,
   },
 
+  contentGridCompact: {
+    gridTemplateColumns: "1fr",
+  },
+
   sectionHeader: {
     display: "flex",
     justifyContent:
@@ -1286,14 +1315,14 @@ const styles = {
   storyGrid: {
     display: "grid",
     gridTemplateColumns:
-      "repeat(auto-fit, minmax(180px, 1fr))",
+      createAutoFitMinmax(180),
     gap: 14,
   },
 
   friendGrid: {
     display: "grid",
     gridTemplateColumns:
-      "repeat(auto-fit, minmax(140px, 1fr))",
+      createAutoFitMinmax(140),
     gap: 12,
   },
 

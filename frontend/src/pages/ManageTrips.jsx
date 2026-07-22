@@ -18,6 +18,10 @@ import {
   pageTheme,
 } from "../components/publicPageTheme.js";
 import {
+  createAutoFitMinmax,
+  useCompactLayout,
+} from "../utils/responsive.js";
+import {
   createTrip,
   deleteTrip,
   getTrips,
@@ -469,6 +473,8 @@ function buildTripPayload(form) {
 }
 
 export default function ManageTrips() {
+  const isCompact =
+    useCompactLayout();
   const [trips, setTrips] = useState([]);
   const [form, setForm] = useState(
     createEmptyForm()
@@ -850,7 +856,14 @@ export default function ManageTrips() {
         </div>
       ) : null}
 
-      <div style={styles.layout}>
+      <div
+        style={{
+          ...styles.layout,
+          ...(isCompact
+            ? styles.layoutCompact
+            : null),
+        }}
+      >
         <section style={styles.formColumn}>
           <form
             onSubmit={handleSubmit}
@@ -1846,7 +1859,7 @@ function PreviewRow({
 
 const styles = {
   headerCard: {
-    minWidth: 170,
+    minWidth: "min(100%, 170px)",
     padding: "18px 20px",
     borderRadius: 18,
     background:
@@ -1876,7 +1889,7 @@ const styles = {
   statsGrid: {
     display: "grid",
     gridTemplateColumns:
-      "repeat(auto-fit, minmax(180px, 1fr))",
+      createAutoFitMinmax(180),
     gap: 14,
     marginBottom: 20,
   },
@@ -1923,6 +1936,10 @@ const styles = {
     alignItems: "start",
   },
 
+  layoutCompact: {
+    gridTemplateColumns: "1fr",
+  },
+
   formColumn: {
     minWidth: 0,
   },
@@ -1957,7 +1974,7 @@ const styles = {
   formGrid: {
     display: "grid",
     gridTemplateColumns:
-      "repeat(auto-fit, minmax(210px, 1fr))",
+      createAutoFitMinmax(210),
     gap: 14,
   },
 
@@ -2013,7 +2030,7 @@ const styles = {
   placeGrid: {
     display: "grid",
     gridTemplateColumns:
-      "repeat(auto-fit, minmax(190px, 1fr))",
+      createAutoFitMinmax(190),
     gap: 12,
   },
 
@@ -2132,7 +2149,7 @@ const styles = {
   catalogFilters: {
     display: "grid",
     gridTemplateColumns:
-      "repeat(auto-fit, minmax(180px, 1fr))",
+      createAutoFitMinmax(180),
     gap: 12,
   },
 
@@ -2166,6 +2183,7 @@ const styles = {
       "space-between",
     gap: 12,
     alignItems: "flex-start",
+    flexWrap: "wrap",
   },
 
   tripTagRow: {

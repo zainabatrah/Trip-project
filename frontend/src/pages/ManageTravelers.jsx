@@ -18,6 +18,7 @@ import {
   getStatusBadgeStyle,
   pageTheme,
 } from "../components/publicPageTheme.js";
+import { createAutoFitMinmax } from "../utils/responsive.js";
 import {
   cancelBookingById,
   getManagedBookings,
@@ -416,7 +417,7 @@ export default function ManageTravelers() {
           style={{
             display: "grid",
             gridTemplateColumns:
-              "repeat(auto-fit, minmax(220px, 1fr))",
+              createAutoFitMinmax(220),
             gap: 14,
           }}
         >
@@ -887,7 +888,7 @@ const styles = {
   detailsGrid: {
     display: "grid",
     gridTemplateColumns:
-      "repeat(auto-fit, minmax(160px, 1fr))",
+      createAutoFitMinmax(160),
     gap: 12,
   },
 };

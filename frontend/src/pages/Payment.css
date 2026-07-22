@@ -2,7 +2,7 @@
 
     min-height:100vh;
     background:#b0c4f96b;
-    padding:40px;
+    padding:clamp(16px, 4vw, 40px);
 
     font-family:Arial;
 
@@ -35,7 +35,7 @@
 
 .payment-header h1{
 
-    font-size:4rem;
+    font-size:clamp(2.4rem, 8vw, 4rem);
 
     background: linear-gradient(135deg, #7CCBFF, /* sky blue */ #5C9DFF, /* medium blue */ #8E7CFF, /* soft purple */ #a8c0ff, /* pastel blue */ #d9b3ff, /* pastel purple */ #FFD6F7, /* soft pink */ #c1b3ff /* lavender */);
     background-size: 125%;
@@ -49,7 +49,7 @@
 .payment-header p{
 
     color:#64748b;
-    font-size:20px;
+    font-size:clamp(16px, 3.4vw, 20px);
 
 }
 
@@ -79,14 +79,14 @@
 
 }
 .triptitle{
-font-size: 50px;
+font-size: clamp(30px, 7vw, 50px);
 }
 .trip-box div p{
-font-size: 30px;
+font-size: clamp(18px, 4vw, 30px);
 }
 .trip-box div{
 
-    padding:30px;
+    padding:clamp(18px, 4vw, 30px);
            background: linear-gradient(135deg, rgb(168 192 255 / 31%), rgba(255, 255, 255, 0.65));
 
     padding:30px;
@@ -168,7 +168,7 @@ box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
 
          background: linear-gradient(135deg, rgb(168 192 255 / 10%), rgba(255, 255, 255, 0.65));
 
-    padding:30px;
+    padding:clamp(18px, 4vw, 30px);
 
     border-radius:20px;
 
@@ -336,7 +336,7 @@ box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
 
     background:white;
 
-    padding:50px;
+    padding:clamp(24px, 5vw, 50px);
 
     border-radius:25px;
 
@@ -417,6 +417,51 @@ width:100%;
 
 }
 
+.trip-box div{
+min-width:0;
+}
+
+}
+
+@media(max-width:560px){
+
+.payment-container{
+padding:16px;
+}
+
+.back-link{
+font-size:16px;
+}
+
+.trip-box img{
+max-height:260px;
+}
+
+.counter{
+gap:18px;
+flex-wrap:wrap;
+}
+
+.counter button{
+width:44px;
+height:44px;
+font-size:26px;
+}
+
+.counter span{
+font-size:24px;
+}
+
+.price-row,
+.total{
+gap:12px;
+flex-wrap:wrap;
+}
+
+.pay-button{
+padding:16px;
+font-size:18px;
+}
 }
 
 .error-box{

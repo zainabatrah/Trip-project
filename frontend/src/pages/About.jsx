@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import PublicPageLayout from "../components/PublicPageLayout.jsx";
 import { pageTheme } from "../components/publicPageTheme.js";
+import { createAutoFitMinmax } from "../utils/responsive.js";
 
 export default function About() {
   const features = [
@@ -127,7 +128,8 @@ const styles = {
 
   twoCols: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+    gridTemplateColumns:
+      createAutoFitMinmax(260),
     gap: 18,
   },
 

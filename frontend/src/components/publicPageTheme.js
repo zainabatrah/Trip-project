@@ -1,3 +1,5 @@
+import { createAutoFitMinmax } from "../utils/responsive.js";
+
 export const pageTheme = {
   page: {
     width: "100%",
@@ -13,7 +15,8 @@ export const pageTheme = {
 
   main: {
     width: "100%",
-    padding: "34px 26px 60px",
+    padding:
+      "clamp(20px, 4vw, 34px) clamp(14px, 4vw, 26px) clamp(42px, 8vw, 60px)",
     boxSizing: "border-box",
   },
 
@@ -55,7 +58,7 @@ export const pageTheme = {
 
   title: {
     margin: 0,
-    fontSize: 34,
+    fontSize: "clamp(28px, 5vw, 34px)",
     fontWeight: 900,
     color: "#1e3a8a",
     letterSpacing: "-0.04em",
@@ -63,7 +66,7 @@ export const pageTheme = {
 
   subtitle: {
     margin: "8px 0 0",
-    fontSize: 15,
+    fontSize: "clamp(14px, 2.6vw, 15px)",
     fontWeight: 500,
     color: "#475569",
     lineHeight: 1.7,
@@ -72,8 +75,8 @@ export const pageTheme = {
 
   surface: {
     width: "100%",
-    padding: 24,
-    borderRadius: 22,
+    padding: "clamp(18px, 4vw, 24px)",
+    borderRadius: "clamp(18px, 4vw, 22px)",
     background: "rgba(255, 255, 255, 0.72)",
     border: "1px solid rgba(147, 197, 253, 0.45)",
     boxShadow: "0 25px 70px rgba(59, 130, 246, 0.22)",
@@ -84,8 +87,8 @@ export const pageTheme = {
 
   softSurface: {
     width: "100%",
-    padding: 18,
-    borderRadius: 18,
+    padding: "clamp(16px, 3vw, 18px)",
+    borderRadius: "clamp(16px, 3vw, 18px)",
     background: "rgba(255, 255, 255, 0.72)",
     border: "1px solid rgba(147, 197, 253, 0.45)",
     boxShadow: "0 16px 40px rgba(96, 165, 250, 0.18)",
@@ -95,8 +98,8 @@ export const pageTheme = {
   },
 
   tile: {
-    padding: 18,
-    borderRadius: 18,
+    padding: "clamp(16px, 3vw, 18px)",
+    borderRadius: "clamp(16px, 3vw, 18px)",
     background: "rgba(255, 255, 255, 0.72)",
     border: "1px solid #bfdbfe",
     boxShadow: "0 12px 30px rgba(96, 165, 250, 0.18)",
@@ -120,14 +123,14 @@ export const pageTheme = {
 
   sectionTitle: {
     margin: "0 0 16px",
-    fontSize: 20,
+    fontSize: "clamp(18px, 3.8vw, 20px)",
     fontWeight: 900,
     color: "#1e3a8a",
   },
 
   smallTitle: {
     margin: "0 0 12px",
-    fontSize: 16,
+    fontSize: "clamp(15px, 3vw, 16px)",
     fontWeight: 900,
     color: "#1e3a8a",
   },
@@ -148,13 +151,15 @@ export const pageTheme = {
 
   cardGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
+    gridTemplateColumns:
+      createAutoFitMinmax(230),
     gap: 16,
   },
 
   infoGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
+    gridTemplateColumns:
+      createAutoFitMinmax(170),
     gap: 12,
   },
 

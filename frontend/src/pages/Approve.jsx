@@ -10,6 +10,7 @@ import {
   getStatusBadgeStyle,
   pageTheme,
 } from "../components/publicPageTheme.js";
+import { createAutoFitMinmax } from "../utils/responsive.js";
 import {
   getPrivateTripRequests,
   updatePrivateTripRequest,
@@ -1124,7 +1125,7 @@ const styles = {
   statistics: {
     display: "grid",
     gridTemplateColumns:
-      "repeat(auto-fit, minmax(130px, 1fr))",
+      createAutoFitMinmax(130),
     gap: 12,
     margin: "24px 0",
   },
@@ -1194,7 +1195,7 @@ const styles = {
   infoGrid: {
     display: "grid",
     gridTemplateColumns:
-      "repeat(auto-fit, minmax(170px, 1fr))",
+      createAutoFitMinmax(170),
     gap: 12,
     margin: "20px 0",
   },
@@ -1202,7 +1203,7 @@ const styles = {
   editorGrid: {
     display: "grid",
     gridTemplateColumns:
-      "repeat(auto-fit, minmax(170px, 1fr))",
+      createAutoFitMinmax(170),
     gap: 12,
     marginBottom: 10,
   },

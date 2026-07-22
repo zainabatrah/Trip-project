@@ -13,6 +13,10 @@ import {
   pageTheme,
 } from "../components/publicPageTheme.js";
 import {
+  createAutoFitMinmax,
+  useCompactLayout,
+} from "../utils/responsive.js";
+import {
   getTrips,
 } from "../api/trips.js";
 
@@ -154,7 +158,10 @@ function getInitialTripImage(trip) {
   );
 }
 
-function TripImage({ trip }) {
+function TripImage({
+  trip,
+  compact = false,
+}) {
   const [
     image,
     setImage,
@@ -209,7 +216,14 @@ function TripImage({ trip }) {
         "Trip"
       }
       loading="lazy"
-      style={styles.image}
+      style={
+        compact
+          ? {
+              ...styles.image,
+              ...styles.imageCompact,
+            }
+          : styles.image
+      }
       onError={
         handleImageError
       }
@@ -319,6 +333,8 @@ function buildMapLink(trip) {
 }
 
 export default function Trips() {
+  const isCompact =
+    useCompactLayout();
   const [
     trips,
     setTrips,
@@ -852,14 +868,20 @@ export default function Trips() {
                 return (
                   <article
                     key={id}
-                    style={
-                      styles.card
-                    }
+                    style={{
+                      ...styles.card,
+                      ...(isCompact
+                        ? styles.cardCompact
+                        : null),
+                    }}
                   >
                     <div
-                      style={
-                        styles.imageSection
-                      }
+                      style={{
+                        ...styles.imageSection,
+                        ...(isCompact
+                          ? styles.imageSectionCompact
+                          : null),
+                      }}
                     >
                       <TripImage
                         key={[
@@ -869,6 +891,7 @@ export default function Trips() {
                           trip?.country || "",
                         ].join(":")}
                         trip={trip}
+                        compact={isCompact}
                       />
 
                       {status ===
@@ -894,9 +917,12 @@ export default function Trips() {
                     </div>
 
                     <div
-                      style={
-                        styles.body
-                      }
+                      style={{
+                        ...styles.body,
+                        ...(isCompact
+                          ? styles.bodyCompact
+                          : null),
+                      }}
                     >
                       <div
                         style={
@@ -1038,7 +1064,7 @@ const styles = {
   filters: {
     display: "grid",
     gridTemplateColumns:
-      "repeat(auto-fit, minmax(220px, 1fr))",
+      createAutoFitMinmax(220),
     gap: 16,
   },
 
@@ -1086,6 +1112,10 @@ const styles = {
       "0 12px 30px rgba(96,165,250,0.15)",
   },
 
+  cardCompact: {
+    flexDirection: "column",
+  },
+
   imageSection: {
     width: 230,
     minWidth: 230,
@@ -1093,11 +1123,21 @@ const styles = {
     flexDirection: "column",
   },
 
+  imageSectionCompact: {
+    width: "100%",
+    minWidth: 0,
+  },
+
   image: {
     width: 230,
     height: 200,
     objectFit: "cover",
     display: "block",
+  },
+
+  imageCompact: {
+    width: "100%",
+    height: 220,
   },
 
   commentsButton: {
@@ -1149,8 +1189,15 @@ const styles = {
       "border-box",
   },
 
+  bodyCompact: {
+    flexDirection: "column",
+    gap: 16,
+    padding: 18,
+  },
+
   mainInfo: {
     flex: 1,
+    minWidth: 0,
   },
 
   titleRow: {

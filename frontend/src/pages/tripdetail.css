@@ -924,14 +924,58 @@ height: 91px;
   .hero{
     height: auto;
     padding: 30px;
+    margin-left: 0;
+    border-radius: 24px;
   }
 
   .hero h1{
-    font-size: 40px;
+    font-size: clamp(2.2rem, 8vw, 2.8rem);
+  }
+
+  .hero-description{
+    font-size: 16px;
   }
 
   .top-info-grid{
     grid-template-columns: 1fr;
+    margin-left: 0;
+  }
+
+  .about-inclusions,
+  .card3{
+    margin-left: 0;
+  }
+
+  .top-info-card,
+  .about-box,
+  .card{
+    padding: 22px;
+  }
+
+  .price-section h2{
+    font-size: clamp(2rem, 7vw, 3rem);
+  }
+
+  .about-header h2,
+  .card h3{
+    font-size: clamp(2rem, 8vw, 2.8rem);
+  }
+
+  .card h3{
+    padding-top: 20px;
+    margin-bottom: 24px;
+  }
+
+  .about-text{
+    font-size: 18px;
+  }
+
+  .inclusions-grid{
+    margin-top: 32px;
+  }
+
+  .inclusion-row{
+    height: auto;
   }
 
   .place-info{
@@ -946,6 +990,33 @@ height: 91px;
 
   .forecast-card{
     width: 100%;
+  }
+
+  .timeline-item{
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .timeline-left{
+    flex-direction: row;
+    gap: 10px;
+  }
+
+  .line{
+    width: 48px;
+    height: 2px;
+    margin-top: 0;
+  }
+
+  .weather-unavailable,
+  .trip-ended-message{
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .trip-ended-message{
+    text-align: center;
   }
 }
 

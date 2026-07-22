@@ -14,6 +14,10 @@ import ProfileAreaLayout from "../components/ProfileAreaLayout.jsx";
 import {
   pageTheme,
 } from "../components/publicPageTheme.js";
+import {
+  createAutoFitMinmax,
+  useCompactLayout,
+} from "../utils/responsive.js";
 import SocialPostCard from "../components/social/SocialPostCard.jsx";
 import SocialStoryCard from "../components/social/SocialStoryCard.jsx";
 import {
@@ -29,6 +33,8 @@ import {
 } from "../api/social.js";
 
 export default function PostsStories() {
+  const isCompact =
+    useCompactLayout();
   const [feed, setFeed] =
     useState(null);
   const [loading, setLoading] =
@@ -420,7 +426,14 @@ export default function PostsStories() {
         </div>
       ) : (
         <>
-          <section style={styles.topGrid}>
+          <section
+            style={{
+              ...styles.topGrid,
+              ...(isCompact
+                ? styles.topGridCompact
+                : null),
+            }}
+          >
             <article style={styles.userCard}>
               <img
                 src={getUserAvatarUrl(
@@ -720,7 +733,7 @@ function MiniStat({
 
 const styles = {
   headerCard: {
-    minWidth: 170,
+    minWidth: "min(100%, 170px)",
     padding: "18px 20px",
     borderRadius: 18,
     background:
@@ -753,6 +766,10 @@ const styles = {
       "minmax(0, 1fr) repeat(2, minmax(290px, 0.7fr))",
     gap: 18,
     alignItems: "start",
+  },
+
+  topGridCompact: {
+    gridTemplateColumns: "1fr",
   },
 
   userCard: {
@@ -881,7 +898,7 @@ const styles = {
   storyGrid: {
     display: "grid",
     gridTemplateColumns:
-      "repeat(auto-fit, minmax(210px, 1fr))",
+      createAutoFitMinmax(210),
     gap: 14,
   },
 
