@@ -68,7 +68,8 @@ function createEmptyForm() {
     description: "",
     photo: "",
     price: "0",
-    duration: "1",
+    durationValue: "1",
+    durationUnit: "days",
     numberOfTravelers: "20",
     reservedTravelers: "0",
     status: "planned",
@@ -94,27 +95,90 @@ function formatDateForInput(value) {
   return date.toISOString().slice(0, 10);
 }
 
+function toDurationFormState(
+  value,
+  fallbackUnit = "days"
+) {
+  if (
+    value &&
+    typeof value === "object"
+  ) {
+    const durationValue =
+      value.value ??
+      value.amount ??
+      value.days ??
+      value.hours;
+
+    return {
+      value: String(
+        durationValue ??
+          1
+      ),
+      unit:
+        String(
+          value.unit ||
+            (value.hours !==
+            undefined
+              ? "hours"
+              : fallbackUnit)
+        )
+          .trim()
+          .toLowerCase() ===
+        "hours"
+          ? "hours"
+          : "days",
+    };
+  }
+
+  if (
+    value !== undefined &&
+    value !== null &&
+    value !== ""
+  ) {
+    return {
+      value: String(value),
+      unit: fallbackUnit,
+    };
+  }
+
+  return {
+    value: "1",
+    unit: fallbackUnit,
+  };
+}
+
 function toFormState(trip) {
   const places =
     Array.isArray(trip?.places) &&
     trip.places.length > 0
-      ? trip.places.map((place) => ({
-          city: place?.city || "",
-          image: place?.image || "",
-          latitude:
-            place?.latitude ?? "",
-          longitude:
-            place?.longitude ?? "",
-          days: String(
-            place?.days ??
-              place?.duration?.value ??
-              1
-          ),
-          unit:
-            place?.duration?.unit ||
-            "days",
-        }))
+      ? trip.places.map((place) => {
+          const duration =
+            toDurationFormState(
+              place?.duration ??
+                place?.days ??
+                1
+            );
+
+          return {
+            city: place?.city || "",
+            image:
+              place?.image || "",
+            latitude:
+              place?.latitude ?? "",
+            longitude:
+              place?.longitude ?? "",
+            days:
+              duration.value,
+            unit:
+              duration.unit,
+          };
+        })
       : [createEmptyPlace()];
+
+  const tripDuration =
+    toDurationFormState(
+      trip?.duration ?? 1
+    );
 
   return {
     title: trip?.title || "",
@@ -128,9 +192,10 @@ function toFormState(trip) {
       trip?.description || "",
     photo: trip?.photo || "",
     price: String(trip?.price ?? 0),
-    duration: String(
-      trip?.duration ?? 1
-    ),
+    durationValue:
+      tripDuration.value,
+    durationUnit:
+      tripDuration.unit,
     numberOfTravelers: String(
       trip?.numberOfTravelers ?? 1
     ),
@@ -286,12 +351,27 @@ function validateForm(form) {
   }
 
   if (
-    Number(form.duration) < 0 ||
+    Number(form.durationValue) < 0 ||
     !Number.isFinite(
-      Number(form.duration)
+      Number(
+        form.durationValue
+      )
     )
   ) {
     return "Duration must be a non-negative number.";
+  }
+
+  if (
+    ![
+      "days",
+      "hours",
+    ].includes(
+      String(
+        form.durationUnit || ""
+      ).toLowerCase()
+    )
+  ) {
+    return "Duration unit must be days or hours.";
   }
 
   if (
@@ -357,7 +437,16 @@ function buildTripPayload(form) {
       form.description.trim(),
     photo: form.photo.trim(),
     price: Number(form.price),
-    duration: Number(form.duration),
+    duration: {
+      value: Number(
+        form.durationValue
+      ),
+      unit:
+        form.durationUnit ===
+        "hours"
+          ? "hours"
+          : "days",
+    },
     numberOfTravelers: Number(
       form.numberOfTravelers
     ),
@@ -915,10 +1004,28 @@ export default function ManageTrips() {
                 type="number"
                 min="0"
                 step="1"
-                value={form.duration}
+                value={
+                  form.durationValue
+                }
                 onChange={(value) =>
                   handleFieldChange(
-                    "duration",
+                    "durationValue",
+                    value
+                  )
+                }
+              />
+              <SelectField
+                label="Duration unit"
+                value={
+                  form.durationUnit
+                }
+                options={[
+                  "days",
+                  "hours",
+                ]}
+                onChange={(value) =>
+                  handleFieldChange(
+                    "durationUnit",
                     value
                   )
                 }
@@ -1070,10 +1177,28 @@ export default function ManageTrips() {
                   type="number"
                   min="0"
                   step="1"
-                  value={form.duration}
+                  value={
+                    form.durationValue
+                  }
                   onChange={(value) =>
                     handleFieldChange(
-                      "duration",
+                      "durationValue",
+                      value
+                    )
+                  }
+                />
+                <SelectField
+                  label="Duration unit"
+                  value={
+                    form.durationUnit
+                  }
+                  options={[
+                    "days",
+                    "hours",
+                  ]}
+                  onChange={(value) =>
+                    handleFieldChange(
+                      "durationUnit",
                       value
                     )
                   }

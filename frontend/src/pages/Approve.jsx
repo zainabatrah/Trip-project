@@ -69,6 +69,8 @@ function buildEditForm(request) {
     title: request.title || "",
     destination:
       request.destination || "",
+    pickupCity:
+      request.pickupCity || "",
     startDate: toDateInputValue(
       request.startDate
     ),
@@ -212,6 +214,8 @@ export default function Approve() {
             title: form.title.trim(),
             destination:
               form.destination.trim(),
+            pickupCity:
+              form.pickupCity.trim(),
             startDate: form.startDate,
             endDate: form.endDate,
             transportation:
@@ -407,9 +411,17 @@ export default function Approve() {
 
                 <div style={styles.infoGrid}>
                   <Info
-                    label="Destination"
+                    label="End trip"
                     value={
                       request.destination
+                    }
+                  />
+
+                  <Info
+                    label="Start trip"
+                    value={
+                      request.pickupCity ||
+                      "Not set"
                     }
                   />
 
@@ -482,7 +494,25 @@ export default function Approve() {
                     </label>
 
                     <label style={pageTheme.field}>
-                      <span>Destination</span>
+                      <span>Start trip</span>
+                      <input
+                        value={
+                          form.pickupCity
+                        }
+                        onChange={(event) =>
+                          handleEditChange(
+                            id,
+                            "pickupCity",
+                            event.target.value
+                          )
+                        }
+                        disabled={busy}
+                        style={pageTheme.control}
+                      />
+                    </label>
+
+                    <label style={pageTheme.field}>
+                      <span>End trip</span>
                       <input
                         value={
                           form.destination

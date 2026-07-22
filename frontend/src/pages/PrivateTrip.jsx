@@ -13,6 +13,7 @@ import {
 const initialForm = {
   title: "",
   destination: "",
+  pickupCity: "",
   startDate: "",
   endDate: "",
   durationValue: "",
@@ -80,7 +81,15 @@ export default function PrivateTrip() {
           .trim()
           .length < 2
       ) {
-        return "Destination is required.";
+        return "End trip is required.";
+      }
+
+      if (
+        form.pickupCity
+          .trim()
+          .length < 2
+      ) {
+        return "Start trip is required.";
       }
 
       if (
@@ -191,6 +200,9 @@ export default function PrivateTrip() {
 
             destination:
               form.destination.trim(),
+
+            pickupCity:
+              form.pickupCity.trim(),
 
             startDate:
               form.startDate,
@@ -342,7 +354,7 @@ export default function PrivateTrip() {
               styles.sectionText
             }
           >
-            Add the destination, preferred dates, transport choice, and anything the organizer should know before responding.
+            Add the start trip, end trip, preferred dates, transport choice, and anything the organizer should know before responding.
           </p>
         </div>
 
@@ -391,7 +403,21 @@ export default function PrivateTrip() {
             />
 
             <Field
-              label="Destination"
+              label="Start trip"
+              name="pickupCity"
+              value={
+                form.pickupCity
+              }
+              onChange={
+                handleChange
+              }
+              disabled={
+                saving
+              }
+            />
+
+            <Field
+              label="End trip"
               name="destination"
               value={
                 form.destination
@@ -649,7 +675,7 @@ export default function PrivateTrip() {
                   styles.helperText
                 }
               >
-                Requests are easier to review when you include travel style, pickup city, timing preferences, and any must-have stops.
+                Requests are easier to review when you include the trip start, trip end, travel style, timing preferences, and any must-have stops.
               </p>
 
               <div
@@ -662,7 +688,15 @@ export default function PrivateTrip() {
                     pageTheme.pill
                   }
                 >
-                  Pickup city
+                  Start trip
+                </span>
+
+                <span
+                  style={
+                    pageTheme.pill
+                  }
+                >
+                  End trip
                 </span>
 
                 <span

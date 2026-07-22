@@ -94,6 +94,14 @@ function buildPoint(
   };
 }
 
+function normalizePointName(
+  value
+) {
+  return String(value || "")
+    .trim()
+    .toLowerCase();
+}
+
 function getTripPoints(trip) {
   const placePoints =
     Array.isArray(
@@ -160,6 +168,47 @@ function getTripPoints(trip) {
   }
 
   return points;
+}
+
+async function getLocationPoint(
+  name
+) {
+  const query =
+    String(name || "").trim();
+
+  if (!query) {
+    return null;
+  }
+
+  const searchParams =
+    new URLSearchParams({
+      q: `${query}, Lebanon`,
+      format: "json",
+      limit: "1",
+      countrycodes: "lb",
+    });
+
+  const response =
+    await fetch(
+      `https://nominatim.openstreetmap.org/search?${searchParams.toString()}`
+    );
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const data =
+    await response.json();
+
+  if (!Array.isArray(data) || !data[0]) {
+    return null;
+  }
+
+  return buildPoint(
+    query,
+    data[0].lat,
+    data[0].lon
+  );
 }
 
 function buildFallbackTrip(
@@ -238,14 +287,28 @@ function formatDurationLabel(
 ) {
   const duration =
     typeof value === "object"
-      ? value?.value
+      ? value?.value ??
+        value?.amount ??
+        value?.days ??
+        value?.hours
       : value;
+
+  const unit =
+    typeof value === "object"
+      ? String(
+          value?.unit ||
+            (value?.hours !==
+            undefined
+              ? "hours"
+              : "days")
+        ).trim() || "days"
+      : "days";
 
   return Number.isFinite(
     Number(duration)
   ) &&
     Number(duration) > 0
-    ? `⏱ ${duration} Days`
+    ? `⏱ ${duration} ${unit}`
     : "⏱ Duration not set";
 }
 
@@ -302,11 +365,41 @@ export default function Map() {
   const [trip, setTrip] =
     useState(null);
   const [
+    resolvedStartPoint,
+    setResolvedStartPoint,
+  ] = useState(null);
+  const [
+    resolvedEndPoint,
+    setResolvedEndPoint,
+  ] = useState(null);
+  const [
     roadRoute,
     setRoadRoute,
   ] = useState([]);
   const [error, setError] =
     useState("");
+  const baseTripPoints =
+    getTripPoints(trip);
+  const tripPointSignature =
+    baseTripPoints
+      .map(
+        (point) =>
+          `${point.name}:${point.lat}:${point.lng}`
+      )
+      .join("|");
+  const tripPoints =
+    resolvedStartPoint
+      ? [
+          resolvedStartPoint,
+          ...baseTripPoints,
+        ]
+      : [...baseTripPoints];
+
+  if (resolvedEndPoint) {
+    tripPoints.push(
+      resolvedEndPoint
+    );
+  }
 
   useEffect(() => {
     let cancelled =
@@ -314,6 +407,10 @@ export default function Map() {
 
     async function loadTrip() {
       setError("");
+      setResolvedStartPoint(
+        null
+      );
+      setResolvedEndPoint(null);
       setRoadRoute([]);
 
       if (!tripId) {
@@ -393,10 +490,115 @@ export default function Map() {
     let cancelled =
       false;
 
-    async function getRoad() {
-      const tripPoints =
-        getTripPoints(trip);
+    async function resolveBoundaryPoints() {
+      setResolvedStartPoint(
+        null
+      );
+      setResolvedEndPoint(null);
 
+      if (baseTripPoints.length === 0) {
+        return;
+      }
+
+      const startCity =
+        String(
+          trip?.from || ""
+        ).trim();
+      const endCity =
+        String(
+          trip?.to || ""
+        ).trim();
+      const firstPoint =
+        baseTripPoints[0];
+      const lastPoint =
+        baseTripPoints[
+          baseTripPoints.length - 1
+        ];
+      const shouldAddStart =
+        Boolean(startCity) &&
+        normalizePointName(
+          startCity
+        ) !==
+          normalizePointName(
+            firstPoint?.name
+          ) &&
+        normalizePointName(
+          startCity
+        ) !==
+          "private pickup";
+      const shouldAddEnd =
+        Boolean(endCity) &&
+        normalizePointName(
+          endCity
+        ) !==
+          normalizePointName(
+            lastPoint?.name
+          );
+
+      if (
+        !shouldAddStart &&
+        !shouldAddEnd
+      ) {
+        return;
+      }
+
+      try {
+        const [
+          startPoint,
+          endPoint,
+        ] = await Promise.all([
+          shouldAddStart
+            ? getLocationPoint(
+                startCity
+              )
+            : null,
+          shouldAddEnd
+            ? getLocationPoint(
+                endCity
+              )
+            : null,
+        ]);
+
+        if (
+          cancelled
+        ) {
+          return;
+        }
+
+        if (startPoint) {
+          setResolvedStartPoint(
+            startPoint
+          );
+        }
+
+        if (endPoint) {
+          setResolvedEndPoint(
+            endPoint
+          );
+        }
+      } catch (
+        boundaryError
+      ) {
+        if (!cancelled) {
+          console.error(
+            boundaryError
+          );
+        }
+      }
+    }
+
+    resolveBoundaryPoints();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [trip, tripPointSignature]);
+
+  useEffect(() => {
+    let cancelled =
+      false;
+
+    async function getRoad() {
       if (
         tripPoints.length < 2
       ) {
@@ -462,7 +664,11 @@ export default function Map() {
     return () => {
       cancelled = true;
     };
-  }, [trip]);
+  }, [
+    trip,
+    resolvedStartPoint,
+    resolvedEndPoint,
+  ]);
 
   if (!trip && !error) {
     return (
@@ -489,9 +695,6 @@ export default function Map() {
       </div>
     );
   }
-
-  const tripPoints =
-    getTripPoints(trip);
 
   if (
     tripPoints.length === 0

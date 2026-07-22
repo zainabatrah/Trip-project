@@ -20,6 +20,14 @@ const tripSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  fromLocation:{
+lat:Number,
+lng:Number,
+  },
+    toLocation:{
+lat:Number,
+lng:Number,
+  },
   date:{
 type:Date,
 require:true,

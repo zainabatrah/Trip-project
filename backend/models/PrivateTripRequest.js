@@ -55,8 +55,15 @@ const privateTripRequestSchema =
         type: String,
         required: [
           true,
-          "Destination is required.",
+          "End trip is required.",
         ],
+        trim: true,
+        maxlength: 150,
+      },
+
+      pickupCity: {
+        type: String,
+        default: "",
         trim: true,
         maxlength: 150,
       },

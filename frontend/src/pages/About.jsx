@@ -33,6 +33,7 @@ export default function About() {
   return (
     <PublicPageLayout
       title="About TripManager"
+         showNavbar={false}
       subtitle="TripManager helps users discover trips, request private trips, and manage their travel experience in a simple way."
     >
       <section style={pageTheme.surface}>

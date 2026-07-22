@@ -150,19 +150,33 @@ function extractOtherUser(
   friendship,
   currentUserId
 ) {
+  const requester =
+    friendship?.requester || null;
+
+  const recipient =
+    friendship?.recipient || null;
+
+
   if (
     sameUser(
-      friendship?.requester?._id ||
-        friendship?.requester,
+      requester?._id || requester,
       currentUserId
     )
   ) {
-    return friendship.recipient;
+    return recipient;
   }
 
-  return friendship.requester;
-}
+  if (
+    sameUser(
+      recipient?._id || recipient,
+      currentUserId
+    )
+  ) {
+    return requester;
+  }
 
+  return null;
+}
 function serializeFriendship(
   friendship,
   currentUserId

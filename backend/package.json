@@ -10,7 +10,8 @@
     "dev": "nodemon server.js",
     "check": "node --check server.js && node --check routes/trips.js",
     "seed": "node seedTrips.js",
-    "set-user-role": "node src/scripts/setUserRole.js"
+    "set-user-role": "node src/scripts/setUserRole.js",
+      "sync-trip-images": "node src/scripts/syncTripImages.js"
   },
   "keywords": [
     "travel",

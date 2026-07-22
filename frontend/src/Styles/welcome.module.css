@@ -243,6 +243,7 @@
 
 .notificationWrap {
   position: relative;
+      margin-right: 40px;
 }
 
 .notificationButton {
@@ -473,7 +474,7 @@
     width: 260px;
     height: 100vh;
 
-        background: linear-gradient(135deg, rgb(184, 225, 255) 0%, rgb(167, 199, 255) 45%, rgb(195, 177, 255) 100%);
+       background: linear-gradient(rgb(168 192 255) 0%, rgba(150, 195, 253, 0.82) 46%, rgba(255, 255, 255, 0.94) 100%);
 
     display: flex;
     flex-direction: column;
@@ -542,6 +543,8 @@
 
 .notificationWrap {
   width: 100%;
+  margin-left: 65px;
+
 }
 
 .notificationButton {
@@ -641,7 +644,9 @@
   padding: 10px;
 }
 
-
+.CarouselCaption p{
+  color:white
+}
   .howitworks {
   font-family: Arial, sans-serif;
   margin: 50px 0;

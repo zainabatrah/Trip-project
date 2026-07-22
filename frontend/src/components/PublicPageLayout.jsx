@@ -11,11 +11,12 @@ export default function PublicPageLayout({
   mainStyle,
   contentStyle,
   showHeader = true,
+   showNavbar = true,
 }) {
   
   return (
     <div style={pageTheme.page}>
-      <TopNavbar />
+      {showNavbar && <TopNavbar />}
 
       <main
         style={{

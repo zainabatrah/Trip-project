@@ -694,27 +694,31 @@ function FriendshipRow({
   item,
   actions,
 }) {
+
+  if (!item?.user) {
+    return null;
+  }
+
   return (
     <article style={styles.rowCard}>
       <div style={styles.rowUser}>
         <img
-          src={getUserAvatarUrl(
-            item.user
-          )}
+          src={getUserAvatarUrl(item.user)}
           alt={item.user.fullName}
           style={styles.rowAvatar}
         />
+
         <div>
           <strong style={styles.rowName}>
             {item.user.fullName}
           </strong>
+
           <div style={styles.rowCountry}>
-            {item.user.country ||
-              "Traveler"}
+            {item.user.country || "Traveler"}
           </div>
+
           <p style={styles.rowBio}>
-            {item.user.bio ||
-              "No bio added yet."}
+            {item.user.bio || "No bio added yet."}
           </p>
         </div>
       </div>
@@ -723,7 +727,6 @@ function FriendshipRow({
     </article>
   );
 }
-
 const styles = {
   headerCard: {
     minWidth: 170,

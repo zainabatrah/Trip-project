@@ -251,7 +251,7 @@ const styles = {
   },
 
   title: {
-    margin: "0 0 30px",
+    margin: "35px 0 30px",
     fontSize: 34,
     fontWeight: 900,
     letterSpacing: "-0.5px",

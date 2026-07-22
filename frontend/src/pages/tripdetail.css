@@ -1192,3 +1192,35 @@ height: 91px;
     }
 
 }
+
+.trip-ended-message {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+
+  padding: 20px;
+
+  background: #e8f3ff;
+
+  border: 1px solid #a8d4ff;
+
+  border-radius: 15px;
+
+  color: #2563eb;
+
+  justify-content: center;
+}
+
+.trip-ended-message svg {
+  font-size:35px;
+}
+
+.trip-ended-message h3 {
+  margin:0;
+  font-size:20px;
+}
+
+.trip-ended-message p {
+  margin:5px 0 0;
+  color:#777;
+}

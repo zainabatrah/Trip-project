@@ -221,7 +221,7 @@ function RequestCard({ request }) {
           </h2>
 
           <p style={styles.cardText}>
-            Destination:{" "}
+            End trip:{" "}
             <strong>
               {request.destination}
             </strong>
@@ -243,6 +243,14 @@ function RequestCard({ request }) {
       </div>
 
       <div style={styles.infoGrid}>
+        <Info
+          label="Start trip"
+          value={
+            request.pickupCity ||
+            "Not set"
+          }
+        />
+
         <Info
           label="Start date"
           value={formatDate(

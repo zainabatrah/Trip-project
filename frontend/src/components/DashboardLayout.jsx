@@ -1,7 +1,23 @@
 import TopNavbar from "./TopNavbar.jsx";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
+import Footer from "./Footer.jsx";
 
 export default function DashboardLayout() {
+
+  const location = useLocation();
+
+
+  const organizerPages = [
+    "/approve",
+    "/manage-trips"
+  ];
+
+
+  const hideFooter = organizerPages.some((path) =>
+    location.pathname.startsWith(path)
+  );
+
+
   return (
     <div
       style={{
@@ -12,9 +28,17 @@ export default function DashboardLayout() {
 
       <TopNavbar />
 
+
       <main>
+       
         <Outlet />
+            {
+        !hideFooter && <Footer />
+      }
       </main>
+
+
+     
 
     </div>
   );

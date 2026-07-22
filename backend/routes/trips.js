@@ -5,6 +5,9 @@ const fs = require("fs");
 const path = require("path");
 
 const Trip = require("../models/Trip");
+const getCoordinates = require(
+  "../src/utils/geocode"
+);
 
 const {
   requireAuth,
@@ -304,6 +307,36 @@ function hashString(value) {
 */
 
 function normalizeDurationValue(value) {
+  const amount =
+    readDurationAmount(
+      value
+    );
+
+  if (amount === 0) {
+    return 0;
+  }
+
+  const unit =
+    normalizeDurationUnit(
+      value
+    );
+
+  if (unit === "hours") {
+    return Math.max(
+      1,
+      Math.ceil(
+        amount / 24
+      )
+    );
+  }
+
+  return Math.max(
+    1,
+    Math.ceil(amount)
+  );
+}
+
+function readDurationAmount(value) {
   if (
     value === undefined ||
     value === null ||
@@ -339,43 +372,49 @@ function normalizeDurationValue(value) {
   if (
     typeof value === "object"
   ) {
-    const amount =
-      Number(
-        value.value ??
+    const amount = Number(
+      value.value ??
         value.amount ??
         value.days ??
         value.hours
-      );
+    );
 
-    if (
-      !Number.isFinite(amount)
-    ) {
+    if (!Number.isFinite(amount)) {
       return 0;
     }
 
-    const unit =
-      String(
-        value.unit || ""
-      ).toLowerCase();
-
-    if (
-      unit.includes("hour")
-    ) {
-      return Math.max(
-        1,
-        Math.ceil(
-          amount / 24
-        )
-      );
-    }
-
     return Math.max(
-      1,
-      Math.ceil(amount)
+      0,
+      amount
     );
   }
 
   return 0;
+}
+
+function normalizeDurationUnit(
+  value,
+  fallbackUnit = "days"
+) {
+  const source =
+    typeof value === "object" &&
+    value !== null
+      ? value.unit ??
+        (value.hours !==
+        undefined
+          ? "hours"
+          : fallbackUnit)
+      : value ??
+        fallbackUnit;
+
+  return String(
+    source || fallbackUnit
+  )
+    .trim()
+    .toLowerCase() ===
+    "hours"
+    ? "hours"
+    : "days";
 }
 
 function buildDurationField(
@@ -383,31 +422,23 @@ function buildDurationField(
   fallbackUnit = "days"
 ) {
   const normalizedValue =
-    normalizeDurationValue(
+    readDurationAmount(
       value
     );
-
-  const normalizedUnit =
-    String(
-      typeof value ===
-          "object" &&
-        value !== null
-        ? value.unit ||
-            fallbackUnit
-        : fallbackUnit
-    )
-      .trim()
-      .toLowerCase();
 
   return {
     value:
       normalizedValue,
 
     unit:
-      normalizedUnit ===
-      "hours"
-        ? "hours"
-        : "days",
+      normalizeDurationUnit(
+        typeof value ===
+          "object" &&
+          value !== null
+          ? value
+          : fallbackUnit,
+        fallbackUnit
+      ),
   };
 }
 
@@ -909,6 +940,80 @@ function normalizePlaceForPersistence(
   };
 }
 
+function hasValidPlaceCoordinates(
+  latitude,
+  longitude
+) {
+  const lat =
+    Number(latitude);
+  const lng =
+    Number(longitude);
+
+  if (
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng)
+  ) {
+    return false;
+  }
+
+  if (lat === 0 && lng === 0) {
+    return false;
+  }
+
+  return (
+    lat >= -90 &&
+    lat <= 90 &&
+    lng >= -180 &&
+    lng <= 180
+  );
+}
+
+async function normalizePlaceCoordinates(
+  place
+) {
+  if (
+    hasValidPlaceCoordinates(
+      place?.latitude,
+      place?.longitude
+    )
+  ) {
+    return {
+      ...place,
+      latitude: Number(
+        place.latitude
+      ),
+      longitude: Number(
+        place.longitude
+      ),
+    };
+  }
+
+  const coordinates =
+    await getCoordinates(
+      place?.city
+    );
+
+  if (coordinates) {
+    return {
+      ...place,
+      latitude:
+        coordinates.lat,
+      longitude:
+        coordinates.lng,
+    };
+  }
+
+  return {
+    ...place,
+    latitude: Number(
+      place?.latitude
+    ),
+    longitude: Number(
+      place?.longitude
+    ),
+  };
+}
+
 /*
 |--------------------------------------------------------------------------
 | Normalize trip returned by list/create/update
@@ -939,10 +1044,11 @@ function normalizeTripResponse(
         ),
 
     duration:
-      normalizeDurationValue(
-        trip?.duration
+      buildDurationField(
+        trip?.duration ??
+          1
       ) ||
-      1,
+      buildDurationField(1),
 
     price:
       Number(
@@ -1000,7 +1106,7 @@ function normalizeTripResponse(
 |
 */
 
-function normalizeTripForPersistence(
+async function normalizeTripForPersistence(
   trip
 ) {
   return {
@@ -1020,11 +1126,15 @@ function normalizeTripForPersistence(
       Array.isArray(
         trip?.places
       )
-        ? trip.places.map(
-            (place) =>
-              normalizePlaceForPersistence(
-                place
-              )
+        ? await Promise.all(
+            trip.places.map(
+              async (place) =>
+                normalizePlaceCoordinates(
+                  normalizePlaceForPersistence(
+                    place
+                  )
+                )
+            )
           )
         : [],
   };
@@ -1151,7 +1261,7 @@ function normalizeTripData(data) {
       ""
   ) {
     normalized.duration =
-      normalizeDurationValue(
+      buildDurationField(
         normalized.duration
       );
   }
@@ -1176,8 +1286,10 @@ function addDefaults(data) {
       0,
 
     duration:
-      data.duration ??
-      0,
+      buildDurationField(
+        data.duration ??
+          0
+      ),
 
     numberOfTravelers:
       data.numberOfTravelers ??
@@ -1302,9 +1414,10 @@ function validateTrip(data) {
 
   if (
     !Number.isFinite(
-      data.duration
+      data.duration?.value
     ) ||
-    data.duration < 0
+    data.duration.value <
+      0
   ) {
     return "Duration must be a non-negative number.";
   }
@@ -1364,6 +1477,17 @@ router.get(
     next
   ) => {
     try {
+      await Trip.updateMany(
+  {
+    status: { $ne: "completed" },
+    date: { $lt: new Date() },
+  },
+  {
+    $set: {
+      status: "completed",
+    },
+  }
+);
       const trips =
         await Trip.find({})
           .sort({
@@ -1418,6 +1542,17 @@ router.get(
     res
   ) => {
     try {
+      await Trip.updateMany(
+  {
+    status: { $ne: "completed" },
+    date: { $lt: new Date() },
+  },
+  {
+    $set: {
+      status: "completed",
+    },
+  }
+);
       if (
         !mongoose.Types.ObjectId.isValid(
           req.params.id
@@ -1757,7 +1892,7 @@ router.post(
 
       const trip =
         await Trip.create(
-          normalizeTripForPersistence(
+          await normalizeTripForPersistence(
             tripData
           )
         );
@@ -1890,7 +2025,7 @@ router.put(
 
       Object.assign(
         existingTrip,
-        normalizeTripForPersistence(
+        await normalizeTripForPersistence(
           completeData
         )
       );

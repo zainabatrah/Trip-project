@@ -11,6 +11,9 @@ const Trip = require(
 const Booking = require(
   "../models/Booking"
 );
+const getCoordinates = require(
+  "../src/utils/geocode"
+);
 
 const {
   optionalAuth,
@@ -486,7 +489,7 @@ function createTripDuration(
   };
 }
 
-function resolveDestinationPreset(
+async function resolveDestinationPreset(
   destination
 ) {
   const normalized =
@@ -496,13 +499,16 @@ function resolveDestinationPreset(
       .trim()
       .toLowerCase();
 
-  return (
+  const matchedPreset =
     destinationPresets.find(
       (preset) =>
         normalized.includes(
           preset.key
         )
-    ) || {
+    );
+
+  const fallbackPreset =
+    matchedPreset || {
       image:
         pickGenericDestinationImage(
           normalized ||
@@ -514,8 +520,24 @@ function resolveDestinationPreset(
 
       longitude:
         35.5018,
-    }
-  );
+    };
+
+  const coordinates =
+    await getCoordinates(
+      destination
+    );
+
+  if (!coordinates) {
+    return fallbackPreset;
+  }
+
+  return {
+    ...fallbackPreset,
+    latitude:
+      coordinates.lat,
+    longitude:
+      coordinates.lng,
+  };
 }
 
 function pickGenericDestinationImage(
@@ -574,6 +596,20 @@ function buildEditableRequestData(
             ""
         ).trim()
       : request.destination;
+
+  const pickupCity =
+    body.pickupCity !==
+      undefined ||
+    body.from !==
+      undefined
+      ? String(
+          body.pickupCity ||
+            body.from ||
+            ""
+        ).trim()
+      : String(
+          request.pickupCity || ""
+        ).trim();
 
   const startDate =
     body.startDate !==
@@ -677,6 +713,7 @@ function buildEditableRequestData(
   return {
     title,
     destination,
+    pickupCity,
     startDate,
     endDate,
     duration,
@@ -704,7 +741,13 @@ function validateEditableRequestData(
   if (
     !data.destination
   ) {
-    return "Destination is required.";
+    return "End trip is required.";
+  }
+
+  if (
+    !data.pickupCity
+  ) {
+    return "Start trip is required.";
   }
 
   if (
@@ -815,7 +858,7 @@ function buildGuestIdentity(
   };
 }
 
-function buildTripFromRequest(
+async function buildTripFromRequest(
   request
 ) {
   const duration =
@@ -823,8 +866,13 @@ function buildTripFromRequest(
       request
     );
 
+  const pickupCity =
+    String(
+      request.pickupCity || ""
+    ).trim();
+
   const destinationPreset =
-    resolveDestinationPreset(
+    await resolveDestinationPreset(
       request.destination
     );
 
@@ -853,6 +901,7 @@ function buildTripFromRequest(
       "Lebanon",
 
     from:
+      pickupCity ||
       "Private Pickup",
 
     to:
@@ -940,7 +989,7 @@ async function syncApprovedTrip(
   request
 ) {
   const tripData =
-    buildTripFromRequest(
+    await buildTripFromRequest(
       request
     );
 
@@ -1159,6 +1208,13 @@ router.post(
             ""
         ).trim();
 
+      const pickupCity =
+        String(
+          req.body.pickupCity ||
+            req.body.from ||
+            ""
+        ).trim();
+
       const startDate =
         new Date(
           req.body.startDate ||
@@ -1214,7 +1270,8 @@ router.post(
 
       if (
         !title ||
-        !destination
+        !destination ||
+        !pickupCity
       ) {
         return res
           .status(400)
@@ -1223,7 +1280,7 @@ router.post(
               false,
 
             message:
-              "Trip title and destination are required.",
+              "Trip title, start trip, and end trip are required.",
           });
       }
 
@@ -1367,6 +1424,7 @@ router.post(
 
             title,
             destination,
+            pickupCity,
             startDate,
             endDate,
 
@@ -1879,6 +1937,9 @@ router.patch(
 
       request.destination =
         nextData.destination;
+
+      request.pickupCity =
+        nextData.pickupCity;
 
       request.startDate =
         nextData.startDate;

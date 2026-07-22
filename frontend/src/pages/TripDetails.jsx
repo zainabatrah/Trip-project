@@ -32,6 +32,8 @@ import {
   FaClock,
   FaPlane,
   FaCheckCircle,
+  FaGlobe,
+    FaCalendarAlt,
 } from "react-icons/fa";
 
 /*
@@ -42,6 +44,175 @@ import {
 
 const defaultTripImage =
   "/Images/Libanon233.jpg";
+
+function isRemoteImage(
+  value
+) {
+  return /^https?:\/\//i.test(
+    String(
+      value || ""
+    ).trim()
+  );
+}
+
+function normalizeLocalImagePath(
+  value
+) {
+  const normalized =
+    String(
+      value || ""
+    )
+      .trim()
+      .replace(
+        /\\/g,
+        "/"
+      );
+
+  if (!normalized) {
+    return "";
+  }
+
+  if (
+    isRemoteImage(
+      normalized
+    )
+  ) {
+    return normalized;
+  }
+
+  const segments =
+    normalized
+      .split("/")
+      .filter(Boolean);
+
+  const fileName =
+    segments[
+      segments.length - 1
+    ];
+
+  return fileName
+    ? `/Images/${fileName}`
+    : "";
+}
+
+function getDestinationName(
+  trip,
+  fallbackPlace = null
+) {
+  return String(
+    trip?.to ||
+      trip?.destination ||
+      fallbackPlace?.city ||
+      trip?.country ||
+      ""
+  ).trim();
+}
+
+function buildDestinationImagePath(
+  value
+) {
+  const destination =
+    String(value || "").trim();
+
+  return destination
+    ? `/Images/${destination}.jpg`
+    : "";
+}
+
+function buildLocationImageCandidates(
+  value
+) {
+  const location =
+    String(value || "").trim();
+
+  if (!location) {
+    return [];
+  }
+
+  const normalizedLocation =
+    location
+      .normalize("NFD")
+      .replace(
+        /[\u0300-\u036f]/g,
+        ""
+      );
+
+  const titleCaseLocation =
+    normalizedLocation
+      .split(/\s+/)
+      .map((word) =>
+        word
+          ? `${word.charAt(0).toUpperCase()}${word
+              .slice(1)
+              .toLowerCase()}`
+          : ""
+      )
+      .join(" ");
+
+  const lowercaseLocation =
+    normalizedLocation.toLowerCase();
+
+  const slugLocation =
+    lowercaseLocation
+      .replace(/&/g, "and")
+      .replace(
+        /[^a-z0-9]+/g,
+        "-"
+      )
+      .replace(
+        /^-+|-+$/g,
+        ""
+      );
+
+  return getUniqueImageCandidates(
+    buildDestinationImagePath(
+      location
+    ),
+    buildDestinationImagePath(
+      normalizedLocation
+    ),
+    buildDestinationImagePath(
+      titleCaseLocation
+    ),
+    buildDestinationImagePath(
+      lowercaseLocation
+    ),
+    slugLocation
+      ? buildDestinationImagePath(
+          slugLocation
+        )
+      : ""
+  );
+}
+
+function getUniqueImageCandidates(
+  ...values
+) {
+  const seen =
+    new Set();
+
+  return values.filter(
+    (value) => {
+      const normalized =
+        String(value || "").trim();
+
+      if (
+        !normalized ||
+        seen.has(
+          normalized.toLowerCase()
+        )
+      ) {
+        return false;
+      }
+
+      seen.add(
+        normalized.toLowerCase()
+      );
+
+      return true;
+    }
+  );
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -63,15 +234,6 @@ const defaultTripImage =
 function getTripDisplayImage(
   trip
 ) {
-  const tripPhoto =
-    String(
-      trip?.photo || ""
-    ).trim();
-
-  if (tripPhoto) {
-    return tripPhoto;
-  }
-
   const places =
     Array.isArray(
       trip?.places
@@ -89,8 +251,18 @@ function getTripDisplayImage(
       )
       .find(Boolean);
 
-  return (
-    placeImage ||
+  return getUniqueImageCandidates(
+    normalizeLocalImagePath(
+      trip?.photo
+    ),
+    normalizeLocalImagePath(
+      placeImage
+    ),
+    buildDestinationImagePath(
+      getDestinationName(
+        trip
+      )
+    ),
     defaultTripImage
   );
 }
@@ -105,23 +277,125 @@ function getPlaceDisplayImage(
   place,
   trip
 ) {
-  const placeImage =
+  const savedPlaceImage =
+    normalizeLocalImagePath(
+      place?.image
+    );
+  const tripImage =
+    normalizeLocalImagePath(
+      trip?.photo
+    );
+  const tripDestinationImages =
+    buildLocationImageCandidates(
+      getDestinationName(trip)
+    );
+  const placeName =
     String(
-      place?.image || ""
+      place?.city || ""
     ).trim();
+  const sameAsTripDestination =
+    placeName &&
+    placeName.toLowerCase() ===
+      String(
+        getDestinationName(trip)
+      )
+        .trim()
+        .toLowerCase();
+  const keepSavedPlaceImage =
+    savedPlaceImage &&
+    savedPlaceImage.toLowerCase() !==
+      tripImage.toLowerCase() &&
+    (
+      sameAsTripDestination ||
+      !tripDestinationImages.some(
+        (candidate) =>
+          candidate.toLowerCase() ===
+          savedPlaceImage.toLowerCase()
+      )
+    );
 
-  if (placeImage) {
-    return placeImage;
+  return getUniqueImageCandidates(
+    keepSavedPlaceImage
+      ? savedPlaceImage
+      : "",
+    ...buildLocationImageCandidates(
+      place?.city
+    ),
+    defaultTripImage
+  );
+}
+
+function getPlaceImageKey(
+  place,
+  trip
+) {
+  return [
+    place?.image,
+    place?.city,
+    trip?.photo,
+    trip?.to,
+    trip?.destination,
+    trip?.country,
+  ]
+    .map((value) =>
+      String(value || "").trim()
+    )
+    .join("|");
+}
+
+function PlacePreviewImage({
+  place,
+  trip,
+}) {
+  const imageCandidates =
+    getPlaceDisplayImage(
+      place,
+      trip
+    );
+
+  const [
+    imageIndex,
+    setImageIndex,
+  ] = useState(0);
+
+  function handleError(
+    event
+  ) {
+    setImageIndex(
+      (currentIndex) => {
+        const nextIndex =
+          currentIndex + 1;
+
+        if (
+          !imageCandidates[
+            nextIndex
+          ]
+        ) {
+          event.currentTarget.onerror =
+            null;
+
+          return currentIndex;
+        }
+
+        return nextIndex;
+      }
+    );
   }
 
-  const tripImage =
-    String(
-      trip?.photo || ""
-    ).trim();
-
   return (
-    tripImage ||
-    defaultTripImage
+    <img
+      src={
+        imageCandidates[
+          imageIndex
+        ] || defaultTripImage
+      }
+      alt={
+        place?.city ||
+        "Trip destination"
+      }
+      loading="lazy"
+      onError={handleError}
+    />
   );
 }
 
@@ -393,6 +667,24 @@ export default function TripDetails() {
     };
   }, [id]);
 
+    function formatDate(value) {
+  if (!value) {
+    return "No date";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Invalid date";
+  }
+
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
   /*
   |--------------------------------------------------------------------------
   | Verify hero image
@@ -411,44 +703,57 @@ export default function TripDetails() {
     let cancelled =
       false;
 
-    const selectedImage =
+    const imageCandidates =
       getTripDisplayImage(
         trip
       );
 
-    const imageLoader =
-      new window.Image();
+    function tryImage(
+      index
+    ) {
+      const selectedImage =
+        imageCandidates[index];
 
-    imageLoader.onload =
-      () => {
-        if (!cancelled) {
-          setHeroImage(
-            selectedImage
-          );
-        }
-      };
-
-    imageLoader.onerror =
-      () => {
+      if (!selectedImage) {
         if (!cancelled) {
           setHeroImage(
             defaultTripImage
           );
         }
-      };
 
-    imageLoader.src =
-      selectedImage;
+        return;
+      }
+
+      const imageLoader =
+        new window.Image();
+
+      imageLoader.onload =
+        () => {
+          if (!cancelled) {
+            setHeroImage(
+              selectedImage
+            );
+          }
+        };
+
+      imageLoader.onerror =
+        () => {
+          if (!cancelled) {
+            tryImage(
+              index + 1
+            );
+          }
+        };
+
+      imageLoader.src =
+        selectedImage;
+    }
+
+    tryImage(0);
 
     return () => {
       cancelled =
         true;
-
-      imageLoader.onload =
-        null;
-
-      imageLoader.onerror =
-        null;
     };
   }, [trip]);
 
@@ -788,7 +1093,13 @@ export default function TripDetails() {
     trip._id ||
     trip.id ||
     id;
+   const isTripPassed =
+  new Date(trip.date) < new Date();
+  const displayStatus = isTripPassed
+  ? "completed"
+  : trip.status;
 
+  const totalCities = trip.places?.length || 0;
   return (
     <div className="trip-page">
 
@@ -869,9 +1180,13 @@ export default function TripDetails() {
                 Status
               </p>
 
-              <h4>
-                {trip.status}
-              </h4>
+                           <h4>
+  {displayStatus}
+</h4>
+              <h5>
+       📅 Date: {formatDate(trip.date)}
+    </h5>
+           
             </div>
           </div>
 
@@ -986,19 +1301,38 @@ export default function TripDetails() {
                 </div>
 
                 <div>
-                  <span>
-                    Destinations
-                  </span>
+    <span>
+      Trip Route
+    </span>
 
-                  <h5>
-                    {
-                      trip.places
-                        ?.length ||
-                      0
-                    }{" "}
-                    Cities
-                  </h5>
+    <h5>
+      From : {trip.from || "Not specified"}
+    </h5>
+
+    <h5>
+      To : {trip.to || "Not specified"}
+    </h5>
+
+   
+  </div>
+              </div>
+                       <div className="trip-extra-item">
+                <div className="icon-box map">
+                  <FaMapMarkerAlt />
                 </div>
+
+                <div>
+    <span>
+      Cities
+    </span>
+
+  <p className="about-cities">
+  <FaGlobe /> You will visit <strong>{totalCities}</strong>{" "}
+  {totalCities === 1 ? "city" : "cities"} during this trip.
+</p>
+
+   
+  </div>
               </div>
             </div>
           </div>
@@ -1051,12 +1385,6 @@ export default function TripDetails() {
                       place.days
                   );
 
-                const placeImage =
-                  getPlaceDisplayImage(
-                    place,
-                    trip
-                  );
-
                 return (
                   <div
                     className="timeline-item"
@@ -1077,24 +1405,13 @@ export default function TripDetails() {
 
                     <div className="timeline-content">
                       <div className="place-info">
-                        <img
-                          src={
-                            placeImage
-                          }
-                          alt={
-                            place.city ||
-                            "Trip destination"
-                          }
-                          loading="lazy"
-                          onError={(
-                            event
-                          ) => {
-                            event.currentTarget.onerror =
-                              null;
-
-                            event.currentTarget.src =
-                              defaultTripImage;
-                          }}
+                        <PlacePreviewImage
+                          key={getPlaceImageKey(
+                            place,
+                            trip
+                          )}
+                          place={place}
+                          trip={trip}
                         />
 
                         <div>
@@ -1201,20 +1518,41 @@ export default function TripDetails() {
 
         {/* Booking */}
 
-        <div className="book-section">
-          <button
-            className="book-btn"
-            onClick={() => {
-              if (tripId) {
-                navigate(
-                  `/payment/${tripId}`
-                );
-              }
-            }}
-          >
-            Book This Trip
-          </button>
-        </div>
+           <div className="book-section">
+               
+                 {isTripPassed ? (
+               
+                   <div className="trip-ended-message">
+                     <FaTimesCircle />
+                     <div>
+                       <h3>
+                         This trip is no longer available
+                       </h3>
+               
+                       <p>
+                         The departure date has already passed.
+                       </p>
+                     </div>
+                   </div>
+               
+                 ) : (
+               
+                   <button
+                     className="book-btn"
+                     onClick={() => {
+                       if (tripId) {
+                         navigate(
+                           `/payment/${tripId}`
+                         );
+                       }
+                     }}
+                   >
+                     Book This Trip
+                   </button>
+               
+                 )}
+               
+               </div>
      
     </div>
   );
