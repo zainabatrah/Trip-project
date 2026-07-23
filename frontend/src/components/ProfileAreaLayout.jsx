@@ -1,4 +1,6 @@
-import { pageTheme } from "./publicPageTheme.js";
+import {
+  pageTheme,
+} from "./publicPageTheme.js";
 
 export default function ProfileAreaLayout({
   title = "",
@@ -12,20 +14,42 @@ export default function ProfileAreaLayout({
     <div
       style={{
         ...pageTheme.page,
+        width: "100%",
+        maxWidth: "100%",
+        minWidth: 0,
         paddingTop: 84,
+        overflowX: "hidden",
       }}
     >
       <main
-        style={pageTheme.main}
+        style={{
+          ...pageTheme.main,
+          width: "100%",
+          maxWidth: "100%",
+          minWidth: 0,
+        }}
       >
         <div
           style={{
             ...pageTheme.contentWrapper,
+            width: "100%",
             maxWidth,
+            minWidth: 0,
           }}
         >
-          <div style={pageTheme.header}>
-            <div style={pageTheme.titleGroup}>
+          <div
+            style={{
+              ...pageTheme.header,
+              width: "100%",
+              minWidth: 0,
+            }}
+          >
+            <div
+              style={{
+                ...pageTheme.titleGroup,
+                minWidth: 0,
+              }}
+            >
               {eyebrow ? (
                 <div
                   style={
@@ -60,7 +84,15 @@ export default function ProfileAreaLayout({
             {headerAction}
           </div>
 
-          {children}
+          <div
+            style={{
+              width: "100%",
+              maxWidth: "100%",
+              minWidth: 0,
+            }}
+          >
+            {children}
+          </div>
         </div>
       </main>
     </div>

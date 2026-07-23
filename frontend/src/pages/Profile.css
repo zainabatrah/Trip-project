@@ -1,387 +1,778 @@
-.profilePage{
+const styles = {
+  headerCard: {
+    width:
+      "min(100%, 180px)",
 
-min-height:100vh;
-padding:100px 20px;
+    maxWidth: "100%",
+    minWidth: 0,
 
-background: linear-gradient(rgba(168, 192, 255, 0.55) 0%, rgba(219, 234, 254, 0.82) 46%, rgba(255, 255, 255, 0.94) 100%);
+    padding:
+      "18px 20px",
 
-display:flex;
-flex-direction:column;
-align-items:center;
+    borderRadius: 18,
 
-}
-.passwordInput{
+    background:
+      "rgba(255, 255, 255, 0.78)",
 
-position:relative;
+    border:
+      "1px solid rgba(147, 197, 253, 0.45)",
 
-}
+    boxShadow:
+      "0 16px 34px rgba(96, 165, 250, 0.16)",
 
+    display: "grid",
+    gap: 4,
 
-.passwordInput input{
+    textAlign: "center",
 
-width:100%;
+    boxSizing: "border-box",
+  },
 
-padding-right:45px;
+  headerValue: {
+    maxWidth: "100%",
 
-}
+    fontSize: 30,
+    color: "#1e3a8a",
 
+    overflowWrap: "anywhere",
+  },
 
-.passwordInput span{
+  headerLabel: {
+    maxWidth: "100%",
 
-position:absolute;
+    color: "#64748b",
 
-right:15px;
+    fontSize: 12,
+    fontWeight: 900,
 
-top:50%;
+    textTransform: "uppercase",
+    letterSpacing: "0.08em",
 
-transform:translateY(-50%);
+    overflowWrap: "anywhere",
+  },
 
-cursor:pointer;
+  heroCard: {
+    width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
 
-}
-.passwordInput{
-    position:relative;
-    width:100%;
-    margin:10px 0;
-}
+    padding:
+      "clamp(18px, 4vw, 28px)",
 
+    borderRadius: 28,
 
-.passwordInput input{
+    background:
+      "linear-gradient(145deg, rgba(255, 255, 255, 0.86), rgba(219, 234, 254, 0.76), rgba(191, 219, 254, 0.62))",
 
-    width:100%;
-    padding:12px 45px 12px 12px;
+    border:
+      "1px solid rgba(147, 197, 253, 0.45)",
 
-    border-radius:10px;
-    border:1px solid #ddd;
+    boxShadow:
+      "0 28px 80px rgba(59, 130, 246, 0.18)",
 
-    box-sizing:border-box;
+    boxSizing: "border-box",
+    overflow: "hidden",
+  },
 
-}
+  /*
+   * Flex wrapping preserves the desktop image/text
+   * arrangement and automatically stacks it on phones.
+   */
+  heroMain: {
+    display: "flex",
+    flexWrap: "wrap",
 
+    width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
 
-.eyeIcon{
+    gap: 24,
 
-    position:absolute;
+    alignItems: "center",
+  },
 
-    right:15px;
+  heroMainCompact: {
+    flexDirection:
+      "column",
 
-    top:50%;
+    flexWrap: "nowrap",
 
-    transform:translateY(-50%);
+    alignItems: "center",
 
-    cursor:pointer;
+    width: "100%",
 
-    font-size:18px;
+    gap: 18,
 
-}
-.successMessage{
+    textAlign: "center",
+  },
 
-background:#22c55e;
+  avatarShell: {
+    position: "relative",
 
-color:white;
+    flex:
+      "0 0 auto",
 
-padding:12px 20px;
+    width:
+      "clamp(120px, 34vw, 160px)",
 
-border-radius:10px;
+    maxWidth: "100%",
 
-margin-top:20px;
+    height:
+      "clamp(120px, 34vw, 160px)",
 
-}
+    margin: "0 auto",
+  },
 
-.preview{
+  avatar: {
+    display: "block",
 
-width:100px;
-height:100px;
+    width: "100%",
+    height: "100%",
 
-border-radius:50%;
+    maxWidth: "100%",
 
-object-fit:cover;
+    borderRadius: 34,
 
-margin:15px auto;
+    objectFit: "cover",
+    objectPosition: "center",
 
-display:block;
+    border:
+      "5px solid rgba(255, 255, 255, 0.82)",
 
-}
+    boxShadow:
+      "0 16px 34px rgba(96, 165, 250, 0.26)",
 
-.profileCard{
+    boxSizing: "border-box",
+  },
 
-width:600px;
-max-width:95%;
+  cameraButton: {
+    position: "absolute",
 
-background:white;
+    right: 10,
+    bottom: 10,
 
-border-radius:25px;
+    width: 44,
+    height: 44,
 
-padding:40px;
+    borderRadius: 14,
+    border: "none",
 
-text-align:center;
+    background:
+      "linear-gradient(135deg, #93c5fd, #a78bfa)",
 
-box-shadow:0 20px 50px rgba(0,0,0,.2);
+    color: "#0f172a",
 
-}
+    display: "grid",
+    placeItems: "center",
 
+    cursor: "pointer",
 
+    boxShadow:
+      "0 10px 24px rgba(96, 165, 250, 0.25)",
+  },
 
-.avatar{
+  /*
+   * On desktop this fills the area beside the avatar.
+   * On phones it wraps below the avatar at full width.
+   */
+  heroText: {
+    flex:
+      "1 1 320px",
 
-width:130px;
-height:130px;
+    width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
+  },
 
-border-radius:50%;
+  heroBadge: {
+    display:
+      "inline-flex",
 
-object-fit:cover;
+    alignItems: "center",
 
-border:5px solid #7c3aed;
+    maxWidth: "100%",
 
-}
+    padding:
+      "7px 12px",
 
+    borderRadius: 999,
 
+    background:
+      "rgba(191, 219, 254, 0.6)",
 
-.email{
+    color: "#1d4ed8",
 
-color:#777;
+    fontSize: 12,
+    fontWeight: 900,
 
-}
+    textTransform:
+      "uppercase",
 
+    letterSpacing:
+      "0.08em",
 
+    boxSizing: "border-box",
 
-.info{
+    whiteSpace: "normal",
+    overflowWrap: "anywhere",
+  },
 
-display:flex;
-gap:30px;
+  heroTitle: {
+    maxWidth: "100%",
 
-margin:30px 0;
+    margin:
+      "16px 0 8px",
 
-text-align:left;
+    fontSize:
+      "clamp(28px, 6vw, 34px)",
 
-}
+    color: "#1e3a8a",
 
+    lineHeight: 1.05,
 
+    overflowWrap:
+      "anywhere",
 
-.info div{
+    wordBreak: "break-word",
+  },
 
-flex:1;
+  heroEmail: {
+    maxWidth: "100%",
 
+    margin: 0,
 
+    color: "#475569",
 
-padding:15px;
+    fontWeight: 700,
+    lineHeight: 1.5,
 
-    border-radius: 22px;
-    background: rgba(255, 255, 255, 0.72);
-    border: 1px solid rgba(147, 197, 253, 0.45);
-    box-shadow: rgba(59, 130, 246, 0.22) 0px 25px 70px;
-    backdrop-filter: blur(16px);
-    box-sizing: border-box;
-}
+    overflowWrap:
+      "anywhere",
 
+    wordBreak: "break-word",
+  },
 
+  metaRow: {
+    display: "flex",
+    flexWrap: "wrap",
 
+    width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
 
+    gap: 10,
 
+    marginTop: 14,
+  },
 
-button{
+  metaPill: {
+    display:
+      "inline-flex",
 
-border:none;
+    alignItems: "center",
 
-padding:12px 20px;
+    flex:
+      "0 1 auto",
 
-border-radius:12px;
+    maxWidth: "100%",
+    minWidth: 0,
 
-cursor:pointer;
+    gap: 8,
 
-font-size:15px;
+    padding:
+      "8px 12px",
 
-}
+    borderRadius: 999,
 
+    background:
+      "rgba(255, 255, 255, 0.8)",
 
+    color: "#334155",
 
+    border:
+      "1px solid rgba(191, 219, 254, 0.72)",
 
-.mainBtn,
-.save{
+    fontSize: 13,
+    fontWeight: 700,
 
-    border-radius: 14px;
-    border-width: medium;
-    border-style: none;
-    border-color: currentcolor;
-    border-image: initial;
-    background: linear-gradient(135deg, rgb(147, 197, 253), rgb(167, 139, 250));
-        box-shadow: rgba(96, 165, 250, 0.35) 0px 12px 28px;
+    lineHeight: 1.4,
 
-}
+    boxSizing: "border-box",
 
+    whiteSpace: "normal",
+    overflowWrap: "anywhere",
+  },
 
+  heroBio: {
+    width: "100%",
+    maxWidth: 720,
 
+    margin:
+      "16px 0 0",
 
-.buttons{
+    color: "#334155",
 
-margin-top:25px;
+    lineHeight: 1.8,
 
-display:grid;
+    overflowWrap:
+      "anywhere",
 
-grid-template-columns:1fr 1fr;
+    wordBreak: "break-word",
+  },
 
-gap:15px;
+  /*
+   * Three columns on laptop and one column
+   * automatically on narrow phones.
+   */
+  heroActions: {
+    display: "grid",
 
+    gridTemplateColumns:
+      createAutoFitMinmax(165),
 
-}
+    width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
 
+    gap: 12,
 
+    marginTop: 24,
+  },
 
-.buttons button{
+  statsGrid: {
+    display: "grid",
 
-    border-radius: 999px;
-    background: rgba(191, 219, 254, 0.55);
-    border: 1px solid rgba(147, 197, 253, 0.55);
+    gridTemplateColumns:
+      createAutoFitMinmax(120),
 
-}
+    width: "100%",
+    minWidth: 0,
 
+    gap: 14,
 
+    marginTop: 24,
+  },
 
+  statCard: {
+    width: "100%",
+    minWidth: 0,
 
-.section{
+    padding: 16,
 
-margin-top:25px;
+    borderRadius: 18,
 
-background:white;
+    background:
+      "rgba(255, 255, 255, 0.72)",
 
-width:600px;
+    border:
+      "1px solid rgba(191, 219, 254, 0.78)",
 
-max-width:95%;
+    boxShadow:
+      "0 14px 30px rgba(96, 165, 250, 0.12)",
 
-padding:30px;
+    display: "grid",
+    gap: 4,
 
-border-radius:20px;
+    boxSizing: "border-box",
+  },
 
-}
+  statValue: {
+    maxWidth: "100%",
 
+    fontSize: 28,
+    color: "#0f172a",
 
+    overflowWrap: "anywhere",
+  },
 
-.section input{
+  statLabel: {
+    maxWidth: "100%",
 
-width:100%;
+    color: "#64748b",
+    fontWeight: 800,
 
-padding:12px;
+    overflowWrap: "anywhere",
+  },
 
-margin:10px 0;
+  quickGrid: {
+    display: "grid",
 
-border-radius:10px;
+    gridTemplateColumns:
+      createAutoFitMinmax(260),
 
-border:1px solid #ddd;
+    width: "100%",
+    minWidth: 0,
 
-}
+    gap: 16,
 
+    marginTop: 22,
+  },
 
+  quickCard: {
+    display: "grid",
 
+    gridTemplateColumns:
+      "58px minmax(0, 1fr)",
 
-.danger{
+    width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
 
-background:#dc2626;
+    gap: 14,
 
-color:white;
+    alignItems: "start",
 
-}
+    padding: 20,
 
+    borderRadius: 22,
 
+    background:
+      "rgba(255, 255, 255, 0.76)",
 
+    border:
+      "1px solid rgba(147, 197, 253, 0.45)",
 
-/* Edit popup */
+    boxShadow:
+      "0 18px 40px rgba(96, 165, 250, 0.14)",
 
+    textDecoration: "none",
 
-.overlay{
+    boxSizing: "border-box",
+  },
 
-position:fixed;
+  quickIcon: {
+    width: 58,
+    height: 58,
 
-top:0;
-left:0;
+    flexShrink: 0,
 
-width:100%;
-height:100%;
+    borderRadius: 18,
 
-background:rgba(0,0,0,.5);
+    background:
+      "linear-gradient(135deg, rgba(96, 165, 250, 0.9), rgba(167, 139, 250, 0.85))",
 
-display:flex;
+    color: "#ffffff",
 
-justify-content:center;
+    display: "grid",
+    placeItems: "center",
 
-align-items:center;
+    fontSize: 22,
 
-z-index:2000;
+    boxShadow:
+      "0 12px 26px rgba(96, 165, 250, 0.24)",
+  },
 
-}
+  quickTitle: {
+    maxWidth: "100%",
 
+    margin:
+      "2px 0 6px",
 
+    color: "#1e3a8a",
 
-.editBox{
+    overflowWrap: "anywhere",
+  },
 
-background:white;
+  quickText: {
+    maxWidth: "100%",
 
-width:450px;
+    margin: 0,
 
-padding:30px;
+    color: "#475569",
 
-border-radius:20px;
+    lineHeight: 1.7,
 
-}
+    overflowWrap: "anywhere",
+  },
 
+  /*
+   * This intrinsically becomes one column on phones.
+   * The compact JavaScript style is retained as backup.
+   */
+  contentGrid: {
+    display: "grid",
 
+    gridTemplateColumns:
+      createAutoFitMinmax(320),
 
-.editBox input,
-.editBox textarea{
+    width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
 
-width:100%;
+    gap: 18,
 
-margin:10px 0;
+    alignItems: "start",
 
-padding:12px;
+    marginTop: 22,
+  },
 
-border-radius:10px;
+  contentGridCompact: {
+    gridTemplateColumns:
+      "minmax(0, 1fr)",
 
-border:1px solid #ddd;
+    width: "100%",
+  },
 
-}
+  sectionHeader: {
+    display: "flex",
 
+    justifyContent:
+      "space-between",
 
+    alignItems:
+      "flex-start",
 
-.editBox textarea{
+    width: "100%",
+    minWidth: 0,
 
-height:100px;
+    gap: 14,
+    flexWrap: "wrap",
 
-}
+    marginBottom: 14,
+  },
 
+  sectionTitle: {
+    maxWidth: "100%",
 
+    margin: 0,
 
-.actions{
+    color: "#1e3a8a",
 
-display:flex;
+    fontSize: 22,
+    fontWeight: 900,
 
-gap:10px;
+    overflowWrap:
+      "anywhere",
+  },
 
-}
+  sectionText: {
+    maxWidth: "100%",
 
+    margin:
+      "6px 0 0",
 
+    color: "#475569",
 
-.cancel{
+    lineHeight: 1.7,
 
-background:#ddd;
+    overflowWrap:
+      "anywhere",
+  },
 
-}
+  inlineLink: {
+    maxWidth: "100%",
 
+    color: "#1d4ed8",
 
+    fontWeight: 800,
 
-@media(max-width:600px){
+    textDecoration: "none",
 
+    overflowWrap:
+      "anywhere",
+  },
 
-.info{
+  postList: {
+    display: "grid",
 
-flex-direction:column;
+    width: "100%",
+    minWidth: 0,
 
-}
+    gap: 14,
+  },
 
+  storyGrid: {
+    display: "grid",
 
-.buttons{
+    gridTemplateColumns:
+      createAutoFitMinmax(180),
 
-grid-template-columns:1fr;
+    width: "100%",
+    minWidth: 0,
 
-}
+    gap: 14,
+  },
 
-}
+  friendGrid: {
+    display: "grid",
+
+    gridTemplateColumns:
+      createAutoFitMinmax(140),
+
+    width: "100%",
+    minWidth: 0,
+
+    gap: 12,
+  },
+
+  friendCard: {
+    width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
+
+    padding: 16,
+
+    borderRadius: 18,
+
+    background:
+      "rgba(255, 255, 255, 0.82)",
+
+    border:
+      "1px solid rgba(191, 219, 254, 0.78)",
+
+    display: "grid",
+
+    gap: 8,
+
+    justifyItems: "center",
+
+    textAlign: "center",
+
+    boxSizing: "border-box",
+
+    overflowWrap: "anywhere",
+  },
+
+  friendAvatar: {
+    display: "block",
+
+    width: 64,
+    height: 64,
+
+    maxWidth: "100%",
+
+    borderRadius: 20,
+
+    objectFit: "cover",
+    objectPosition: "center",
+  },
+
+  friendCountry: {
+    maxWidth: "100%",
+
+    color: "#64748b",
+
+    fontSize: 13,
+
+    overflowWrap:
+      "anywhere",
+  },
+
+  overlay: {
+    position: "fixed",
+
+    inset: 0,
+
+    background:
+      "rgba(15, 23, 42, 0.5)",
+
+    display: "grid",
+    placeItems: "center",
+
+    width: "100%",
+    height: "100%",
+
+    padding:
+      "clamp(10px, 4vw, 20px)",
+
+    overflowY: "auto",
+
+    zIndex: 2000,
+
+    boxSizing: "border-box",
+  },
+
+  modal: {
+    width:
+      "min(540px, 100%)",
+
+    maxWidth: "100%",
+    minWidth: 0,
+
+    maxHeight: "90vh",
+
+    overflowY: "auto",
+
+    padding:
+      "clamp(18px, 5vw, 24px)",
+
+    borderRadius: 24,
+
+    background:
+      "rgba(255, 255, 255, 0.94)",
+
+    border:
+      "1px solid rgba(191, 219, 254, 0.78)",
+
+    boxShadow:
+      "0 30px 80px rgba(15, 23, 42, 0.24)",
+
+    boxSizing: "border-box",
+  },
+
+  modalHeader: {
+    display: "flex",
+
+    justifyContent:
+      "space-between",
+
+    alignItems: "center",
+
+    width: "100%",
+    minWidth: 0,
+
+    gap: 14,
+    flexWrap: "wrap",
+
+    marginBottom: 16,
+  },
+
+  closeButton: {
+    maxWidth: "100%",
+
+    border: "none",
+
+    background:
+      "rgba(191, 219, 254, 0.55)",
+
+    color: "#1d4ed8",
+
+    borderRadius: 12,
+
+    paddin:contentReference[oaicite:4]{index=4}r: "pointer",
+    fontWeight: 800,
+
+    boxSizing: "border-box",
+  },
+
+  preview: {
+    display: "block",
+
+    width: 120,
+    maxWidth: "100%",
+
+    height: 120,
+
+    borderRadius: 24,
+
+    objectFit: "cover",
+    objectPosition: "center",
+
+    margin:
+      "6px auto 0",
+  },
+
+  modalActions: {
+    display: "grid",
+
+    gridTemplateColumns:
+      createAutoFitMinmax(140),
+
+    width: "100%",
+    minWidth: 0,
+
+    gap: 12,
+
+    marginTop: 8,
+  },
+};

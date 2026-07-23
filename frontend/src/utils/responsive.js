@@ -1,6 +1,5 @@
 import {
-  useEffect,
-  useState,
+  useSyncExternalStore,
 } from "react";
 
 export function createAutoFitMinmax(
@@ -14,26 +13,17 @@ export function useCompactLayout(
 ) {
   const query = `(max-width: ${maxWidth}px)`;
 
-  const getMatch = () =>
-    typeof window !== "undefined" &&
-    window.matchMedia(query).matches;
-
-  const [isCompact, setIsCompact] =
-    useState(getMatch);
-
-  useEffect(() => {
+  function subscribe(callback) {
     if (typeof window === "undefined") {
-      return undefined;
+      return () => {};
     }
 
     const mediaQuery =
       window.matchMedia(query);
 
-    function handleChange(event) {
-      setIsCompact(event.matches);
+    function handleChange() {
+      callback();
     }
-
-    setIsCompact(mediaQuery.matches);
 
     if (mediaQuery.addEventListener) {
       mediaQuery.addEventListener(
@@ -58,7 +48,18 @@ export function useCompactLayout(
         );
       }
     };
-  }, [query]);
+  }
 
-  return isCompact;
+  function getSnapshot() {
+    return (
+      typeof window !== "undefined" &&
+      window.matchMedia(query).matches
+    );
+  }
+
+  return useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    () => false
+  );
 }

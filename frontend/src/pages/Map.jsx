@@ -1,4 +1,8 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   useParams,
   useSearchParams,
@@ -323,6 +327,35 @@ function formatTravelersLabel(
     : "👥 Travelers not set";
 }
 
+const mapPageStyles = {
+  shell: {
+    background: "#eff6ff",
+    minHeight: "100vh",
+    padding:
+      "calc(env(safe-area-inset-top, 0px) + 92px) clamp(14px, 4vw, 25px) clamp(18px, 4vw, 25px)",
+    boxSizing: "border-box",
+  },
+
+  statusCard: {
+    background: "white",
+    padding:
+      "clamp(18px, 4vw, 24px)",
+    borderRadius: 22,
+    boxShadow:
+      "0 10px 30px rgba(0,0,0,0.12)",
+  },
+
+  summaryCard: {
+    background: "white",
+    padding:
+      "clamp(16px, 4vw, 20px)",
+    borderRadius: 22,
+    marginBottom: 20,
+    boxShadow:
+      "0 10px 30px rgba(0,0,0,0.12)",
+  },
+};
+
 function FitBounds({
   points,
 }) {
@@ -378,28 +411,41 @@ export default function Map() {
   ] = useState([]);
   const [error, setError] =
     useState("");
-  const baseTripPoints =
-    getTripPoints(trip);
-  const tripPointSignature =
-    baseTripPoints
-      .map(
-        (point) =>
-          `${point.name}:${point.lat}:${point.lng}`
-      )
-      .join("|");
-  const tripPoints =
-    resolvedStartPoint
-      ? [
-          resolvedStartPoint,
-          ...baseTripPoints,
-        ]
-      : [...baseTripPoints];
+  const baseTripPoints = useMemo(
+    () => getTripPoints(trip),
+    [trip]
+  );
+  const tripPointSignature = useMemo(
+    () =>
+      baseTripPoints
+        .map(
+          (point) =>
+            `${point.name}:${point.lat}:${point.lng}`
+        )
+        .join("|"),
+    [baseTripPoints]
+  );
+  const tripPoints = useMemo(() => {
+    const points =
+      resolvedStartPoint
+        ? [
+            resolvedStartPoint,
+            ...baseTripPoints,
+          ]
+        : [...baseTripPoints];
 
-  if (resolvedEndPoint) {
-    tripPoints.push(
-      resolvedEndPoint
-    );
-  }
+    if (resolvedEndPoint) {
+      points.push(
+        resolvedEndPoint
+      );
+    }
+
+    return points;
+  }, [
+    baseTripPoints,
+    resolvedStartPoint,
+    resolvedEndPoint,
+  ]);
 
   useEffect(() => {
     let cancelled =
@@ -592,7 +638,11 @@ export default function Map() {
     return () => {
       cancelled = true;
     };
-  }, [trip, tripPointSignature]);
+  }, [
+    trip,
+    baseTripPoints,
+    tripPointSignature,
+  ]);
 
   useEffect(() => {
     let cancelled =
@@ -664,22 +714,24 @@ export default function Map() {
     return () => {
       cancelled = true;
     };
-  }, [
-    trip,
-    resolvedStartPoint,
-    resolvedEndPoint,
-  ]);
+  }, [tripPoints]);
 
   if (!trip && !error) {
     return (
       <div
-        style={{
-          padding: "30px",
-        }}
+        style={
+          mapPageStyles.shell
+        }
       >
-        <h2>
-          Loading map...
-        </h2>
+        <div
+          style={
+            mapPageStyles.statusCard
+          }
+        >
+          <h2>
+            Loading map...
+          </h2>
+        </div>
       </div>
     );
   }
@@ -687,11 +739,17 @@ export default function Map() {
   if (!trip) {
     return (
       <div
-        style={{
-          padding: "30px",
-        }}
+        style={
+          mapPageStyles.shell
+        }
       >
-        <h2>{error}</h2>
+        <div
+          style={
+            mapPageStyles.statusCard
+          }
+        >
+          <h2>{error}</h2>
+        </div>
       </div>
     );
   }
@@ -701,13 +759,19 @@ export default function Map() {
   ) {
     return (
       <div
-        style={{
-          padding: "30px",
-        }}
+        style={
+          mapPageStyles.shell
+        }
       >
-        <h2>
-          Trip location is unavailable.
-        </h2>
+        <div
+          style={
+            mapPageStyles.statusCard
+          }
+        >
+          <h2>
+            Trip location is unavailable.
+          </h2>
+        </div>
       </div>
     );
   }
@@ -742,27 +806,14 @@ export default function Map() {
 
   return (
     <div
-      style={{
-        background:
-          "#eff6ff",
-        minHeight: "100vh",
-        padding:
-          "calc(clamp(14px, 4vw, 25px) + 74px) clamp(14px, 4vw, 25px) clamp(14px, 4vw, 25px)",
-      }}
+      style={
+        mapPageStyles.shell
+      }
     >
       <div
-        style={{
-          background:
-            "white",
-          padding:
-            "clamp(16px, 4vw, 20px)",
-          borderRadius:
-            "22px",
-          marginBottom:
-            "20px",
-          boxShadow:
-            "0 10px 30px rgba(0,0,0,0.12)",
-        }}
+        style={
+          mapPageStyles.summaryCard
+        }
       >
         <h1
           style={{

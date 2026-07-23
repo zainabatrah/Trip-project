@@ -3,6 +3,8 @@ import { createAutoFitMinmax } from "../utils/responsive.js";
 export const pageTheme = {
   page: {
     width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
     minHeight: "100vh",
     paddingTop: 70,
     background:
@@ -15,35 +17,46 @@ export const pageTheme = {
 
   main: {
     width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
     padding:
-      "clamp(20px, 4vw, 34px) clamp(14px, 4vw, 26px) clamp(42px, 8vw, 60px)",
+      "clamp(16px, 4vw, 34px) clamp(10px, 4vw, 26px) clamp(42px, 8vw, 60px)",
     boxSizing: "border-box",
   },
 
   contentWrapper: {
     width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
     margin: "0 auto",
     color: "#1e293b",
     boxSizing: "border-box",
   },
 
   header: {
+    width: "100%",
+    minWidth: 0,
     display: "flex",
     justifyContent: "space-between",
     alignItems: "flex-start",
     gap: 16,
     flexWrap: "wrap",
     marginBottom: 22,
+    boxSizing: "border-box",
   },
 
   titleGroup: {
+    flex: "1 1 280px",
+    width: "100%",
     maxWidth: 760,
+    minWidth: 0,
   },
 
   eyebrow: {
     display: "inline-flex",
     alignItems: "center",
     gap: 8,
+    maxWidth: "100%",
     padding: "7px 12px",
     borderRadius: 999,
     background: "rgba(255, 255, 255, 0.72)",
@@ -54,28 +67,36 @@ export const pageTheme = {
     letterSpacing: "0.08em",
     textTransform: "uppercase",
     color: "#2563eb",
+    boxSizing: "border-box",
+    overflowWrap: "anywhere",
   },
 
   title: {
+    maxWidth: "100%",
     margin: 0,
     fontSize: "clamp(28px, 5vw, 34px)",
     fontWeight: 900,
     color: "#1e3a8a",
     letterSpacing: "-0.04em",
+    lineHeight: 1.1,
+    overflowWrap: "anywhere",
   },
 
   subtitle: {
+    maxWidth: 680,
     margin: "8px 0 0",
     fontSize: "clamp(14px, 2.6vw, 15px)",
     fontWeight: 500,
     color: "#475569",
     lineHeight: 1.7,
-    maxWidth: 680,
+    overflowWrap: "anywhere",
   },
 
   surface: {
     width: "100%",
-    padding: "clamp(18px, 4vw, 24px)",
+    maxWidth: "100%",
+    minWidth: 0,
+    padding: "clamp(16px, 4vw, 24px)",
     borderRadius: "clamp(18px, 4vw, 22px)",
     background: "rgba(255, 255, 255, 0.72)",
     border: "1px solid rgba(147, 197, 253, 0.45)",
@@ -87,6 +108,8 @@ export const pageTheme = {
 
   softSurface: {
     width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
     padding: "clamp(16px, 3vw, 18px)",
     borderRadius: "clamp(16px, 3vw, 18px)",
     background: "rgba(255, 255, 255, 0.72)",
@@ -98,6 +121,9 @@ export const pageTheme = {
   },
 
   tile: {
+    width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
     padding: "clamp(16px, 3vw, 18px)",
     borderRadius: "clamp(16px, 3vw, 18px)",
     background: "rgba(255, 255, 255, 0.72)",
@@ -109,6 +135,7 @@ export const pageTheme = {
   iconCircle: {
     width: 38,
     height: 38,
+    flexShrink: 0,
     borderRadius: 14,
     background: "linear-gradient(135deg, #60a5fa, #a78bfa)",
     display: "flex",
@@ -122,57 +149,72 @@ export const pageTheme = {
   },
 
   sectionTitle: {
+    maxWidth: "100%",
     margin: "0 0 16px",
     fontSize: "clamp(18px, 3.8vw, 20px)",
     fontWeight: 900,
     color: "#1e3a8a",
+    overflowWrap: "anywhere",
   },
 
   smallTitle: {
+    maxWidth: "100%",
     margin: "0 0 12px",
     fontSize: "clamp(15px, 3vw, 16px)",
     fontWeight: 900,
     color: "#1e3a8a",
+    overflowWrap: "anywhere",
   },
 
   bodyText: {
+    maxWidth: "100%",
     margin: 0,
     fontSize: 14,
     fontWeight: 500,
     color: "#475569",
     lineHeight: 1.7,
+    overflowWrap: "anywhere",
   },
 
   divider: {
+    width: "100%",
     height: 1,
     background: "rgba(147, 197, 253, 0.65)",
     margin: "22px 0",
   },
 
   cardGrid: {
+    width: "100%",
+    minWidth: 0,
     display: "grid",
-    gridTemplateColumns:
-      createAutoFitMinmax(230),
+    gridTemplateColumns: createAutoFitMinmax(230),
     gap: 16,
   },
 
   infoGrid: {
+    width: "100%",
+    minWidth: 0,
     display: "grid",
-    gridTemplateColumns:
-      createAutoFitMinmax(170),
+    gridTemplateColumns: createAutoFitMinmax(170),
     gap: 12,
   },
 
   field: {
+    width: "100%",
+    minWidth: 0,
     display: "grid",
     gap: 7,
     marginBottom: 16,
     fontWeight: 700,
     color: "#334155",
+    boxSizing: "border-box",
   },
 
   control: {
+    display: "block",
     width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
     padding: "12px 14px",
     borderRadius: 14,
     border: "1px solid #bfdbfe",
@@ -190,29 +232,55 @@ export const pageTheme = {
   },
 
   buttonPrimary: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    maxWidth: "100%",
+    minWidth: 0,
     padding: "12px 16px",
     borderRadius: 14,
     border: "none",
     background: "linear-gradient(135deg, #93c5fd, #a78bfa)",
     color: "#0f172a",
     textDecoration: "none",
+    textAlign: "center",
     fontWeight: 900,
     boxShadow: "0 12px 28px rgba(96, 165, 250, 0.35)",
     cursor: "pointer",
+    boxSizing: "border-box",
+    whiteSpace: "normal",
+    overflowWrap: "anywhere",
   },
 
   buttonSecondary: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    maxWidth: "100%",
+    minWidth: 0,
     padding: "12px 16px",
     borderRadius: 14,
     border: "1px solid rgba(147, 197, 253, 0.52)",
     background: "rgba(255, 255, 255, 0.84)",
     color: "#1e3a8a",
     textDecoration: "none",
+    textAlign: "center",
     fontWeight: 800,
     cursor: "pointer",
+    boxSizing: "border-box",
+    whiteSpace: "normal",
+    overflowWrap: "anywhere",
   },
 
   buttonSuccess: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    maxWidth: "100%",
+    minWidth: 0,
     padding: "10px 15px",
     borderRadius: 12,
     border: "none",
@@ -220,9 +288,17 @@ export const pageTheme = {
     color: "#052e16",
     fontWeight: 900,
     cursor: "pointer",
+    boxSizing: "border-box",
+    whiteSpace: "normal",
   },
 
   buttonDanger: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    maxWidth: "100%",
+    minWidth: 0,
     padding: "10px 15px",
     borderRadius: 12,
     border: "none",
@@ -230,9 +306,17 @@ export const pageTheme = {
     color: "#450a0a",
     fontWeight: 900,
     cursor: "pointer",
+    boxSizing: "border-box",
+    whiteSpace: "normal",
   },
 
   buttonWarning: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    maxWidth: "100%",
+    minWidth: 0,
     padding: "10px 15px",
     borderRadius: 12,
     border: "none",
@@ -240,9 +324,13 @@ export const pageTheme = {
     color: "#451a03",
     fontWeight: 900,
     cursor: "pointer",
+    boxSizing: "border-box",
+    whiteSpace: "normal",
   },
 
   actions: {
+    width: "100%",
+    minWidth: 0,
     display: "flex",
     gap: 12,
     flexWrap: "wrap",
@@ -253,6 +341,8 @@ export const pageTheme = {
     display: "inline-flex",
     alignItems: "center",
     gap: 6,
+    maxWidth: "100%",
+    minWidth: 0,
     padding: "6px 10px",
     borderRadius: 999,
     background: "rgba(191, 219, 254, 0.55)",
@@ -260,9 +350,14 @@ export const pageTheme = {
     color: "#1d4ed8",
     fontSize: 12,
     fontWeight: 800,
+    boxSizing: "border-box",
+    whiteSpace: "normal",
+    overflowWrap: "anywhere",
   },
 
   errorBox: {
+    width: "100%",
+    maxWidth: "100%",
     padding: "11px 12px",
     borderRadius: 12,
     background: "rgba(248, 113, 113, 0.14)",
@@ -271,9 +366,13 @@ export const pageTheme = {
     marginBottom: 14,
     fontSize: 14,
     fontWeight: 700,
+    boxSizing: "border-box",
+    overflowWrap: "anywhere",
   },
 
   successBox: {
+    width: "100%",
+    maxWidth: "100%",
     padding: "11px 12px",
     borderRadius: 12,
     background: "rgba(74, 222, 128, 0.14)",
@@ -282,16 +381,23 @@ export const pageTheme = {
     marginBottom: 14,
     fontSize: 14,
     fontWeight: 700,
+    boxSizing: "border-box",
+    overflowWrap: "anywhere",
   },
 
   emptyBox: {
-    padding: 30,
+    width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
+    padding: "clamp(22px, 6vw, 30px)",
     borderRadius: 18,
     textAlign: "center",
     background: "rgba(255, 255, 255, 0.72)",
     border: "1px solid rgba(147, 197, 253, 0.45)",
     boxShadow: "0 16px 40px rgba(96, 165, 250, 0.18)",
     color: "#475569",
+    boxSizing: "border-box",
+    overflowWrap: "anywhere",
   },
 };
 

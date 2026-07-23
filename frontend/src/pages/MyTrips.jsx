@@ -100,12 +100,6 @@ function TripImage({ trip }) {
       getInitialTripImage(trip)
     );
 
-  useEffect(() => {
-    setImage(
-      getInitialTripImage(trip)
-    );
-  }, [trip]);
-
   function handleImageError() {
     const destinationImage =
       getDestinationImage(trip);
@@ -652,6 +646,14 @@ const tripFinished =
                   key={booking._id}
                 >
                   <TripImage
+                    key={[
+                      trip?._id ||
+                        trip?.id ||
+                        "",
+                      trip?.photo || "",
+                      trip?.to || "",
+                      trip?.country || "",
+                    ].join(":")}
                     trip={trip}
                   />
 

@@ -1153,215 +1153,380 @@ export default function Trips() {
 
 const styles = {
   filters: {
+    width: "100%",
+    minWidth: 0,
+
     display: "grid",
+
     gridTemplateColumns:
       createAutoFitMinmax(220),
+
     gap: 16,
   },
 
   resultsBar: {
+    width: "100%",
+    minWidth: 0,
+
     display: "flex",
+
     justifyContent:
       "space-between",
-    gap: 16,
+
     alignItems:
       "flex-start",
+
+    gap: 16,
     flexWrap: "wrap",
+
     marginBottom: 18,
   },
 
   resultsTitle: {
+    maxWidth: "100%",
+
     margin: "0 0 6px",
+
     fontSize: 20,
     fontWeight: 900,
+
     color: "#1e3a8a",
+
+    overflowWrap:
+      "anywhere",
   },
 
   resultsText: {
+    maxWidth: "100%",
+
     margin: 0,
+
     color: "#475569",
     lineHeight: 1.7,
+
+    overflowWrap:
+      "anywhere",
   },
 
   list: {
+    width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
+
     display: "flex",
     flexDirection: "column",
+
     gap: 18,
   },
 
+  /*
+   * flex-wrap makes the body move below the
+   * image automatically on small screens,
+   * even before the JavaScript breakpoint runs.
+   */
   card: {
     display: "flex",
     alignItems: "stretch",
+    flexWrap: "wrap",
+
     width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
+
     background:
       "rgba(255,255,255,0.8)",
+
     border:
       "1px solid #bfdbfe",
+
     borderRadius: 18,
+
     overflow: "hidden",
+
     boxShadow:
       "0 12px 30px rgba(96,165,250,0.15)",
+
+    boxSizing: "border-box",
   },
 
   cardCompact: {
     flexDirection: "column",
+    flexWrap: "nowrap",
+
+    width: "100%",
     minWidth: 0,
   },
 
   cardPhone: {
+    width: "100%",
+    maxWidth: "100%",
+
     borderRadius: 16,
   },
 
   imageSection: {
+    /*
+     * On laptop this remains approximately 230px.
+     * On a narrow phone it grows to the card width.
+     */
+    flex: "1 1 230px",
+
     width: 230,
-    minWidth: 230,
+    maxWidth: "100%",
+    minWidth: 0,
+
     display: "flex",
     flexDirection: "column",
+
+    boxSizing: "border-box",
   },
 
   imageSectionCompact: {
+    flex:
+      "0 0 100%",
+
     width: "100%",
-    minWidth: 0,
     maxWidth: "100%",
+    minWidth: 0,
   },
 
   imageSectionPhone: {
     width: "100%",
+    maxWidth: "100%",
   },
 
   image: {
-    width: 230,
-    height: 200,
-    objectFit: "cover",
     display: "block",
+
+    width: "100%",
+    maxWidth: "100%",
+    height: 200,
+
+    objectFit: "cover",
+    objectPosition: "center",
+
+    flexShrink: 0,
   },
 
   imageCompact: {
     width: "100%",
-    height: "clamp(190px, 56vw, 220px)",
+    height:
+      "clamp(190px, 56vw, 220px)",
   },
 
   imagePhone: {
-    height: "clamp(180px, 58vw, 210px)",
+    width: "100%",
+    height:
+      "clamp(180px, 58vw, 210px)",
   },
 
   commentsButton: {
     display: "flex",
+
     alignItems: "center",
-    justifyContent:
-      "center",
+    justifyContent: "center",
+
+    width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
+
     gap: 8,
-    padding: "12px",
-    background:
-      "#f8fbff",
+
+    padding: 12,
+
+    background: "#f8fbff",
+
     borderTop:
       "1px solid #dbeafe",
-    color:
-      "#2563eb",
-    textDecoration:
-      "none",
+
+    color: "#2563eb",
+
+    textDecoration: "none",
+    textAlign: "center",
+
     fontWeight: 700,
-    boxSizing:
-      "border-box",
+    lineHeight: 1.45,
+
+    boxSizing: "border-box",
+
+    whiteSpace: "normal",
+    overflowWrap: "anywhere",
   },
 
   commentsDisabled: {
     display: "flex",
-    justifyContent:
-      "center",
-    alignItems:
-      "center",
-    padding: "12px",
-    background:
-      "#f8fafc",
-    color:
-      "#94a3b8",
+
+    justifyContent: "center",
+    alignItems: "center",
+
+    width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
+
+    padding: 12,
+
+    background: "#f8fafc",
+
+    color: "#94a3b8",
+
     borderTop:
       "1px solid #e2e8f0",
+
     fontSize: 14,
     fontWeight: 600,
-    textAlign:
-      "center",
+
+    textAlign: "center",
     lineHeight: 1.45,
-    boxSizing:
-      "border-box",
+
+    boxSizing: "border-box",
+
+    whiteSpace: "normal",
+    overflowWrap: "anywhere",
   },
 
   commentsButtonPhone: {
+    width: "100%",
     minHeight: 48,
-    padding: "11px 14px",
+
+    padding:
+      "11px 14px",
   },
 
   commentsDisabledPhone: {
+    width: "100%",
     minHeight: 48,
-    padding: "11px 14px",
+
+    padding:
+      "11px 14px",
   },
 
+  /*
+   * A large flex basis forces the body below
+   * the image when there is not enough space.
+   */
   body: {
-    flex: 1,
+    flex:
+      "999 1 360px",
+
+    width: "auto",
+    maxWidth: "100%",
+    minWidth: 0,
+
     display: "flex",
+
     justifyContent:
       "space-between",
+
     alignItems:
       "stretch",
+
     padding: 22,
-    boxSizing:
-      "border-box",
-    minWidth: 0,
+
+    boxSizing: "border-box",
   },
 
   bodyCompact: {
+    flex:
+      "0 0 100%",
+
+    width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
+
     flexDirection: "column",
+
     gap: 16,
-    padding: "clamp(16px, 4vw, 18px)",
+
+    padding:
+      "clamp(16px, 4vw, 18px)",
   },
 
   bodyPhone: {
+    width: "100%",
+    maxWidth: "100%",
+
     gap: 14,
+
+    padding:
+      "clamp(14px, 4vw, 17px)",
   },
 
   mainInfo: {
     flex: 1,
+
+    width: "100%",
+    maxWidth: "100%",
     minWidth: 0,
   },
 
   titleRow: {
     display: "flex",
+
     alignItems: "center",
+
+    width: "100%",
+    minWidth: 0,
+
     gap: 12,
     flexWrap: "wrap",
+
     marginBottom: 6,
-    minWidth: 0,
   },
 
   titleRowPhone: {
     alignItems:
       "flex-start",
+
     gap: 10,
   },
 
   title: {
+    flex: "1 1 180px",
+
+    maxWidth: "100%",
+    minWidth: 0,
+
     margin: "5px 0",
-    fontSize: "clamp(20px, 5vw, 23px)",
+
+    fontSize:
+      "clamp(20px, 5vw, 23px)",
+
     fontWeight: 900,
-    color:
-      "#1e3a8a",
+
+    color: "#1e3a8a",
+
+    lineHeight: 1.2,
+
     overflowWrap:
       "anywhere",
+
+    wordBreak: "break-word",
   },
 
   titlePhone: {
+    width: "100%",
+
     margin: "2px 0",
-    fontSize: "clamp(19px, 5.8vw, 21px)",
+
+    fontSize:
+      "clamp(19px, 5.8vw, 21px)",
   },
 
   route: {
+    maxWidth: "100%",
+
     margin:
       "5px 0 15px",
-    color:
-      "#2563eb",
+
+    color: "#2563eb",
     fontWeight: 700,
-    overflowWrap: "anywhere",
+
+    lineHeight: 1.5,
+
+    overflowWrap:
+      "anywhere",
+
+    wordBreak: "break-word",
   },
 
   routePhone: {
@@ -1372,99 +1537,165 @@ const styles = {
   details: {
     display: "flex",
     flexWrap: "wrap",
+
+    width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
+
     gap: 15,
-    color:
-      "#475569",
+
+    color: "#475569",
+
     marginBottom: 18,
+
     fontSize: 14,
     lineHeight: 1.5,
-    minWidth: 0,
   },
 
   detailsPhone: {
     flexDirection:
       "column",
+
+    alignItems:
+      "stretch",
+
     gap: 10,
+
     marginBottom: 16,
   },
 
   detailItem: {
+    flex:
+      "0 1 auto",
+
+    maxWidth: "100%",
     minWidth: 0,
+
     overflowWrap:
       "anywhere",
+
+    wordBreak: "break-word",
   },
 
   detailItemPhone: {
     display: "block",
+    width: "100%",
   },
 
   statusBadge: {
+    flexShrink: 0,
+
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+
+    maxWidth: "100%",
+
     padding:
       "6px 12px",
+
     borderRadius: 20,
+
     fontSize: 12,
     fontWeight: 800,
+
     color: "#ffffff",
+
     textTransform:
       "uppercase",
+
     letterSpacing:
       "0.5px",
+
+    textAlign: "center",
+
+    whiteSpace: "normal",
+    overflowWrap: "anywhere",
+
+    boxSizing: "border-box",
   },
 
   planned: {
-    background:
-      "#3b8ce9",
+    background: "#3b8ce9",
   },
 
   ongoing: {
-    background:
-      "#f59e0b",
+    background: "#f59e0b",
   },
 
   completed: {
-    background:
-      "#dc2626",
+    background: "#dc2626",
   },
 
   actions: {
-    display: "flex",
-    gap: 12,
-    marginTop: 18,
-    flexWrap: "wrap",
+    display: "grid",
+
+    gridTemplateColumns:
+      createAutoFitMinmax(145),
+
+    width: "100%",
+    maxWidth: "100%",
     minWidth: 0,
+
+    gap: 12,
+
+    marginTop: 18,
   },
 
   actionsPhone: {
-    flexDirection:
-      "column",
+    gridTemplateColumns:
+      "1fr",
+
     gap: 10,
+
     marginTop: 16,
   },
 
   actionButton: {
-    display: "inline-flex",
+    display:
+      "inline-flex",
+
     alignItems:
       "center",
+
     justifyContent:
       "center",
-    textDecoration:
-      "none",
-    textAlign:
-      "center",
+    width: "100%",
+    minWidth: 0,
+
+    minHeight: 44,
+
     padding:
       "10px 18px",
+
     borderRadius: 12,
+
+    textDecoration:
+      "none",
+
+    textAlign: "center",
+
     fontWeight: 800,
+
+    boxSizing:
+      "border-box",
+
+    whiteSpace: "normal",
+    overflowWrap: "anywhere",
   },
 
   actionButtonCompact: {
-    flex: "1 1 100%",
     width: "100%",
+
+    flex:
+      "1 1 100%",
+
     boxSizing:
       "border-box",
   },
 
   actionButtonPhone: {
+    width: "100%",
     minHeight: 46,
   },
 };

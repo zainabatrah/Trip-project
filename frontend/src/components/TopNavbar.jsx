@@ -6,7 +6,6 @@ import {
 import {
   Link,
   useNavigate,
-  useLocation,
 } from "react-router-dom";
 import {
   FaBell,
@@ -65,8 +64,6 @@ export default function TopNavbar() {
     useRef(null);
   const navigate =
     useNavigate();
-  const location =
-    useLocation();
   const profileImage = getProfileImage(user);
   const profileLetter = getProfileLetter(user);
   const isOrganizer =
@@ -213,11 +210,6 @@ export default function TopNavbar() {
   }, [user?._id]);
 
   useEffect(() => {
-    setOpen(false);
-    setNotificationOpen(false);
-  }, [location.pathname]);
-
-  useEffect(() => {
     if (typeof document === "undefined") {
       return undefined;
     }
@@ -259,12 +251,6 @@ export default function TopNavbar() {
       );
     };
   }, []);
-
-  useEffect(() => {
-    if (!open) {
-      setNotificationOpen(false);
-    }
-  }, [open]);
 
   useEffect(() => {
     if (!notificationOpen) {
@@ -430,31 +416,71 @@ export default function TopNavbar() {
     }
   }
 
+  function handleCloseOverlays() {
+    setOpen(false);
+    setNotificationOpen(false);
+  }
+
+  function handleToggleMenu() {
+    setOpen((current) => {
+      const nextOpen = !current;
+
+      if (nextOpen) {
+        setNotificationOpen(false);
+      }
+
+      return nextOpen;
+    });
+  }
+
   return (
    <nav className={`${styles.navbar} ${open ? styles.open : ""}`}>
       <div className={styles.navInner}>
        <div className={`${styles.menu} ${open ? styles.open : ""}`}>
   
           <div className={styles.leftLinks}>
-            <Link to="/" className={styles.link}>
+            <Link
+              to="/"
+              className={styles.link}
+              onClick={
+                handleCloseOverlays
+              }
+            >
               Home
             </Link>
 
-            <Link to="/about" className={styles.link}>
+            <Link
+              to="/about"
+              className={styles.link}
+              onClick={
+                handleCloseOverlays
+              }
+            >
               About Us
             </Link>
-              <Link to="/private-trip" className={styles.link}>
+              <Link
+      to="/private-trip"
+      className={styles.link}
+      onClick={handleCloseOverlays}
+    >
       Private Trip
     </Link>
 
 {user && (
   <>
-   <Link to="/trips" className={styles.link}>
+   <Link
+              to="/trips"
+              className={styles.link}
+              onClick={
+                handleCloseOverlays
+              }
+            >
               Trips
             </Link>
 <Link 
     to={isOrganizer ? "/manage-trips" : "/my-trips"} 
     className={styles.link}
+    onClick={handleCloseOverlays}
 >
     {isOrganizer ? "Manage Trips" : "My Trips"}
 </Link>
@@ -463,17 +489,26 @@ export default function TopNavbar() {
       <Link
         to="/manage-travelers"
         className={styles.link}
+        onClick={handleCloseOverlays}
       >
         Manage Travelers
       </Link>
     ) : null}
 
     {isOrganizer ? (
-      <Link to="/approve" className={styles.link}>
+      <Link
+        to="/approve"
+        className={styles.link}
+        onClick={handleCloseOverlays}
+      >
         Approve
       </Link>
     ) : (
-      <Link to="/my-requests" className={styles.link}>
+      <Link
+        to="/my-requests"
+        className={styles.link}
+        onClick={handleCloseOverlays}
+      >
         My Requests
       </Link>
       
@@ -664,7 +699,11 @@ export default function TopNavbar() {
       ) : null}
     </div>
 
-    <Link to="/Profile" className={`${styles.profileCircle} ${styles.circles}`}>
+    <Link
+      to="/Profile"
+      className={`${styles.profileCircle} ${styles.circles}`}
+      onClick={handleCloseOverlays}
+    >
       {profileImage ? (
         <img
           src={profileImage}
@@ -697,6 +736,7 @@ export default function TopNavbar() {
     <Link
       to="/login"
       className={styles.primaryBtn}
+      onClick={handleCloseOverlays}
     >
       Login
     </Link>
@@ -704,6 +744,7 @@ export default function TopNavbar() {
     <Link
       to="/register"
       className={styles.secondaryBtn}
+      onClick={handleCloseOverlays}
     >
       Register
     </Link>
@@ -719,15 +760,15 @@ export default function TopNavbar() {
             styles.mobileBackdrop
           }
           aria-label="Close menu"
-          onClick={() =>
-            setOpen(false)
+          onClick={
+            handleCloseOverlays
           }
         />
       ) : null}
 
      <div 
   className={styles.hamburger}
-  onClick={() => setOpen(!open)}
+  onClick={handleToggleMenu}
 >
   {open ? "✕" : "☰"}
 </div>
