@@ -2070,7 +2070,7 @@ const styles = {
 
   previewTitle: {
     margin: "16px 0 8px",
-    fontSize: 26,
+    fontSize: "clamp(22px, 5vw, 26px)",
     lineHeight: 1.1,
     color: "#1e3a8a",
   },
@@ -2170,7 +2170,7 @@ const styles = {
 
   tripCardButton: {
     width: "100%",
-    padding: 18,
+    padding: "clamp(14px, 3.4vw, 18px)",
     border: "none",
     background: "transparent",
     textAlign: "left",
@@ -2195,8 +2195,9 @@ const styles = {
 
   tripCardTitle: {
     margin: 0,
-    fontSize: 20,
+    fontSize: "clamp(18px, 4.8vw, 20px)",
     color: "#1e3a8a",
+    overflowWrap: "anywhere",
   },
 
   tripPrice: {
@@ -2208,6 +2209,7 @@ const styles = {
     margin: "10px 0 12px",
     color: "#2563eb",
     fontWeight: 800,
+    overflowWrap: "anywhere",
   },
 
   tripMeta: {
@@ -2217,6 +2219,7 @@ const styles = {
     color: "#475569",
     fontSize: 13,
     fontWeight: 700,
+    lineHeight: 1.5,
   },
 
   tripLinks: {

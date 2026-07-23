@@ -1096,7 +1096,7 @@ function Stat({ label, value }) {
 
 const styles = {
   headerCard: {
-    minWidth: 170,
+    minWidth: "min(100%, 170px)",
     padding: "18px 20px",
     borderRadius: 18,
     background: "rgba(255, 255, 255, 0.72)",
@@ -1120,6 +1120,7 @@ const styles = {
     lineHeight: 1.5,
     textTransform: "uppercase",
     letterSpacing: "0.04em",
+    overflowWrap: "anywhere",
   },
 
   statistics: {
@@ -1156,6 +1157,7 @@ const styles = {
     justifyContent: "space-between",
     gap: 16,
     alignItems: "flex-start",
+    flexWrap: "wrap",
   },
 
   cardTitle: {
@@ -1168,6 +1170,7 @@ const styles = {
   cardText: {
     margin: 0,
     color: "#475569",
+    overflowWrap: "anywhere",
   },
 
   metaRow: {
@@ -1239,6 +1242,8 @@ const styles = {
   editorActions: {
     display: "flex",
     justifyContent: "flex-end",
+    flexWrap: "wrap",
+    gap: 10,
   },
 
   boxLabel: {

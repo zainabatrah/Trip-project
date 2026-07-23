@@ -1229,6 +1229,7 @@ const styles = {
     color:
       "#2563eb",
     fontWeight: 700,
+    overflowWrap: "anywhere",
   },
 
   details: {
@@ -1239,6 +1240,7 @@ const styles = {
       "#475569",
     marginBottom: 18,
     fontSize: 14,
+    lineHeight: 1.5,
   },
 
   statusBadge: {

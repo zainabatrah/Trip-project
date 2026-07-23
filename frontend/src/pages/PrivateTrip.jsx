@@ -805,7 +805,7 @@ function Field({
 
 const styles = {
   headerCard: {
-    minWidth: 200,
+    minWidth: "min(100%, 200px)",
     padding: "18px 20px",
     borderRadius: 18,
     background:
@@ -828,6 +828,7 @@ const styles = {
     fontSize: 13,
     fontWeight: 700,
     lineHeight: 1.5,
+    overflowWrap: "anywhere",
   },
 
   highlightsGrid: {

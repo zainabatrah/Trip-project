@@ -23,13 +23,19 @@ export default function DashboardLayout() {
       style={{
         minHeight: "100vh",
         width: "100%",
+        overflowX: "hidden",
       }}
     >
 
       <TopNavbar />
 
 
-      <main>
+      <main
+        style={{
+          width: "100%",
+          overflowX: "hidden",
+        }}
+      >
        
         <Outlet />
             {
