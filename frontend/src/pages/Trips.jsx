@@ -161,6 +161,7 @@ function getInitialTripImage(trip) {
 function TripImage({
   trip,
   compact = false,
+  phone = false,
 }) {
   const [
     image,
@@ -221,6 +222,9 @@ function TripImage({
           ? {
               ...styles.image,
               ...styles.imageCompact,
+              ...(phone
+                ? styles.imagePhone
+                : null),
             }
           : styles.image
       }
@@ -335,6 +339,8 @@ function buildMapLink(trip) {
 export default function Trips() {
   const isCompact =
     useCompactLayout();
+  const isPhone =
+    useCompactLayout(640);
   const [
     trips,
     setTrips,
@@ -873,6 +879,9 @@ export default function Trips() {
                       ...(isCompact
                         ? styles.cardCompact
                         : null),
+                      ...(isPhone
+                        ? styles.cardPhone
+                        : null),
                     }}
                   >
                     <div
@@ -880,6 +889,9 @@ export default function Trips() {
                         ...styles.imageSection,
                         ...(isCompact
                           ? styles.imageSectionCompact
+                          : null),
+                        ...(isPhone
+                          ? styles.imageSectionPhone
                           : null),
                       }}
                     >
@@ -892,23 +904,30 @@ export default function Trips() {
                         ].join(":")}
                         trip={trip}
                         compact={isCompact}
+                        phone={isPhone}
                       />
 
                       {status ===
                       "completed" ? (
                         <Link
                           to={`/feedback/${id}`}
-                          style={
-                            styles.commentsButton
-                          }
+                          style={{
+                            ...styles.commentsButton,
+                            ...(isPhone
+                              ? styles.commentsButtonPhone
+                              : null),
+                          }}
                         >
                           💬 Reviews
                         </Link>
                       ) : (
                         <div
-                          style={
-                            styles.commentsDisabled
-                          }
+                          style={{
+                            ...styles.commentsDisabled,
+                            ...(isPhone
+                              ? styles.commentsDisabledPhone
+                              : null),
+                          }}
                         >
                           💬 Reviews available
                           after trip
@@ -922,6 +941,9 @@ export default function Trips() {
                         ...(isCompact
                           ? styles.bodyCompact
                           : null),
+                        ...(isPhone
+                          ? styles.bodyPhone
+                          : null),
                       }}
                     >
                       <div
@@ -930,14 +952,20 @@ export default function Trips() {
                         }
                       >
                         <div
-                          style={
-                            styles.titleRow
-                          }
+                          style={{
+                            ...styles.titleRow,
+                            ...(isPhone
+                              ? styles.titleRowPhone
+                              : null),
+                          }}
                         >
                           <h2
-                            style={
-                              styles.title
-                            }
+                            style={{
+                              ...styles.title,
+                              ...(isPhone
+                                ? styles.titlePhone
+                                : null),
+                            }}
                           >
                             {trip.title ||
                               "Untitled Trip"}
@@ -962,19 +990,32 @@ export default function Trips() {
                         </div>
 
                         <p
-                          style={
-                            styles.route
-                          }
+                          style={{
+                            ...styles.route,
+                            ...(isPhone
+                              ? styles.routePhone
+                              : null),
+                          }}
                         >
                           {route}
                         </p>
 
                         <div
-                          style={
-                            styles.details
-                          }
+                          style={{
+                            ...styles.details,
+                            ...(isPhone
+                              ? styles.detailsPhone
+                              : null),
+                          }}
                         >
-                          <span>
+                          <span
+                            style={{
+                              ...styles.detailItem,
+                              ...(isPhone
+                                ? styles.detailItemPhone
+                                : null),
+                            }}
+                          >
                             📅{" "}
                             {formatDate(
                               trip.date
@@ -982,19 +1023,40 @@ export default function Trips() {
                           </span>
 
                           {rating > 0 ? (
-                            <span>
+                            <span
+                              style={{
+                                ...styles.detailItem,
+                                ...(isPhone
+                                  ? styles.detailItemPhone
+                                  : null),
+                              }}
+                            >
                               ⭐{" "}
                               {rating.toFixed(
                                 1
                               )}
                             </span>
                           ) : (
-                            <span>
+                            <span
+                              style={{
+                                ...styles.detailItem,
+                                ...(isPhone
+                                  ? styles.detailItemPhone
+                                  : null),
+                              }}
+                            >
                               ⭐ No reviews yet
                             </span>
                           )}
 
-                          <span>
+                          <span
+                            style={{
+                              ...styles.detailItem,
+                              ...(isPhone
+                                ? styles.detailItemPhone
+                                : null),
+                            }}
+                          >
                             💰 $
                             {Number(
                               trip.price ||
@@ -1002,14 +1064,28 @@ export default function Trips() {
                             ).toFixed(2)}
                           </span>
 
-                          <span>
+                          <span
+                            style={{
+                              ...styles.detailItem,
+                              ...(isPhone
+                                ? styles.detailItemPhone
+                                : null),
+                            }}
+                          >
                             🚗{" "}
                             {capitalize(
                               trip.transportation
                             )}
                           </span>
 
-                          <span>
+                          <span
+                            style={{
+                              ...styles.detailItem,
+                              ...(isPhone
+                                ? styles.detailItemPhone
+                                : null),
+                            }}
+                          >
                             🧳{" "}
                             {seatsLeft(
                               trip
@@ -1019,9 +1095,12 @@ export default function Trips() {
                         </div>
 
                         <div
-                          style={
-                            styles.actions
-                          }
+                          style={{
+                            ...styles.actions,
+                            ...(isPhone
+                              ? styles.actionsPhone
+                              : null),
+                          }}
                         >
                           <Link
                             to={`/trips/${id}`}
@@ -1030,6 +1109,9 @@ export default function Trips() {
                               ...styles.actionButton,
                               ...(isCompact
                                 ? styles.actionButtonCompact
+                                : null),
+                              ...(isPhone
+                                ? styles.actionButtonPhone
                                 : null),
                             }}
                           >
@@ -1047,6 +1129,9 @@ export default function Trips() {
                               ...styles.actionButton,
                               ...(isCompact
                                 ? styles.actionButtonCompact
+                                : null),
+                              ...(isPhone
+                                ? styles.actionButtonPhone
                                 : null),
                             }}
                           >
@@ -1120,6 +1205,11 @@ const styles = {
 
   cardCompact: {
     flexDirection: "column",
+    minWidth: 0,
+  },
+
+  cardPhone: {
+    borderRadius: 16,
   },
 
   imageSection: {
@@ -1132,6 +1222,11 @@ const styles = {
   imageSectionCompact: {
     width: "100%",
     minWidth: 0,
+    maxWidth: "100%",
+  },
+
+  imageSectionPhone: {
+    width: "100%",
   },
 
   image: {
@@ -1143,7 +1238,11 @@ const styles = {
 
   imageCompact: {
     width: "100%",
-    height: 220,
+    height: "clamp(190px, 56vw, 220px)",
+  },
+
+  imagePhone: {
+    height: "clamp(180px, 58vw, 210px)",
   },
 
   commentsButton: {
@@ -1162,6 +1261,8 @@ const styles = {
     textDecoration:
       "none",
     fontWeight: 700,
+    boxSizing:
+      "border-box",
   },
 
   commentsDisabled: {
@@ -1182,6 +1283,18 @@ const styles = {
     textAlign:
       "center",
     lineHeight: 1.45,
+    boxSizing:
+      "border-box",
+  },
+
+  commentsButtonPhone: {
+    minHeight: 48,
+    padding: "11px 14px",
+  },
+
+  commentsDisabledPhone: {
+    minHeight: 48,
+    padding: "11px 14px",
   },
 
   body: {
@@ -1194,12 +1307,17 @@ const styles = {
     padding: 22,
     boxSizing:
       "border-box",
+    minWidth: 0,
   },
 
   bodyCompact: {
     flexDirection: "column",
     gap: 16,
-    padding: 18,
+    padding: "clamp(16px, 4vw, 18px)",
+  },
+
+  bodyPhone: {
+    gap: 14,
   },
 
   mainInfo: {
@@ -1213,6 +1331,13 @@ const styles = {
     gap: 12,
     flexWrap: "wrap",
     marginBottom: 6,
+    minWidth: 0,
+  },
+
+  titleRowPhone: {
+    alignItems:
+      "flex-start",
+    gap: 10,
   },
 
   title: {
@@ -1221,6 +1346,13 @@ const styles = {
     fontWeight: 900,
     color:
       "#1e3a8a",
+    overflowWrap:
+      "anywhere",
+  },
+
+  titlePhone: {
+    margin: "2px 0",
+    fontSize: "clamp(19px, 5.8vw, 21px)",
   },
 
   route: {
@@ -1232,6 +1364,11 @@ const styles = {
     overflowWrap: "anywhere",
   },
 
+  routePhone: {
+    margin:
+      "4px 0 14px",
+  },
+
   details: {
     display: "flex",
     flexWrap: "wrap",
@@ -1241,6 +1378,24 @@ const styles = {
     marginBottom: 18,
     fontSize: 14,
     lineHeight: 1.5,
+    minWidth: 0,
+  },
+
+  detailsPhone: {
+    flexDirection:
+      "column",
+    gap: 10,
+    marginBottom: 16,
+  },
+
+  detailItem: {
+    minWidth: 0,
+    overflowWrap:
+      "anywhere",
+  },
+
+  detailItemPhone: {
+    display: "block",
   },
 
   statusBadge: {
@@ -1276,9 +1431,22 @@ const styles = {
     gap: 12,
     marginTop: 18,
     flexWrap: "wrap",
+    minWidth: 0,
+  },
+
+  actionsPhone: {
+    flexDirection:
+      "column",
+    gap: 10,
+    marginTop: 16,
   },
 
   actionButton: {
+    display: "inline-flex",
+    alignItems:
+      "center",
+    justifyContent:
+      "center",
     textDecoration:
       "none",
     textAlign:
@@ -1291,5 +1459,12 @@ const styles = {
 
   actionButtonCompact: {
     flex: "1 1 100%",
+    width: "100%",
+    boxSizing:
+      "border-box",
+  },
+
+  actionButtonPhone: {
+    minHeight: 46,
   },
 };
