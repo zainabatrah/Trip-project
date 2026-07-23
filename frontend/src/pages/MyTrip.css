@@ -1,12 +1,14 @@
 
 .mybody{
     background: linear-gradient(rgba(168, 192, 255, 0.55) 0%, rgba(219, 234, 254, 0.82) 46%, rgba(255, 255, 255, 0.94) 100%);
+    min-height:100vh;
+    padding-top:84px;
 }
 
 
 .myTrips{
     max-width:1200px;
-    margin:40px auto;
+    margin:0 auto 40px;
     padding:clamp(16px, 4vw, 20px);
     font-family:Arial,sans-serif;
 }

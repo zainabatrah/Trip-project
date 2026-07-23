@@ -747,7 +747,7 @@ export default function Map() {
           "#eff6ff",
         minHeight: "100vh",
         padding:
-          "clamp(14px, 4vw, 25px)",
+          "calc(clamp(14px, 4vw, 25px) + 74px) clamp(14px, 4vw, 25px) clamp(14px, 4vw, 25px)",
       }}
     >
       <div

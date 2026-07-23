@@ -1028,6 +1028,9 @@ export default function Trips() {
                             style={{
                               ...pageTheme.buttonSecondary,
                               ...styles.actionButton,
+                              ...(isCompact
+                                ? styles.actionButtonCompact
+                                : null),
                             }}
                           >
                             Trip Details
@@ -1042,6 +1045,9 @@ export default function Trips() {
                             style={{
                               ...pageTheme.buttonSecondary,
                               ...styles.actionButton,
+                              ...(isCompact
+                                ? styles.actionButtonCompact
+                                : null),
                             }}
                           >
                             Open Map
@@ -1175,6 +1181,7 @@ const styles = {
     fontWeight: 600,
     textAlign:
       "center",
+    lineHeight: 1.45,
   },
 
   body: {
@@ -1210,7 +1217,7 @@ const styles = {
 
   title: {
     margin: "5px 0",
-    fontSize: 23,
+    fontSize: "clamp(20px, 5vw, 23px)",
     fontWeight: 900,
     color:
       "#1e3a8a",
@@ -1278,5 +1285,9 @@ const styles = {
       "10px 18px",
     borderRadius: 12,
     fontWeight: 800,
+  },
+
+  actionButtonCompact: {
+    flex: "1 1 100%",
   },
 };

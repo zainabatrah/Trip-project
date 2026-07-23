@@ -22,6 +22,7 @@
   padding: 0 40px;
   box-sizing: border-box;
 
+  background: rgba(255,255,255,.14);
   backdrop-filter: blur(12px);
 }
 
@@ -45,6 +46,7 @@
   flex: 1;
   display: flex;
   align-items: center;
+  min-width: 0;
 }
 
 /* ========================= */
@@ -58,7 +60,7 @@
   justify-content: center;
   align-items: center;
 
-  gap: 40px;
+  gap: 30px;
 }
 
 .link,
@@ -127,7 +129,10 @@
   );
 
   transition: .3s;
-  margin-left: 44px;
+  margin-left: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .primaryBtn:hover,
@@ -166,8 +171,7 @@
   box-shadow: 0 10px 25px rgba(92,157,255,.35);
 
   transition: .3s;
-  margin-left: -36px;
-  margin-top: 0px;
+  margin: 0;
 }
 
 .profileCircle:hover {
@@ -189,8 +193,8 @@
   font-weight: bold;
 }
 .circles{
-  margin-top: -4px;
-    width: 46px;
+  margin: 0;
+  width: 46px;
   height: 46px;
 
   border-radius: 50%;
@@ -213,10 +217,7 @@
   border: 2px solid rgba(255,255,255,.9);
 
   box-shadow: 0 10px 25px rgba(92,157,255,.35);
-
   transition: .3s;
-  margin-left: -36px;
-  
 }
 /* ========================= */
 /* HAMBURGER */
@@ -234,18 +235,18 @@
   font-size: 30px;
 }
 .rightlinks{
-  margin-right: -30px;
-      display: flex;
-    justify-content: space-between;
-    align-content: space-around;
-    align-items: center;
-    position: relative;
-    gap: 16px;
+  margin-left: auto;
+  margin-right: 0;
+  display: flex;
+  align-items: center;
+  position: relative;
+  gap: 14px;
+  flex-shrink: 0;
 }
 
 .notificationWrap {
   position: relative;
-      margin-right: 40px;
+  margin-right: 0;
 }
 
 .notificationButton {
@@ -267,6 +268,11 @@
   transition: .3s;
   color: #1e3a8a;
   position: relative;
+  font: inherit;
+}
+
+.notificationButtonText {
+  display: none;
 }
 
 .notificationButton:hover {
@@ -295,7 +301,7 @@
   position: absolute;
   top: calc(100% + 14px);
   right: 0;
-  width: 360px;
+  width: min(360px, calc(100vw - 32px));
   max-height: 470px;
   padding: 18px;
   border-radius: 22px;
@@ -304,6 +310,10 @@
   box-shadow: 0 25px 70px rgba(59, 130, 246, 0.22);
   backdrop-filter: blur(16px);
   z-index: 1200;
+}
+
+.mobileBackdrop {
+  display: none;
 }
 
 .notificationHeader {
@@ -439,198 +449,195 @@
   font-weight: 700;
 }
 /* ========================= */
-/* MOBILE */
+/* MOBILE NAV */
 /* ========================= */
-@media (max-width:768px) {
+@media (max-width:1100px) {
 
   .navbar {
-    height: 70px;
-    padding: 0 20px;
+    padding: 0 16px;
     justify-content: flex-start;
   }
 
-
-  /* hamburger */
   .hamburger {
-    display: block;
-
+    display: grid;
+    place-items: center;
     position: fixed;
-    top: 20px;
-    left: 20px;
-
+    top: 12px;
+    left: 14px;
     z-index: 3000;
-
-    font-size: 28px;
-    cursor: pointer;
+    width: 46px;
+    height: 46px;
+    border-radius: 16px;
+    background: rgba(255,255,255,.9);
+    box-shadow: 0 16px 36px rgba(96,165,250,.22);
+    border: 1px solid rgba(147, 197, 253, 0.45);
+    font-size: 26px;
+    color: #1e3a8a;
   }
 
-
-  /* SIDEBAR HIDDEN BY DEFAULT */
-  .menu {
-
+  .mobileBackdrop {
+    display: block;
     position: fixed;
+    inset: 0;
+    border: none;
+    background: rgba(15, 23, 42, 0.34);
+    z-index: 2400;
+  }
 
+  .menu {
+    position: fixed;
     top: 0;
-    left: -280px; /* hidden */
-
-    width: 260px;
-    height: 100vh;
-
-       background: linear-gradient(rgb(168 192 255) 0%, rgba(150, 195, 253, 0.82) 46%, rgba(255, 255, 255, 0.94) 100%);
-
+    left: calc(-1 * min(360px, calc(100vw - 28px)));
+    width: min(360px, calc(100vw - 28px));
+    max-width: 100%;
+    height: 100dvh;
+    background: linear-gradient(rgb(168 192 255) 0%, rgba(150, 195, 253, 0.82) 46%, rgba(255, 255, 255, 0.94) 100%);
     display: flex;
     flex-direction: column;
-
-    padding: 25px 20px;
-
-    box-shadow: 10px 0 30px rgba(0,0,0,.1);
-
-    transition: left 0.4s ease;
-
+    align-items: stretch;
+    padding: 86px 18px 22px;
+    box-shadow: 18px 0 42px rgba(15,23,42,.18);
+    transition: left 0.35s ease;
     z-index: 2500;
-  }
- .navbar {
-    height: 70px;
-    transition: height 0.4s ease;
+    overflow-y: auto;
+    gap: 18px;
   }
 
-
-  /* remove navbar height when menu opens */
-  .navbar.open {
-    height: 0;
-  }
-
-  /* SIDEBAR SHOW WHEN CLICKED */
   .menu.open {
     left: 0;
   }
 
-
+  .navbar.open {
+    height: 70px;
+  }
 
   .navInner {
     width: 100%;
   }
 
-
-
   .leftLinks {
-
-    margin-top: 80px;
-
+    margin-top: 0;
     width: 100%;
-
     display: flex;
-
     flex-direction: column;
-
-    align-items: flex-start;
-
-    gap: 12px;
-
+    align-items: stretch;
+    gap: 10px;
   }
-
-.rightlinks{
-  
-
-    width: 100%;
-
-    display: flex;
-
-    flex-direction: column;
-
-    align-items: flex-start;
-
-    gap: 5px;
-}
-
-.notificationWrap {
-  width: 100%;
-  margin-left: 65px;
-
-}
-
-.notificationButton {
-  width: 52px;
-  height: 52px;
-}
-
-.notificationPanel {
-  position: static;
-  width: 100%;
-  margin-top: 12px;
-  max-height: none;
-  box-sizing: border-box;
-}
 
   .link,
   .linkButton {
-
     width: 100%;
-
     padding: 14px 15px;
-
-    font-size: 17px;
-
+    font-size: 16px;
     color: #333;
-
-    background: none;
-
+    background: rgba(255,255,255,.46);
     -webkit-text-fill-color: initial;
-
-    border-radius: 12px;
-
+    border-radius: 14px;
   }
-
-
 
   .link:hover,
   .linkButton:hover {
-
     background: #eee8ff;
-
   }
 
-
-
-  .rightButtons {
-
-    margin-top: auto;
-
+  .rightlinks {
     width: 100%;
-
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 15px;
-
+    display: grid;
+    align-items: stretch;
+    gap: 12px;
+    margin-top: auto;
   }
 
+  .notificationWrap {
+    width: 100%;
+    margin: 0;
+  }
 
+  .notificationButton {
+    width: 100%;
+    height: 56px;
+    border-radius: 18px;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 0 18px;
+  }
+
+  .notificationButtonText {
+    display: inline;
+    font-size: 15px;
+    font-weight: 800;
+    color: #1e3a8a;
+  }
+
+  .notificationBadge {
+    top: 8px;
+    right: 12px;
+  }
+
+  .notificationPanel {
+    position: static;
+    width: 100%;
+    margin-top: 12px;
+    max-height: min(58vh, 430px);
+    padding: 14px;
+    border-radius: 20px;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .notificationHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .notificationAction {
+    width: 100%;
+  }
+
+  .notificationList {
+    max-height: min(40vh, 300px);
+  }
+
+  .notificationItem {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .notificationIcon {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+  }
 
   .primaryBtn,
   .secondaryBtn {
-
     width: 100%;
-
     text-align: center;
-
-    margin-left: 0;
-
   }
-
-
 
   .circles {
-
     width: 45px;
     height: 45px;
-
     align-self: center;
-    
+  }
+}
 
+@media (max-width:768px) {
+
+  .menu {
+    width: min(320px, calc(100vw - 24px));
+    left: calc(-1 * min(320px, calc(100vw - 24px)));
+    padding: 84px 16px 20px;
   }
 
+  .notificationPanel {
+    max-height: min(56vh, 400px);
+  }
+
+  .notificationList {
+    max-height: min(38vh, 280px);
+  }
 }
 
 

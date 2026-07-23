@@ -240,7 +240,7 @@ const styles = {
   main: {
     minHeight: "100vh",
     width: "100%",
-    padding: "50px 20px",
+    padding: "96px 20px 50px",
     background:
       "linear-gradient(135deg, #eff6ff 0%, #bfdbfe 45%, #60a5fa 100%)",
     display: "flex",
@@ -251,8 +251,8 @@ const styles = {
   },
 
   title: {
-    margin: "35px 0 30px",
-    fontSize: 34,
+    margin: "0 0 30px",
+    fontSize: "clamp(28px, 6vw, 34px)",
     fontWeight: 900,
     letterSpacing: "-0.5px",
     color: "#1e3a8a",

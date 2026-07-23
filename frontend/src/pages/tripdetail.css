@@ -8,6 +8,12 @@
   
 }
 
+.trip-page {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 86px 23px 40px;
+}
+
 
 .navbar {
   width: 100%;
@@ -920,6 +926,10 @@ height: 91px;
 }
 
 @media(max-width:768px){
+
+  .trip-page {
+    padding: 82px 14px 32px;
+  }
 
   .hero{
     height: auto;

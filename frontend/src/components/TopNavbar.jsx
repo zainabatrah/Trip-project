@@ -6,6 +6,7 @@ import {
 import {
   Link,
   useNavigate,
+  useLocation,
 } from "react-router-dom";
 import {
   FaBell,
@@ -64,6 +65,8 @@ export default function TopNavbar() {
     useRef(null);
   const navigate =
     useNavigate();
+  const location =
+    useLocation();
   const profileImage = getProfileImage(user);
   const profileLetter = getProfileLetter(user);
   const isOrganizer =
@@ -208,6 +211,60 @@ export default function TopNavbar() {
       );
     };
   }, [user?._id]);
+
+  useEffect(() => {
+    setOpen(false);
+    setNotificationOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return undefined;
+    }
+
+    const previousOverflow =
+      document.body.style.overflow;
+
+    if (open) {
+      document.body.style.overflow =
+        "hidden";
+    }
+
+    return () => {
+      document.body.style.overflow =
+        previousOverflow;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    function handleResize() {
+      if (window.innerWidth > 1100) {
+        setOpen(false);
+      }
+    }
+
+    window.addEventListener(
+      "resize",
+      handleResize
+    );
+
+    return () => {
+      window.removeEventListener(
+        "resize",
+        handleResize
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!open) {
+      setNotificationOpen(false);
+    }
+  }, [open]);
 
   useEffect(() => {
     if (!notificationOpen) {
@@ -441,6 +498,13 @@ export default function TopNavbar() {
         }
       >
         <FaBell />
+        <span
+          className={
+            styles.notificationButtonText
+          }
+        >
+          Notifications
+        </span>
         {unreadCount > 0 ? (
           <span
             className={
@@ -646,7 +710,20 @@ export default function TopNavbar() {
   </>
 )}
   </div>
-        </div>
+      </div>
+
+      {open ? (
+        <button
+          type="button"
+          className={
+            styles.mobileBackdrop
+          }
+          aria-label="Close menu"
+          onClick={() =>
+            setOpen(false)
+          }
+        />
+      ) : null}
 
      <div 
   className={styles.hamburger}

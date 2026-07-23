@@ -11,7 +11,7 @@ export default function PublicPageLayout({
   mainStyle,
   contentStyle,
   showHeader = true,
-   showNavbar = true,
+  showNavbar = false,
 }) {
   
   return (
