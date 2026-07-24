@@ -214,6 +214,16 @@ function getUniqueImageCandidates(
   );
 }
 
+function normalizeWeatherCityName(
+  value
+) {
+  return String(
+    value || ""
+  )
+    .trim()
+    .toLowerCase();
+}
+
 /*
 |--------------------------------------------------------------------------
 | Main trip image
@@ -667,23 +677,57 @@ export default function TripDetails() {
     };
   }, [id]);
 
-    function formatDate(value) {
-  if (!value) {
-    return "No date";
+  function formatDate(value) {
+    if (!value) {
+      return "No date";
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return "Invalid date";
+    }
+
+    return date.toLocaleDateString(
+      "en-US",
+      {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }
+    );
   }
 
-  const date = new Date(value);
+  function getForecastForPlace(
+    placeCity
+  ) {
+    const normalizedPlaceCity =
+      normalizeWeatherCityName(
+        placeCity
+      );
 
-  if (Number.isNaN(date.getTime())) {
-    return "Invalid date";
+    if (
+      !normalizedPlaceCity ||
+      !Array.isArray(forecast)
+    ) {
+      return [];
+    }
+
+    const cityWeather =
+      forecast.find(
+        (weatherEntry) =>
+          normalizeWeatherCityName(
+            weatherEntry?.city
+          ) ===
+          normalizedPlaceCity
+      );
+
+    return Array.isArray(
+      cityWeather?.forecast
+    )
+      ? cityWeather.forecast
+      : [];
   }
-
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
 
   /*
   |--------------------------------------------------------------------------
@@ -1385,6 +1429,11 @@ export default function TripDetails() {
                       place.days
                   );
 
+                const cityForecast =
+                  getForecastForPlace(
+                    place?.city
+                  );
+
                 return (
                   <div
                     className="timeline-item"
@@ -1456,56 +1505,60 @@ export default function TripDetails() {
                               </span>
                             </div>
                           </div>
+                        ) : cityForecast.length >
+                          0 ? (
+                          cityForecast.map(
+                            (
+                              weather,
+                              weatherIndex
+                            ) => (
+                              <div
+                                key={
+                                  weatherIndex
+                                }
+                                className="forecast-card"
+                              >
+                                <p>
+                                  {
+                                    weather.date
+                                  }
+                                </p>
+
+                                <div className="weather-icon-box">
+                                  {getWeatherIcon(
+                                    weather.maxTemp
+                                  )}
+                                </div>
+
+                                <span>
+                                  {
+                                    weather.maxTemp
+                                  }
+                                  ° /{" "}
+                                  {
+                                    weather.minTemp
+                                  }
+                                  °
+                                </span>
+                              </div>
+                            )
+                          )
                         ) : (
-                          forecast
-                            ?.filter(
-                              (
-                                weather
-                              ) =>
-                                weather.city ===
-                                place.city
-                            )
-                            .map(
-                              (
-                                cityWeather
-                              ) =>
-                                cityWeather.forecast.map(
-                                  (
-                                    weather,
-                                    weatherIndex
-                                  ) => (
-                                    <div
-                                      key={
-                                        weatherIndex
-                                      }
-                                      className="forecast-card"
-                                    >
-                                      <p>
-                                        {
-                                          weather.date
-                                        }
-                                      </p>
+                          <div className="weather-unavailable">
+                            <div className="weather-message-icon">
+                              🌥️
+                            </div>
 
-                                      <div className="weather-icon-box">
-                                        {getWeatherIcon(
-                                          weather.maxTemp
-                                        )}
-                                      </div>
+                            <div className="weather-message-content">
+                              <h4>
+                                Weather data unavailable
+                              </h4>
 
-                                      <span>
-                                        {
-                                          weather.maxTemp
-                                        }
-                                        ° /{" "}
-                                        {
-                                          weather.minTemp
-                                        }
-                                        °
-                                      </span>
-                                    </div>
-                                  )
-                                )
-                            )
+                              <p>
+                                We could not load the forecast for this stop.
+                              </p>
+                            </div>
+                          </div>
                         )}
                       </div>
                     </div>

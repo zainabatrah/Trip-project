@@ -23,11 +23,7 @@ import {
   cancelBookingById,
   getManagedBookings,
 } from "../api/bookings.js";
-
-const API_ROOT = (
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:5000/api"
-).replace(/\/api\/?$/, "");
+import { API_ROOT } from "../api/apiBase.js";
 
 function formatDateTime(value) {
   if (!value) {

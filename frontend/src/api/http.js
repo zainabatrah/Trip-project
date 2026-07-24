@@ -1,9 +1,5 @@
+import { API_URL } from "./apiBase.js";
 import { getAuthStorageValue } from "./authStorage.js";
-
-const API_URL = (
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:5000/api"
-).replace(/\/+$/, "");
 
 export async function apiRequest(
   path,

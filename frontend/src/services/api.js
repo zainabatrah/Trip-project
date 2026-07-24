@@ -1,11 +1,7 @@
 import axios from "axios";
+import { API_URL } from "../api/apiBase.js";
 import { getAuthStorageValue } from "../api/authStorage.js";
 import { logoutUser } from "../api/auth.js";
-
-const API_URL = (
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:5000/api"
-).replace(/\/+$/, "");
 
 const api = axios.create({
   baseURL: API_URL,

@@ -1,9 +1,5 @@
 import api from "../services/api.js";
-
-const API_ROOT = (
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:5000/api"
-).replace(/\/api\/?$/, "");
+import { API_ROOT } from "./apiBase.js";
 
 export function getSocialMediaUrl(
   value

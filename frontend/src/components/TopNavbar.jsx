@@ -28,12 +28,8 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from "../api/notifications.js";
+import { API_ROOT } from "../api/apiBase.js";
 import styles from "../Styles/welcome.module.css";
-
-const API_ROOT = (
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:5000/api"
-).replace(/\/api\/?$/, "");
 
 export default function TopNavbar() {
   const [open, setOpen] = useState(false);
