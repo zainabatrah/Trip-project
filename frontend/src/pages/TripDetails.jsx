@@ -1543,23 +1543,7 @@ export default function TripDetails() {
                               </div>
                             )
                           )
-                        ) : (
-                          <div className="weather-unavailable">
-                            <div className="weather-message-icon">
-                              🌥️
-                            </div>
-
-                            <div className="weather-message-content">
-                              <h4>
-                                Weather data unavailable
-                              </h4>
-
-                              <p>
-                                We could not load the forecast for this stop.
-                              </p>
-                            </div>
-                          </div>
-                        )}
+                        ) : null}
                       </div>
                     </div>
                   </div>

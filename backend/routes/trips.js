@@ -1641,14 +1641,29 @@ router.get(
           todayAtMidnight
         ) / millisecondsPerDay;
 
+      const weatherAvailabilityWindowDays =
+        7;
+
+      const supportedForecastLookaheadDays =
+        15;
+
+      const latestForecastDate =
+        new Date(todayAtMidnight);
+
+      latestForecastDate.setDate(
+        latestForecastDate.getDate() +
+          supportedForecastLookaheadDays
+      );
+
       let weather;
 
       /*
        * Only get weather when the trip
-       * is within seven days.
+       * starts within seven days.
        */
       if (
-        daysUntilTrip <= 7 &&
+        daysUntilTrip <=
+          weatherAvailabilityWindowDays &&
         daysUntilTrip >= 0
       ) {
         const tripStartDate =
@@ -1717,6 +1732,26 @@ router.get(
                   days -
                   1
                 );
+
+                if (
+                  cityStartDate >
+                  latestForecastDate
+                ) {
+                  return {
+                    city:
+                      place.city,
+                    forecast: [],
+                  };
+                }
+
+                if (
+                  endDateObject >
+                  latestForecastDate
+                ) {
+                  endDateObject.setTime(
+                    latestForecastDate.getTime()
+                  );
+                }
 
                 const endDate =
                   endDateObject
@@ -1809,7 +1844,7 @@ router.get(
       } else {
         weather = {
           message:
-            "Weather forecast will be available 7 days before your trip",
+            `Weather forecast will be available ${weatherAvailabilityWindowDays} days before your trip`,
         };
       }
 
