@@ -1535,24 +1535,39 @@ router.get(
 |--------------------------------------------------------------------------
 */
 
+/*
+|--------------------------------------------------------------------------
+| GET one trip and weather
+| GET /api/trips/:id
+|--------------------------------------------------------------------------
+*/
+
 router.get(
   "/:id",
-  async (
-    req,
-    res
-  ) => {
+  async (req, res) => {
     try {
+      /*
+       * Automatically mark old trips as completed.
+       */
       await Trip.updateMany(
-  {
-    status: { $ne: "completed" },
-    date: { $lt: new Date() },
-  },
-  {
-    $set: {
-      status: "completed",
-    },
-  }
-);
+        {
+          status: {
+            $ne: "completed",
+          },
+          date: {
+            $lt: new Date(),
+          },
+        },
+        {
+          $set: {
+            status: "completed",
+          },
+        }
+      );
+
+      /*
+       * Validate MongoDB ID.
+       */
       if (
         !mongoose.Types.ObjectId.isValid(
           req.params.id
@@ -1561,11 +1576,15 @@ router.get(
         return res
           .status(400)
           .json({
+            success: false,
             message:
-              "Invalid ID",
+              "Invalid trip ID.",
           });
       }
 
+      /*
+       * Find the trip.
+       */
       const trip =
         await Trip.findById(
           req.params.id
@@ -1575,298 +1594,673 @@ router.get(
         return res
           .status(404)
           .json({
+            success: false,
             message:
-              "Trip not found",
+              "Trip not found.",
           });
       }
 
-      const currentDate =
-        new Date(
+      const MILLISECONDS_PER_DAY =
+        24 * 60 * 60 * 1000;
+
+      const WEATHER_WINDOW_DAYS =
+        7;
+
+      /*
+       * Convert a date to midnight UTC.
+       * This avoids differences between
+       * the local computer and Render.
+       */
+      function toUtcMidnight(
+        value
+      ) {
+        const date =
+          new Date(value);
+
+        if (
+          Number.isNaN(
+            date.getTime()
+          )
+        ) {
+          return null;
+        }
+
+        return new Date(
+          Date.UTC(
+            date.getUTCFullYear(),
+            date.getUTCMonth(),
+            date.getUTCDate()
+          )
+        );
+      }
+
+      /*
+       * Add days without modifying
+       * the original date.
+       */
+      function addUtcDays(
+        value,
+        numberOfDays
+      ) {
+        const result =
+          new Date(value);
+
+        result.setUTCDate(
+          result.getUTCDate() +
+            numberOfDays
+        );
+
+        return result;
+      }
+
+      /*
+       * Convert a date to YYYY-MM-DD.
+       */
+      function formatWeatherDate(
+        value
+      ) {
+        return new Date(value)
+          .toISOString()
+          .slice(0, 10);
+      }
+
+      /*
+       * Validate and normalize coordinates.
+       */
+      function readCoordinates(
+        latitude,
+        longitude
+      ) {
+        const lat =
+          Number(latitude);
+
+        const lng =
+          Number(longitude);
+
+        if (
+          !Number.isFinite(lat) ||
+          !Number.isFinite(lng) ||
+          lat < -90 ||
+          lat > 90 ||
+          lng < -180 ||
+          lng > 180 ||
+          (
+            lat === 0 &&
+            lng === 0
+          )
+        ) {
+          return null;
+        }
+
+        return {
+          latitude: lat,
+          longitude: lng,
+        };
+      }
+
+      /*
+       * Use stored coordinates first.
+       * When missing, search using city name.
+       */
+      async function resolveCoordinates(
+        place
+      ) {
+        const storedCoordinates =
+          readCoordinates(
+            place?.latitude,
+            place?.longitude
+          );
+
+        if (storedCoordinates) {
+          return storedCoordinates;
+        }
+
+        const city =
+          String(
+            place?.city || ""
+          ).trim();
+
+        if (!city) {
+          return null;
+        }
+
+        try {
+          const geocodedCoordinates =
+            await getCoordinates(
+              city
+            );
+
+          return readCoordinates(
+            geocodedCoordinates?.lat ??
+              geocodedCoordinates
+                ?.latitude,
+
+            geocodedCoordinates?.lng ??
+              geocodedCoordinates
+                ?.longitude
+          );
+        } catch (
+          geocodingError
+        ) {
+          console.error(
+            "Weather geocoding error:",
+            city,
+            geocodingError.message
+          );
+
+          return null;
+        }
+      }
+
+      const todayAtMidnight =
+        toUtcMidnight(
+          new Date()
+        );
+
+      const tripDateAtMidnight =
+        toUtcMidnight(
           trip.date
         );
 
       if (
-        Number.isNaN(
-          currentDate.getTime()
-        )
+        !todayAtMidnight ||
+        !tripDateAtMidnight
       ) {
         return res
           .status(400)
           .json({
+            success: false,
             message:
-              "Invalid trip date",
+              "Invalid trip date.",
+          });
+      }
+
+      const daysUntilTrip =
+        Math.round(
+          (
+            tripDateAtMidnight.getTime() -
+            todayAtMidnight.getTime()
+          ) /
+            MILLISECONDS_PER_DAY
+        );
+
+      const tripResponse =
+        applyImagesOnly(
+          trip.toObject()
+        );
+
+      /*
+       * Past trip.
+       */
+      if (daysUntilTrip < 0) {
+        return res
+          .status(200)
+          .json({
+            success: true,
+
+            trip:
+              tripResponse,
+
+            weather: {
+              message:
+                "Weather forecast is unavailable because this trip has already passed.",
+            },
           });
       }
 
       /*
-       * Calculate days until trip using
-       * calendar dates instead of exact
-       * timestamps. This keeps weather
-       * available for trips happening
-       * today and for trips exactly
-       * seven calendar days away.
-       */
-      const millisecondsPerDay =
-        1000 *
-        60 *
-        60 *
-        24;
-
-      const today =
-        new Date();
-
-      const todayAtMidnight =
-        new Date(today);
-
-      todayAtMidnight.setHours(
-        0,
-        0,
-        0,
-        0
-      );
-
-      const tripDateAtMidnight =
-        new Date(currentDate);
-
-      tripDateAtMidnight.setHours(
-        0,
-        0,
-        0,
-        0
-      );
-
-      const daysUntilTrip =
-        (
-          tripDateAtMidnight -
-          todayAtMidnight
-        ) / millisecondsPerDay;
-
-      const weatherAvailabilityWindowDays =
-        7;
-
-      const supportedForecastLookaheadDays =
-        15;
-
-      const latestForecastDate =
-        new Date(todayAtMidnight);
-
-      latestForecastDate.setDate(
-        latestForecastDate.getDate() +
-          supportedForecastLookaheadDays
-      );
-
-      let weather;
-
-      /*
-       * Only get weather when the trip
-       * starts within seven days.
+       * More than seven days away.
        */
       if (
-        daysUntilTrip <=
-          weatherAvailabilityWindowDays &&
-        daysUntilTrip >= 0
+        daysUntilTrip >
+        WEATHER_WINDOW_DAYS
       ) {
-        const tripStartDate =
-          new Date(
-            trip.date
-          );
+        return res
+          .status(200)
+          .json({
+            success: true,
 
-        weather =
-          await Promise.all(
-            trip.places.map(
-              async (
-                place,
-                index
-              ) => {
-                /*
-                 * Calculate the starting
-                 * date of this city.
-                 */
-                const cityStartDate =
-                  new Date(
-                    tripStartDate
-                  );
+            trip:
+              tripResponse,
 
-                /*
-                 * Add previous cities'
-                 * durations.
-                 */
-                for (
-                  let previousIndex =
-                    0;
-                  previousIndex <
-                    index;
-                  previousIndex +=
-                    1
-                ) {
-                  const previousDays =
-                    trip.places[
-                      previousIndex
-                    ].duration
-                      ?.value ||
-                    1;
-
-                  cityStartDate.setDate(
-                    cityStartDate.getDate() +
-                    previousDays
-                  );
-                }
-
-                const days =
-                  place.duration
-                    ?.value ||
-                  1;
-
-                const startDate =
-                  cityStartDate
-                    .toISOString()
-                    .split("T")[0];
-
-                const endDateObject =
-                  new Date(
-                    cityStartDate
-                  );
-
-                endDateObject.setDate(
-                  endDateObject.getDate() +
-                  days -
-                  1
-                );
-
-                if (
-                  cityStartDate >
-                  latestForecastDate
-                ) {
-                  return {
-                    city:
-                      place.city,
-                    forecast: [],
-                  };
-                }
-
-                if (
-                  endDateObject >
-                  latestForecastDate
-                ) {
-                  endDateObject.setTime(
-                    latestForecastDate.getTime()
-                  );
-                }
-
-                const endDate =
-                  endDateObject
-                    .toISOString()
-                    .split("T")[0];
-
-                console.log(
-                  place.city,
-                  startDate,
-                  endDate
-                );
-
-                let forecast = [];
-
-                try {
-                  const response =
-                    await axios.get(
-                      "https://api.open-meteo.com/v1/forecast",
-                      {
-                        params: {
-                          latitude:
-                            place.latitude,
-
-                          longitude:
-                            place.longitude,
-
-                          daily:
-                            "temperature_2m_max,temperature_2m_min",
-
-                          start_date:
-                            startDate,
-
-                          end_date:
-                            endDate,
-
-                          timezone:
-                            "auto",
-                        },
-                      }
-                    );
-
-                  const daily =
-                    response.data
-                      .daily;
-
-                  forecast =
-                    daily.time.map(
-                      (
-                        date,
-                        weatherIndex
-                      ) => ({
-                        date,
-
-                        maxTemp:
-                          daily
-                            .temperature_2m_max[
-                            weatherIndex
-                          ],
-
-                        minTemp:
-                          daily
-                            .temperature_2m_min[
-                            weatherIndex
-                          ],
-                      })
-                    );
-                } catch (
-                  weatherError
-                ) {
-                  console.log(
-                    "Weather error:",
-                    place.city,
-                    weatherError
-                      .response
-                      ?.data ||
-                    weatherError
-                      .message
-                  );
-                }
-
-                return {
-                  city:
-                    place.city,
-
-                  forecast,
-                };
-              }
-            )
-          );
-      } else {
-        weather = {
-          message:
-            `Weather forecast will be available ${weatherAvailabilityWindowDays} days before your trip`,
-        };
+            weather: {
+              message:
+                `Weather forecast will be available ${WEATHER_WINDOW_DAYS} days before your trip.`,
+            },
+          });
       }
 
-      return res.json({
-        /*
-         * Only the image fields are
-         * changed here. Other GET-by-ID
-         * fields keep their structure.
-         */
-        trip:
-          applyImagesOnly(
-            trip.toObject()
-          ),
+      const places =
+        Array.isArray(
+          trip.places
+        )
+          ? trip.places
+          : [];
 
-        weather,
-      });
+      /*
+       * Trip has no destinations.
+       */
+      if (places.length === 0) {
+        return res
+          .status(200)
+          .json({
+            success: true,
+
+            trip:
+              tripResponse,
+
+            weather: {
+              message:
+                "No destinations were added to this trip.",
+            },
+          });
+      }
+
+      let accumulatedDays = 0;
+
+      const weatherResults = [];
+
+      /*
+       * Process each trip destination.
+       */
+      for (
+        let index = 0;
+        index < places.length;
+        index += 1
+      ) {
+        const place =
+          places[index];
+
+        const city =
+          String(
+            place?.city ||
+              `Destination ${index + 1}`
+          ).trim();
+
+        /*
+         * Your existing helper converts hours
+         * and days to a usable day count.
+         */
+        const durationDays =
+          Math.max(
+            1,
+            normalizeDurationValue(
+              place?.duration ??
+                place?.days ??
+                1
+            )
+          );
+
+        const cityStartDate =
+          addUtcDays(
+            tripDateAtMidnight,
+            accumulatedDays
+          );
+
+        const cityEndDate =
+          addUtcDays(
+            cityStartDate,
+            durationDays - 1
+          );
+
+        accumulatedDays +=
+          durationDays;
+
+        const startDate =
+          formatWeatherDate(
+            cityStartDate
+          );
+
+        const endDate =
+          formatWeatherDate(
+            cityEndDate
+          );
+
+        /*
+         * Get valid coordinates.
+         */
+        const coordinates =
+          await resolveCoordinates(
+            place
+          );
+
+        if (!coordinates) {
+          console.error(
+            "Weather coordinates unavailable:",
+            city,
+            place?.latitude,
+            place?.longitude
+          );
+
+          weatherResults.push({
+            city,
+            forecast: [],
+            message:
+              "Destination coordinates are unavailable.",
+          });
+
+          continue;
+        }
+
+        try {
+          /*
+           * First request:
+           * Retrieve the available forecast
+           * and select the required trip dates.
+           */
+          const response =
+            await axios.get(
+              "https://api.open-meteo.com/v1/forecast",
+              {
+                params: {
+                  latitude:
+                    coordinates.latitude,
+
+                  longitude:
+                    coordinates.longitude,
+
+                  daily:
+                    "temperature_2m_max,temperature_2m_min",
+
+                  timezone:
+                    "auto",
+
+                  forecast_days:
+                    16,
+                },
+
+                timeout:
+                  15000,
+
+                headers: {
+                  Accept:
+                    "application/json",
+                },
+              }
+            );
+
+          const daily =
+            response.data?.daily;
+
+          if (
+            !daily ||
+            !Array.isArray(
+              daily.time
+            ) ||
+            !Array.isArray(
+              daily
+                .temperature_2m_max
+            ) ||
+            !Array.isArray(
+              daily
+                .temperature_2m_min
+            )
+          ) {
+            throw new Error(
+              "Open-Meteo returned an invalid response."
+            );
+          }
+
+          let forecast =
+            daily.time
+              .map(
+                (
+                  date,
+                  weatherIndex
+                ) => {
+                  const maxTemp =
+                    Number(
+                      daily
+                        .temperature_2m_max[
+                        weatherIndex
+                      ]
+                    );
+
+                  const minTemp =
+                    Number(
+                      daily
+                        .temperature_2m_min[
+                        weatherIndex
+                      ]
+                    );
+
+                  return {
+                    date,
+                    maxTemp,
+                    minTemp,
+                  };
+                }
+              )
+              .filter(
+                (weatherDay) =>
+                  weatherDay.date >=
+                    startDate &&
+                  weatherDay.date <=
+                    endDate &&
+                  Number.isFinite(
+                    weatherDay.maxTemp
+                  ) &&
+                  Number.isFinite(
+                    weatherDay.minTemp
+                  )
+              );
+
+          /*
+           * Second request:
+           * Try exact dates when the first
+           * response did not contain them.
+           */
+          if (
+            forecast.length === 0
+          ) {
+            console.warn(
+              "Weather date missing from first response:",
+              city,
+              startDate,
+              endDate
+            );
+
+            const exactResponse =
+              await axios.get(
+                "https://api.open-meteo.com/v1/forecast",
+                {
+                  params: {
+                    latitude:
+                      coordinates.latitude,
+
+                    longitude:
+                      coordinates.longitude,
+
+                    daily:
+                      "temperature_2m_max,temperature_2m_min",
+
+                    start_date:
+                      startDate,
+
+                    end_date:
+                      endDate,
+
+                    timezone:
+                      "auto",
+                  },
+
+                  timeout:
+                    15000,
+
+                  headers: {
+                    Accept:
+                      "application/json",
+                  },
+                }
+              );
+
+            const exactDaily =
+              exactResponse
+                .data?.daily;
+
+            if (
+              exactDaily &&
+              Array.isArray(
+                exactDaily.time
+              )
+            ) {
+              forecast =
+                exactDaily.time
+                  .map(
+                    (
+                      date,
+                      weatherIndex
+                    ) => {
+                      const maxTemp =
+                        Number(
+                          exactDaily
+                            .temperature_2m_max?.[
+                            weatherIndex
+                          ]
+                        );
+
+                      const minTemp =
+                        Number(
+                          exactDaily
+                            .temperature_2m_min?.[
+                            weatherIndex
+                          ]
+                        );
+
+                      return {
+                        date,
+                        maxTemp,
+                        minTemp,
+                      };
+                    }
+                  )
+                  .filter(
+                    (weatherDay) =>
+                      weatherDay.date &&
+                      Number.isFinite(
+                        weatherDay.maxTemp
+                      ) &&
+                      Number.isFinite(
+                        weatherDay.minTemp
+                      )
+                  );
+            }
+          }
+
+          /*
+           * No forecast after both requests.
+           */
+          if (
+            forecast.length === 0
+          ) {
+            console.error(
+              "No weather forecast returned:",
+              city,
+              startDate,
+              endDate
+            );
+
+            weatherResults.push({
+              city,
+              forecast: [],
+              message:
+                "No forecast is available for this destination date yet.",
+            });
+
+            continue;
+          }
+
+          console.log(
+            "Weather success:",
+            city,
+            forecast
+          );
+
+          weatherResults.push({
+            city,
+            forecast,
+            message: "",
+          });
+        } catch (
+          weatherError
+        ) {
+          const providerError =
+            weatherError
+              .response
+              ?.data ||
+            weatherError.message;
+
+          console.error(
+            "Weather error:",
+            city,
+            providerError
+          );
+
+          weatherResults.push({
+            city,
+            forecast: [],
+            message:
+              "The weather service is temporarily unavailable.",
+          });
+        }
+      }
+
+      /*
+       * Check whether at least one city
+       * contains actual weather data.
+       */
+      const hasForecast =
+        weatherResults.some(
+          (entry) =>
+            Array.isArray(
+              entry.forecast
+            ) &&
+            entry.forecast.length >
+              0
+        );
+
+      /*
+       * Your current frontend displays a
+       * message object. This prevents the
+       * weather section from appearing blank
+       * when every API request fails.
+       */
+      const weatherResponse =
+        hasForecast
+          ? weatherResults
+          : {
+              message:
+                weatherResults.find(
+                  (entry) =>
+                    entry.message
+                )?.message ||
+                "Weather forecast is temporarily unavailable.",
+            };
+
+      return res
+        .status(200)
+        .json({
+          success: true,
+
+          trip:
+            tripResponse,
+
+          weather:
+            weatherResponse,
+        });
     } catch (error) {
+      console.error(
+        "Trip weather route error:",
+        error
+      );
+
       return res
         .status(500)
         .json({
+          success: false,
+
           message:
-            "Server Error",
+            "Server error while loading the trip.",
 
           error:
             error.message,

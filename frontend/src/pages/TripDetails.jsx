@@ -1560,7 +1560,28 @@ export default function TripDetails() {
                               </div>
                             )
                           )
-                        ) : null}
+                        ) : (
+  <div className="weather-unavailable">
+    <div className="weather-message-icon">
+      🌤️
+    </div>
+
+    <div className="weather-message-content">
+      <h4>
+        Weather unavailable
+      </h4>
+
+      <p>
+        No weather forecast was returned for{" "}
+        {place.city}.
+      </p>
+
+      <span>
+        Check the trip date and destination coordinates.
+      </span>
+    </div>
+  </div>
+)}
                       </div>
                     </div>
                   </div>
