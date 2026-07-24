@@ -1965,7 +1965,8 @@ router.get(
                     "auto",
 
                   forecast_days:
-                    7,
+                    WEATHER_WINDOW_DAYS +
+                    1,
                 },
 
                 timeout:
