@@ -1947,103 +1947,103 @@ router.get(
            * Retrieve the available forecast
            * and select the required trip dates.
            */
-          const response =
-            await axios.get(
-              "https://api.open-meteo.com/v1/forecast",
-              {
-                params: {
-                  latitude:
-                    coordinates.latitude,
+      const response =
+  await axios.get(
+    "https://www.7timer.info/bin/api.pl",
+    {
+      params: {
+        lat:
+          coordinates.latitude,
 
-                  longitude:
-                    coordinates.longitude,
+        lon:
+          coordinates.longitude,
 
-                  daily:
-                    "temperature_2m_max,temperature_2m_min",
+        product:
+          "civil",
 
-                  timezone:
-                    "auto",
+        output:
+          "json",
+      },
 
-                  forecast_days:
-                    WEATHER_WINDOW_DAYS +
-                    1,
-                },
+      timeout:
+        15000,
 
-                timeout:
-                  15000,
+      headers: {
+        Accept:
+          "application/json",
+      },
+    }
+  );
+const daily =
+  response.data?.dataseries;
 
-                headers: {
-                  Accept:
-                    "application/json",
-                },
-              }
-            );
+const forecastStart =
+  response.data?.init;
+if (
+  !daily ||
+  !Array.isArray(daily)
+) {
+  throw new Error(
+    "7Timer returned an invalid response."
+  );
+}
 
-          const daily =
-            response.data?.daily;
+console.log("7Timer data:", daily);
+console.log("Trip dates:", startDate, endDate);
+// Create one weather result per day
+const groupedByDay = {};
 
-          if (
-            !daily ||
-            !Array.isArray(
-              daily.time
-            ) ||
-            !Array.isArray(
-              daily
-                .temperature_2m_max
-            ) ||
-            !Array.isArray(
-              daily
-                .temperature_2m_min
-            )
-          ) {
-            throw new Error(
-              "Open-Meteo returned an invalid response."
-            );
-          }
+daily.forEach((item) => {
 
-          let forecast =
-            daily.time
-              .map(
-                (
-                  date,
-                  weatherIndex
-                ) => {
-                  const maxTemp =
-                    Number(
-                      daily
-                        .temperature_2m_max[
-                        weatherIndex
-                      ]
-                    );
+  const forecastDate = new Date();
 
-                  const minTemp =
-                    Number(
-                      daily
-                        .temperature_2m_min[
-                        weatherIndex
-                      ]
-                    );
+  forecastDate.setDate(
+    forecastDate.getDate() +
+    Math.floor(item.timepoint / 24)
+  );
 
-                  return {
-                    date,
-                    maxTemp,
-                    minTemp,
-                  };
-                }
-              )
-              .filter(
-                (weatherDay) =>
-                  weatherDay.date >=
-                    startDate &&
-                  weatherDay.date <=
-                    endDate &&
-                  Number.isFinite(
-                    weatherDay.maxTemp
-                  ) &&
-                  Number.isFinite(
-                    weatherDay.minTemp
-                  )
-              );
+  const date =
+    forecastDate
+      .toISOString()
+      .slice(0, 10);
+
+
+  const temp =
+    Number(item.temp2m);
+
+
+  if (!groupedByDay[date]) {
+    groupedByDay[date] = {
+      date,
+      maxTemp: temp,
+      minTemp: temp,
+      weather: item.weather
+    };
+  }
+  else {
+
+    groupedByDay[date].maxTemp =
+      Math.max(
+        groupedByDay[date].maxTemp,
+        temp
+      );
+
+    groupedByDay[date].minTemp =
+      Math.min(
+        groupedByDay[date].minTemp,
+        temp
+      );
+  }
+
+});
+
+
+let forecast =
+  Object.values(groupedByDay)
+    .filter(day =>
+      day.date >= startDate &&
+      day.date <= endDate
+    );
 
           /*
            * No forecast returned.
