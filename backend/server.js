@@ -224,6 +224,9 @@ app.use(
 | The second middleware serves:
 | backend/src/uploads
 |
+| The third middleware serves:
+| repo-root uploads
+|
 | Keeping both temporarily prevents old uploaded-file
 | paths from breaking.
 |
@@ -234,6 +237,17 @@ app.use(
   express.static(
     path.join(
       __dirname,
+      "uploads"
+    )
+  )
+);
+
+app.use(
+  "/uploads",
+  express.static(
+    path.join(
+      __dirname,
+      "..",
       "uploads"
     )
   )
