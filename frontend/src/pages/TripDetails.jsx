@@ -699,8 +699,24 @@ export default function TripDetails() {
   }
 
   function getForecastForPlace(
-    placeCity
+    placeCity,
+    placeIndex
   ) {
+    const indexedForecast =
+      Array.isArray(forecast) &&
+      placeIndex >= 0
+        ? forecast[placeIndex]
+        : null;
+
+    if (
+      Array.isArray(
+        indexedForecast?.forecast
+      ) &&
+      indexedForecast.forecast.length > 0
+    ) {
+      return indexedForecast.forecast;
+    }
+
     const normalizedPlaceCity =
       normalizeWeatherCityName(
         placeCity
@@ -1431,7 +1447,8 @@ export default function TripDetails() {
 
                 const cityForecast =
                   getForecastForPlace(
-                    place?.city
+                    place?.city,
+                    index
                   );
 
                 return (
