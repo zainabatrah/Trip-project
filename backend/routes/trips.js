@@ -1944,7 +1944,6 @@ router.get(
 
         try {
           /*
-           * First request:
            * Retrieve the available forecast
            * and select the required trip dates.
            */
@@ -1966,7 +1965,7 @@ router.get(
                     "auto",
 
                   forecast_days:
-                    16,
+                    7,
                 },
 
                 timeout:
@@ -2046,109 +2045,7 @@ router.get(
               );
 
           /*
-           * Second request:
-           * Try exact dates when the first
-           * response did not contain them.
-           */
-          if (
-            forecast.length === 0
-          ) {
-            console.warn(
-              "Weather date missing from first response:",
-              city,
-              startDate,
-              endDate
-            );
-
-            const exactResponse =
-              await axios.get(
-                "https://api.open-meteo.com/v1/forecast",
-                {
-                  params: {
-                    latitude:
-                      coordinates.latitude,
-
-                    longitude:
-                      coordinates.longitude,
-
-                    daily:
-                      "temperature_2m_max,temperature_2m_min",
-
-                    start_date:
-                      startDate,
-
-                    end_date:
-                      endDate,
-
-                    timezone:
-                      "auto",
-                  },
-
-                  timeout:
-                    15000,
-
-                  headers: {
-                    Accept:
-                      "application/json",
-                  },
-                }
-              );
-
-            const exactDaily =
-              exactResponse
-                .data?.daily;
-
-            if (
-              exactDaily &&
-              Array.isArray(
-                exactDaily.time
-              )
-            ) {
-              forecast =
-                exactDaily.time
-                  .map(
-                    (
-                      date,
-                      weatherIndex
-                    ) => {
-                      const maxTemp =
-                        Number(
-                          exactDaily
-                            .temperature_2m_max?.[
-                            weatherIndex
-                          ]
-                        );
-
-                      const minTemp =
-                        Number(
-                          exactDaily
-                            .temperature_2m_min?.[
-                            weatherIndex
-                          ]
-                        );
-
-                      return {
-                        date,
-                        maxTemp,
-                        minTemp,
-                      };
-                    }
-                  )
-                  .filter(
-                    (weatherDay) =>
-                      weatherDay.date &&
-                      Number.isFinite(
-                        weatherDay.maxTemp
-                      ) &&
-                      Number.isFinite(
-                        weatherDay.minTemp
-                      )
-                  );
-            }
-          }
-
-          /*
-           * No forecast after both requests.
+           * No forecast returned.
            */
           if (
             forecast.length === 0
