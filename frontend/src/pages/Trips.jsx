@@ -707,10 +707,6 @@ export default function Trips() {
                 Car
               </option>
 
-              <option value="flight">
-                Flight
-              </option>
-
               <option value="boat">
                 Boat
               </option>
